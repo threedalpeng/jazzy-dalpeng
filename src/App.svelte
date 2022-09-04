@@ -3,11 +3,11 @@
   import ReloadPrompt from "./lib/ReloadPrompt.svelte";
   import PracticePage from "./page/Practice/PracticePage.svelte";
 
-  navigate("/practice/01-pitch-name-on-finger-board");
+  navigate("/jazz/practice/01-pitch-name-on-finger-board");
 </script>
 
 <main class="h-screen select-none">
-  <Router>
+  <Router basepath="jazz">
     <Route path="practice/*">
       <PracticePage />
     </Route>

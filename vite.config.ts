@@ -5,6 +5,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import * as path from "path";
 
 export default defineConfig({
+  base: "/jazz/",
   plugins: [
     svelte(),
     Unocss({}),
