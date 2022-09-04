@@ -1,0 +1,89 @@
+<script lang="ts">
+  import { ChevronLeft, ChevronRight, ChevronUp } from "@steeze-ui/heroicons";
+  import { Icon } from "@steeze-ui/svelte-icon";
+  import { Link, Route, Router } from "svelte-routing";
+  import PitchNameOnFingerBoardPage from "./01-pitch-name-on-finger-board/PitchNameOnFingerBoardPage.svelte";
+
+  const routes = [
+    {
+      name: "01. Pitch Name on Finger Board",
+      to: "01-pitch-name-on-finger-board",
+      component: PitchNameOnFingerBoardPage,
+    },
+    {
+      name: "02. Pitch Name on Finger Board",
+      to: "02-pitch-name-on-finger-board",
+      component: PitchNameOnFingerBoardPage,
+    },
+  ];
+  let currentPageIndex = 0;
+</script>
+
+<Router>
+  <div class="flex h-screen w-screen flex-col">
+    <div class="h-60px flex w-screen flex-row items-center">
+      <span class="font-jazz ml-8 text-2xl font-bold">
+        JazzyDalpeng / Jazz Guitar Practice</span
+      >
+    </div>
+    <div class="m-auto flex flex-1 flex-col items-center justify-center">
+      {#each routes as route}
+        <Route class="m-auto" path={route.to} component={route.component} />
+      {/each}
+    </div>
+    <nav class="h-60px relative w-screen">
+      <div class="flex h-full flex-row items-center justify-between">
+        {#if currentPageIndex >= 1}
+          <Link
+            to={routes[currentPageIndex - 1].to}
+            on:click={() => currentPageIndex--}
+            class="hover:color-indigo-4 active:color-indigo-8 mr-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
+          >
+            <Icon class="h-40px w-auto" src={ChevronLeft} theme="solid" />
+            <span class="whitespace-nowrap"
+              >{routes[currentPageIndex - 1].name}</span
+            >
+          </Link>
+        {:else}
+          <div
+            class="color-gray mr-8 flex h-full select-none flex-row items-center gap-4 transition duration-200"
+          >
+            <Icon class="h-40px w-auto" src={ChevronLeft} theme="solid" />
+          </div>
+        {/if}
+        {#if currentPageIndex < routes.length - 1}
+          <Link
+            to={routes[currentPageIndex + 1].to}
+            on:click={() => currentPageIndex++}
+            class="hover:color-indigo-4 active:color-indigo-8 ml-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
+          >
+            <span class="whitespace-nowrap"
+              >{routes[currentPageIndex + 1].name}</span
+            >
+            <Icon class="h-40px w-auto" src={ChevronRight} theme="solid" />
+          </Link>
+        {:else}
+          <div
+            class="color-gray ml-8 flex h-full select-none flex-row items-center gap-4 transition duration-200"
+          >
+            <Icon class="h-40px w-auto" src={ChevronRight} theme="solid" />
+          </div>
+        {/if}
+      </div>
+      <div
+        class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 lg:top-1/2"
+      >
+        <div class="-top-30px left-50% -translate-x-50% h-40px absolute w-auto">
+          <Icon
+            class="opacity-25% hover:opacity-100% cursor-pointer transition-opacity"
+            src={ChevronUp}
+            theme="mini"
+          />
+        </div>
+        <p>
+          {routes[currentPageIndex].name}
+        </p>
+      </div>
+    </nav>
+  </div>
+</Router>

@@ -1,0 +1,34 @@
+{
+  "name": "jazz",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "@tsconfig/svelte": "^3.0.0",
+    "prettier": "^2.7.1",
+    "prettier-plugin-tailwindcss": "^0.1.13",
+    "svelte": "^3.49.0",
+    "svelte-check": "^2.9.0",
+    "svelte-preprocess": "^4.10.7",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.4",
+    "unocss": "^0.45.14",
+    "vite": "^3.0.9",
+    "vite-plugin-pwa": "^0.12.3",
+    "workbox-window": "^6.5.4"
+  },
+  "dependencies": {
+    "@julr/unocss-preset-forms": "^0.0.1",
+    "@steeze-ui/heroicons": "^2.0.0",
+    "@steeze-ui/svelte-icon": "^1.3.1",
+    "mini-svg-data-uri": "^1.4.4",
+    "svelte-routing": "^1.6.0"
+  }
+}
