@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "gh:deploy": "./deploy.sh",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
