@@ -117,7 +117,7 @@
         <label for="shuffle-mode" class="text-sm">Shuffle Mode</label>
         <select
           id="shuffle-mode"
-          class="bg-right-center b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none px-3 py-1 text-base ring-0 transition ease-in-out focus:text-gray-700
+          class="bg-right-center b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none py-1 pr-6 pl-3 text-base ring-0 transition ease-in-out focus:text-gray-700
            focus:outline-none focus:ring-0"
           bind:value={shuffleMode}
           on:change={initiateRemainedComponent}

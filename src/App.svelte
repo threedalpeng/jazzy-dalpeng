@@ -16,7 +16,7 @@
   navigate("/jazz/practice/01-pitch-name-on-finger-board");
 </script>
 
-<main class="h-screen select-none">
+<main class="h-screen select-none overflow-hidden">
   <Router basepath="jazz">
     <Route path="practice/*">
       <PracticePage />
