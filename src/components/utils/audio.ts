@@ -12,10 +12,16 @@ export function getAudioContext() {
 }
 
 export async function getInstrument(instrument: Soundfont.InstrumentName) {
+  if (!audioCtx) {
+    getAudioContext();
+  }
   if (instruments.has(instrument)) {
     return instruments.get(instrument);
   } else {
-    const inst = await Soundfont.instrument(audioCtx, instrument);
+    const inst = await Soundfont.instrument(audioCtx, instrument, {
+      decay: 0.1,
+      sustain: 0.2,
+    });
     instruments.set(instrument, inst);
     return inst;
   }

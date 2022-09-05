@@ -92,5 +92,5 @@
 </script>
 
 <div class="h-full w-screen">
-  <RandomBox shuffleMode="all-done" {components} />
+  <RandomBox beat={6} {components} />
 </div>

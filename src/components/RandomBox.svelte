@@ -10,7 +10,7 @@
 
   export let bpm = 120;
   export let beat = 4;
-  export let shuffleMode: "each-turn" | "all-done" = "each-turn";
+  export let shuffleMode: "each-turn" | "all-done" = "all-done";
   export let components: {
     component: new (...args: any[]) => SvelteComponent;
     props: any;
@@ -37,11 +37,15 @@
   let beatCount = 0;
   let debouncedSpeed = 60000 / bpm;
   $: debounce(() => {
-    if (beat && bpm && beat > 0 && bpm >= 40) debouncedSpeed = 60000 / bpm;
+    if (beat && bpm && beat > 0 && bpm >= 40) {
+      debouncedSpeed = 60000 / bpm;
+      restartAutoShuffle();
+    }
   }, 200);
-  function startAutoShuffle() {
+  async function startAutoShuffle() {
+    if (!marimba) marimba = await getInstrument("marimba");
     timerRunning = true;
-    timerId = window.setTimeout(function loop() {
+    timerId = window.setInterval(() => {
       if (beatCount >= beat) {
         beatCount = 0;
         openBox();
@@ -52,13 +56,18 @@
         playMarimba("C4");
       }
       beatCount++;
-      timerId = window.setTimeout(loop, debouncedSpeed);
     }, debouncedSpeed);
   }
   function stopAutoShuffle() {
     timerRunning = false;
     beatCount = 0;
     window.clearInterval(timerId);
+  }
+  function restartAutoShuffle() {
+    if (timerRunning) {
+      stopAutoShuffle();
+      startAutoShuffle();
+    }
   }
 
   function openBox() {
@@ -99,7 +108,6 @@
 
   let marimba;
   const playMarimba = async (key: string) => {
-    if (!marimba) marimba = await getInstrument("marimba");
     marimba.play(key);
   };
 
