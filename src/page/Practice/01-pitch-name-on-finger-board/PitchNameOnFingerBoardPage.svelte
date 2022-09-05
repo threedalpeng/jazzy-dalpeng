@@ -1,5 +1,5 @@
 <script lang="ts">
-  import RandomBox from "@lib/RandomBox.svelte";
+  import RandomBox from "@components/RandomBox.svelte";
   import PitchNameOnFingerBoard from "./PitchNameOnFingerBoard.svelte";
 
   const pitchData = [
@@ -91,6 +91,6 @@
   });
 </script>
 
-<div class="w-screen">
+<div class="h-full w-screen">
   <RandomBox shuffleMode="all-done" {components} />
 </div>

@@ -26,9 +26,9 @@
         JazzyDalpeng / Jazz Guitar Practice</span
       >
     </div>
-    <div class="m-auto flex flex-1 flex-col items-center justify-center">
+    <div class="flex basis-full flex-col items-center justify-center">
       {#each routes as route}
-        <Route class="m-auto" path={route.to} component={route.component} />
+        <Route path={route.to} component={route.component} />
       {/each}
     </div>
     <nav class="h-60px relative w-screen">
@@ -40,7 +40,7 @@
             class="hover:color-indigo-4 active:color-indigo-8 mr-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
           >
             <Icon class="h-40px w-auto" src={ChevronLeft} theme="solid" />
-            <span class="whitespace-nowrap"
+            <span class="invisible whitespace-nowrap lg:visible"
               >{routes[currentPageIndex - 1].name}</span
             >
           </Link>
@@ -57,7 +57,7 @@
             on:click={() => currentPageIndex++}
             class="hover:color-indigo-4 active:color-indigo-8 ml-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
           >
-            <span class="whitespace-nowrap"
+            <span class="invisible whitespace-nowrap lg:visible"
               >{routes[currentPageIndex + 1].name}</span
             >
             <Icon class="h-40px w-auto" src={ChevronRight} theme="solid" />
@@ -70,9 +70,7 @@
           </div>
         {/if}
       </div>
-      <div
-        class="absolute left-1/2 top-0 -translate-y-1/2 -translate-x-1/2 lg:top-1/2"
-      >
+      <div class="absolute left-1/2 top-1/2 -translate-y-1/2 -translate-x-1/2">
         <div class="-top-30px left-50% -translate-x-50% h-40px absolute w-auto">
           <Icon
             class="opacity-25% hover:opacity-100% cursor-pointer transition-opacity"
@@ -80,7 +78,7 @@
             theme="mini"
           />
         </div>
-        <p>
+        <p class="whitespace-nowrap">
           {routes[currentPageIndex].name}
         </p>
       </div>

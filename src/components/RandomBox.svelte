@@ -2,6 +2,10 @@
   import { Play, Stop } from "@steeze-ui/heroicons";
   import { Icon } from "@steeze-ui/svelte-icon";
   import type { SvelteComponent } from "svelte/internal";
+
+  import { onDestroy } from "svelte";
+  import BeatPresenter from "./Practice/BeatPresenter.svelte";
+  import { getInstrument } from "./utils/audio";
   import { debounce } from "./utils/basic";
 
   export let bpm = 120;
@@ -30,19 +34,30 @@
     }
   }
 
-  let debouncedSpeed = (60000 * beat) / bpm;
+  let beatCount = 0;
+  let debouncedSpeed = 60000 / bpm;
   $: debounce(() => {
-    debouncedSpeed = (60000 * beat) / bpm;
+    if (beat && bpm && beat > 0 && bpm >= 40) debouncedSpeed = 60000 / bpm;
   }, 200);
   function startAutoShuffle() {
     timerRunning = true;
     timerId = window.setTimeout(function loop() {
-      openBox();
+      if (beatCount >= beat) {
+        beatCount = 0;
+        openBox();
+      }
+      if (beatCount === 0) {
+        playMarimba("C5");
+      } else {
+        playMarimba("C4");
+      }
+      beatCount++;
       timerId = window.setTimeout(loop, debouncedSpeed);
     }, debouncedSpeed);
   }
   function stopAutoShuffle() {
     timerRunning = false;
+    beatCount = 0;
     window.clearInterval(timerId);
   }
 
@@ -81,11 +96,21 @@
       (component) => !Object.is(component, selectedComponent)
     );
   }
+
+  let marimba;
+  const playMarimba = async (key: string) => {
+    if (!marimba) marimba = await getInstrument("marimba");
+    marimba.play(key);
+  };
+
+  onDestroy(() => {
+    stopAutoShuffle();
+  });
 </script>
 
-<div>
+<div class="relative h-full">
   <div
-    class="h-60px top-60px fixed right-0 flex w-screen flex-row items-center justify-between"
+    class="h-60px z-1 absolute right-0 flex w-screen flex-row items-center  justify-between"
   >
     <div class="ml-8 flex flex-row gap-4">
       <div class="flex h-full flex-col items-start justify-between">
@@ -143,10 +168,13 @@
       {/if}
     </button>
   </div>
-  <div on:click={openBox}>
-    <svelte:component
-      this={selectedComponent.component}
-      {...selectedComponent.props}
-    />
+  <div class="relative flex h-full flex-col items-center justify-center">
+    <div on:click={openBox}>
+      <svelte:component
+        this={selectedComponent.component}
+        {...selectedComponent.props}
+      />
+    </div>
+    <BeatPresenter {beat} {beatCount} />
   </div>
 </div>

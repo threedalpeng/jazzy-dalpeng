@@ -1,12 +1,12 @@
 <script lang="ts">
-  import FingerBoard from "@lib/FingerBoard.svelte";
+  import FingerBoard from "@components/FingerBoard.svelte";
 
   export let pitch;
   export let fingers;
   export let isFingerboardHidden = false;
 </script>
 
-<div class="block leading-1.2em h-fit font-jazz text-80px mb-0.5em select-none">
+<div class="leading-1.2em font-jazz text-80px mb-0.5em block h-fit select-none">
   {pitch}
 </div>
 {#if !isFingerboardHidden}
