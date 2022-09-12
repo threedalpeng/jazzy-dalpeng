@@ -11,10 +11,10 @@ export default defineConfig({
     Unocss({}),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+      includeAssets: ["soundfonts/**/*.{js, json}"],
       manifest: {
         name: "JazzyDalpeng",
-        short_name: "jazz",
+        short_name: "JazzyDalpeng",
         description: "Jazz Practice Application",
         theme_color: "#ffffff",
         icons: [
@@ -29,6 +29,10 @@ export default defineConfig({
             type: "image/png",
           },
         ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,png,woff2}"],
+        maximumFileSizeToCacheInBytes: 4000000,
       },
     }),
   ],
