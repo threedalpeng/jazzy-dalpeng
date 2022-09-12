@@ -18,10 +18,14 @@ export async function getInstrument(instrument: Soundfont.InstrumentName) {
   if (instruments.has(instrument)) {
     return instruments.get(instrument);
   } else {
-    const inst = await Soundfont.instrument(audioCtx, instrument, {
-      decay: 0.1,
-      sustain: 0.2,
-    });
+    const inst = await Soundfont.instrument(
+      audioCtx,
+      `/jazz/soundfonts/MusyngKite/${instrument}-mp3.js` as Soundfont.InstrumentName,
+      {
+        decay: 0.1,
+        sustain: 0.2,
+      }
+    );
     instruments.set(instrument, inst);
     return inst;
   }
