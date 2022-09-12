@@ -3,6 +3,7 @@
   import { Icon } from "@steeze-ui/svelte-icon";
   import { Link, Route, Router } from "svelte-routing";
   import PitchNameOnFingerBoardPage from "./01-pitch-name-on-finger-board/PitchNameOnFingerBoardPage.svelte";
+  import MelodyTonePage from "./03-melody-tone/MelodyTonePage.svelte";
 
   const routes = [
     {
@@ -11,9 +12,9 @@
       component: PitchNameOnFingerBoardPage,
     },
     {
-      name: "02. Pitch Name on Finger Board",
-      to: "02-pitch-name-on-finger-board",
-      component: PitchNameOnFingerBoardPage,
+      name: "03. Melody Tone",
+      to: "03-melody-tone",
+      component: MelodyTonePage,
     },
   ];
   let currentPageIndex = 0;
