@@ -2,3 +2,8 @@
   font-family: FinaleJazz;
   src: url(FinaleJazzText.woff2);
 }
+
+@font-face {
+  font-family: FinaleJazzChord;
+  src: url(FinaleJazzChord.woff2);
+}

@@ -7,7 +7,7 @@
 </script>
 
 <div
-  class="leading-1.2em font-jazz text-80px mb-0.5em block h-fit select-none text-center"
+  class="leading-1.2em font-chord text-80px mb-0.5em block h-fit select-none text-center"
 >
   {pitch}
 </div>

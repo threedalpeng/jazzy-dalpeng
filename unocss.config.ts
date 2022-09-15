@@ -6,6 +6,7 @@ export default defineConfig({
   theme: {
     fontFamily: {
       jazz: "FinaleJazz",
+      chord: "FinaleJazzChord",
     },
     colors: {
       primary: {},

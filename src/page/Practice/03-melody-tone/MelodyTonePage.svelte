@@ -4,7 +4,7 @@
 
   const pitchData = [
     {
-      pitch: "AM7",
+      pitch: "AJ",
       fingers: [
         { line: 1, fret: 5 },
         { line: 2, fret: 12 },
