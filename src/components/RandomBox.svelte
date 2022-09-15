@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Play, Stop } from "@steeze-ui/heroicons";
   import { Icon } from "@steeze-ui/svelte-icon";
-  import type { SvelteComponent } from "svelte/internal";
 
   import { onDestroy } from "svelte";
   import BeatPresenter from "./Practice/BeatPresenter.svelte";
@@ -12,7 +11,7 @@
   export let beat = 4;
   export let shuffleMode: "each-turn" | "all-done" = "all-done";
   export let components: {
-    component: new (...args: any[]) => SvelteComponent;
+    component: any;
     props: any;
   }[] = [];
   let selectedComponent = components[0];
@@ -141,7 +140,7 @@
           type="number"
           min="20"
           max="500"
-          class=" b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none px-3 py-1 text-base ring-0 transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0"
+          class="b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none px-3 py-1 text-base ring-0 transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0"
           bind:value={bpm}
         />
       </div>
@@ -152,7 +151,7 @@
           type="number"
           min="1"
           max="12"
-          class=" b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none px-3 py-1 text-base ring-0 transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0"
+          class="b-0 border-b-3 focus:border-b-3 focus:b-0 focus:border-b-indigo-3 border-gray-3 appearance-none px-3 py-1 text-base ring-0 transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0"
           bind:value={beat}
         />
       </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onRender } from "./context";
+  import { onCanvasRender } from "./context";
 
   type AngleUnit = "deg" | "grad" | "rad" | "trun";
   type Angle = `${number}${AngleUnit}`;
@@ -54,7 +54,7 @@
   export let x: number;
   export let y: number;
 
-  onRender(({ getContext2D }) => {
+  onCanvasRender(({ getContext2D }) => {
     const ctx = getContext2D();
     const font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontStretch} ${fontSize} ${fontFamily}`;
     ctx.font = font;

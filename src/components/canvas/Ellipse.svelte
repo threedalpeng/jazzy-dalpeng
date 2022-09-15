@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onRender } from "./context";
+  import { onCanvasRender } from "./context";
 
   export let x: number;
   export let y: number;
@@ -13,7 +13,7 @@
   export let strokeStyle: string | CanvasGradient | CanvasPattern = "#000";
   export let lineWidth: number = 1;
 
-  onRender(({ getContext2D }) => {
+  onCanvasRender(({ getContext2D }) => {
     const ctx = getContext2D();
     ctx.fillStyle = fillStyle;
     ctx.strokeStyle = strokeStyle;

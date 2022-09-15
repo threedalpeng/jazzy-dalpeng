@@ -17,7 +17,7 @@ export const setCanvasContext = (context: CanvasContext) => {
 export const getCanvasContext: () => CanvasContext = () => {
   return getContext("canvas");
 };
-export const onRender = (renderFn: (props: CanvasContext) => any) => {
+export const onCanvasRender = (renderFn: (props: CanvasContext) => any) => {
   const props = getCanvasContext();
   props.subscribeRender(renderFn);
 
