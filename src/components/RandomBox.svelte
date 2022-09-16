@@ -4,7 +4,6 @@
 
   import { onDestroy } from "svelte";
   import BeatPresenter from "./Practice/BeatPresenter.svelte";
-  import { getInstrument } from "./utils/audio";
   import { debounce } from "./utils/basic";
 
   export let bpm = 120;
@@ -42,17 +41,11 @@
     }
   }, 200);
   async function startAutoShuffle() {
-    if (!marimba) marimba = await getInstrument("marimba");
     timerRunning = true;
     timerId = window.setInterval(() => {
       if (beatCount >= beat) {
         beatCount = 0;
         openBox();
-      }
-      if (beatCount === 0) {
-        playMarimba("C5");
-      } else {
-        playMarimba("C4");
       }
       beatCount++;
     }, debouncedSpeed);
@@ -104,11 +97,6 @@
       (component) => !Object.is(component, selectedComponent)
     );
   }
-
-  let marimba;
-  const playMarimba = async (key: string) => {
-    marimba.play(key);
-  };
 
   onDestroy(() => {
     stopAutoShuffle();
