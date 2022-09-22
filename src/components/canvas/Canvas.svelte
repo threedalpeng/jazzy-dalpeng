@@ -4,7 +4,7 @@
   let canvas: HTMLCanvasElement;
   export let width = 100;
   export let height = 100;
-  let canvasContext = setCanvasContext(() => canvas);
+  setCanvasContext(() => canvas);
 </script>
 
 <canvas

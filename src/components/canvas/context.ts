@@ -1,10 +1,9 @@
 import { getContext, onDestroy, onMount, setContext } from "svelte";
 
 type CanvasGetter = () => HTMLCanvasElement;
-type CanvasRenderCallback = (props: CanvasContext) => any;
+type CanvasRenderCallback = (canvasContext: CanvasContext) => any;
 class CanvasContext {
   #canvasGetter: CanvasGetter;
-  #renderCallbacks: CanvasRenderCallback[] = [];
   #timePassed = 0;
   #frameId = 0;
   constructor(canvasGetter: CanvasGetter) {
@@ -34,28 +33,48 @@ class CanvasContext {
     this.canvas.height = h;
   }
 
-  subscribe(callback: CanvasRenderCallback) {
+  #renderCallbacks: CanvasRenderCallback[] = [];
+  onRender(callback: CanvasRenderCallback) {
     this.#renderCallbacks = this.#renderCallbacks.concat(callback);
   }
-  unsubscribe(callback: CanvasRenderCallback) {
+  removeRender(callback: CanvasRenderCallback) {
     this.#renderCallbacks = this.#renderCallbacks.filter(
       (render) => render !== callback
     );
   }
 
+  #afterRenderCallbacks: CanvasRenderCallback[] = [];
+  onAfterRender(callback: CanvasRenderCallback) {
+    this.#afterRenderCallbacks = this.#afterRenderCallbacks.concat(callback);
+  }
+  removeAfterRender(callback: CanvasRenderCallback) {
+    this.#afterRenderCallbacks = this.#afterRenderCallbacks.filter(
+      (render) => render !== callback
+    );
+  }
+
+  render: FrameRequestCallback = async (t) => {
+    this.#timePassed = t;
+    let ctx = this.context2d;
+    ctx.clearRect(0, 0, this.width, this.height);
+    this.#renderCallbacks.forEach(async (renderCallback) => {
+      ctx.save();
+      renderCallback(this);
+      ctx.restore();
+    });
+    this.#afterRenderCallbacks.forEach(async (afterRenderCallback) => {
+      ctx.save();
+      afterRenderCallback(this);
+      ctx.restore();
+    });
+  };
+
   run() {
-    const render: FrameRequestCallback = async (t) => {
-      this.#timePassed = t;
-      let ctx = this.context2d;
-      ctx.clearRect(0, 0, this.width, this.height);
-      this.#renderCallbacks.forEach(async (renderCallback) => {
-        ctx.save();
-        renderCallback(this);
-        ctx.restore();
-      });
-      this.#frameId = requestAnimationFrame(render);
+    const loop: FrameRequestCallback = async (t) => {
+      this.render(t);
+      this.#frameId = requestAnimationFrame(loop);
     };
-    this.#frameId = requestAnimationFrame(render);
+    this.#frameId = requestAnimationFrame(loop);
   }
 
   quit() {
@@ -73,18 +92,47 @@ export const setCanvasContext = (canvasGetter: CanvasGetter) => {
   });
   return context;
 };
+export const setSubroutineCanvasContext = (
+  upperContext: CanvasContext,
+  canvasGetter: CanvasGetter,
+  options?: {
+    beforeRender?: CanvasRenderCallback;
+    afterRender?: CanvasRenderCallback;
+  }
+) => {
+  let subCanvasContext = new CanvasContext(canvasGetter);
+  upperContext.onRender(({ delta }) => {
+    if (options?.beforeRender) {
+      options.beforeRender(subCanvasContext);
+    }
+    subCanvasContext.render(delta);
+    if (options?.afterRender) {
+      options.afterRender(subCanvasContext);
+    }
+  });
+  setContext("canvas", subCanvasContext);
+  return subCanvasContext;
+};
 export const getCanvasContext: () => CanvasContext = () => {
   return getContext("canvas");
 };
-export const onCanvasRender = (
-  renderFn: (canvasContext: CanvasContext) => any
-) => {
+export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
   const canvasContext = getCanvasContext();
   onMount(() => {
-    canvasContext.subscribe(renderFn);
+    canvasContext.onRender(renderFn);
   });
 
   onDestroy(() => {
-    canvasContext.unsubscribe(renderFn);
+    canvasContext.removeRender(renderFn);
+  });
+};
+export const onAfterCanvasRender = (renderFn: CanvasRenderCallback) => {
+  const canvasContext = getCanvasContext();
+  onMount(() => {
+    canvasContext.onAfterRender(renderFn);
+  });
+
+  onDestroy(() => {
+    canvasContext.removeAfterRender(renderFn);
   });
 };
