@@ -1,5 +1,5 @@
 <script lang="ts">
-  import FingerBoard from "@components/FingerBoard.svelte";
+  import FingerBoard from "@components/guitar/FingerBoard/FingerBoard.svelte";
 
   export let pitch;
   export let fingers;
