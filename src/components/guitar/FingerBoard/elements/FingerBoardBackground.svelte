@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Circle, Line } from "@canvas";
-  import { getFingerBoardContext } from "./context";
+  import { Line } from "@canvas";
+  import { getFingerBoardContext } from "../context";
   import FingerBoardInlay from "./FingerBoardInlay.svelte";
 
+  export let inlayVisible: boolean = true;
   const {
     FRET_START,
     FRET_GAP,
@@ -10,17 +11,18 @@
     STRING_START,
     STRING_GAP,
     STRING_WIDTH,
+    FRET_MAX,
   } = getFingerBoardContext();
 
   const stringLines: { x: number; y: number }[][] = [];
   for (let i = 0; i < 6; i++) {
     stringLines.push([
       { x: FRET_START - 2, y: STRING_START + STRING_GAP * i },
-      { x: FRET_START + FRET_GAP * 13, y: STRING_START + STRING_GAP * i },
+      { x: FRET_START + FRET_GAP * FRET_MAX, y: STRING_START + STRING_GAP * i },
     ]);
   }
   const fretLines: { x: number; y: number }[][] = [];
-  for (let i = 0; i < 13; i++) {
+  for (let i = 0; i <= FRET_MAX; i++) {
     fretLines.push([
       { x: FRET_START + FRET_GAP * i, y: STRING_START },
       { x: FRET_START + FRET_GAP * i, y: STRING_START + STRING_GAP * 5 },
@@ -47,4 +49,6 @@
   lineWidth={FRET_WIDTH + 4}
   strokeStyle="#555"
 />
-<FingerBoardInlay />
+{#if inlayVisible}
+  <FingerBoardInlay />
+{/if}

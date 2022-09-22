@@ -113,9 +113,11 @@ export const setSubroutineCanvasContext = (
   setContext("canvas", subCanvasContext);
   return subCanvasContext;
 };
+
 export const getCanvasContext: () => CanvasContext = () => {
   return getContext("canvas");
 };
+
 export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
   const canvasContext = getCanvasContext();
   onMount(() => {

@@ -2,10 +2,11 @@ import { getContext, setContext } from "svelte";
 
 interface FingerBoardContext {
   FRET_START: number;
-  STRING_START: number;
   FRET_GAP: number;
-  STRING_GAP: number;
   FRET_WIDTH: number;
+  FRET_MAX: number;
+  STRING_START: number;
+  STRING_GAP: number;
   STRING_WIDTH: number;
   FINGER_RADIUS: number;
   INLAY_RADIUS: number;
@@ -18,10 +19,11 @@ export const setFingerBoardContext = (
 ) => {
   const defaultContext: FingerBoardContext = {
     FRET_START: 30,
-    STRING_START: 30,
     FRET_GAP: 50,
-    STRING_GAP: 30,
     FRET_WIDTH: 4,
+    FRET_MAX: 24,
+    STRING_START: 30,
+    STRING_GAP: 30,
     STRING_WIDTH: 1,
     FINGER_RADIUS: 7,
     INLAY_RADIUS: 3,
@@ -34,3 +36,12 @@ export const setFingerBoardContext = (
 
 export const getFingerBoardContext = () =>
   getContext<FingerBoardContext>("fingerboard");
+
+export const getXFromFretNumber = (fret: number) => {
+  const fc = getFingerBoardContext();
+  return fc.FRET_START + fret * fc.FRET_GAP;
+};
+export const getYFromStringNumber = (string: number) => {
+  const fc = getFingerBoardContext();
+  return fc.STRING_START + (string - 1) * fc.STRING_GAP;
+};

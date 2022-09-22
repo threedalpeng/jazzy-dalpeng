@@ -4,8 +4,8 @@
 
   export let width: number;
   export let height: number;
-  export let sourceArea: Partial<Rect>;
-  export let destArea: Partial<Rect>;
+  export let sourceArea: Partial<Rect> = { x: 0, y: 0 };
+  export let destArea: Partial<Rect> = { x: 0, y: 0 };
 
   /* Outer Context */
   const upperCanvasContext = getCanvasContext();
@@ -18,12 +18,12 @@
     afterRender: ({ canvas }) => {
       upperCanvasContext.context2d.drawImage(
         canvas,
-        sourceArea.x,
-        sourceArea.y,
+        sourceArea.x ?? 0,
+        sourceArea.y ?? 0,
         sourceArea.width ?? canvas.width,
         sourceArea.height ?? canvas.height,
-        destArea.x,
-        destArea.y,
+        destArea.x ?? 0,
+        destArea.y ?? 0,
         destArea.width ?? sourceArea.width ?? canvas.width,
         destArea.height ?? sourceArea.height ?? canvas.height
       );
