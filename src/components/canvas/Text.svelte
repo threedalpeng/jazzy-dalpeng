@@ -54,8 +54,7 @@
   export let x: number;
   export let y: number;
 
-  onCanvasRender(({ getContext2D }) => {
-    const ctx = getContext2D();
+  onCanvasRender(({ context2d: ctx }) => {
     const font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontStretch} ${fontSize} ${fontFamily}`;
     ctx.font = font;
     ctx.textAlign = textAlign;

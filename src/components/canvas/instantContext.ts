@@ -1,37 +1,40 @@
 import { getContext, onDestroy, onMount, setContext } from "svelte";
 
-type CanvasGetter = () => HTMLCanvasElement;
 type CanvasRenderCallback = (props: CanvasContext) => any;
 class CanvasContext {
-  #canvasGetter: CanvasGetter;
-  #renderCallbacks: CanvasRenderCallback[] = [];
+  #canvas: HTMLCanvasElement;
+  #renderCallbacks: CanvasRenderCallback[];
   #timePassed = 0;
   #frameId = 0;
-  constructor(canvasGetter: CanvasGetter) {
-    this.#canvasGetter = canvasGetter;
+  #width = 100;
+  #height = 100;
+  constructor(canvas: HTMLCanvasElement) {
+    this.#canvas = canvas;
   }
 
   get canvas() {
-    return this.#canvasGetter();
+    return this.#canvas;
   }
   get context2d() {
-    return this.canvas.getContext("2d");
+    return this.#canvas.getContext("2d");
   }
   get delta() {
     return this.#timePassed;
   }
 
   get width() {
-    return this.canvas.width;
+    return this.#width;
   }
   set width(w) {
-    this.canvas.width = w;
+    this.#width = w;
+    this.resize();
   }
   get height() {
-    return this.canvas.height;
+    return this.#height;
   }
   set height(h) {
-    this.canvas.height = h;
+    this.#height = h;
+    this.resize();
   }
 
   subscribe(callback: CanvasRenderCallback) {
@@ -43,12 +46,17 @@ class CanvasContext {
     );
   }
 
+  resize() {
+    this.#canvas.width = this.#width;
+    this.#canvas.height = this.#height;
+  }
+
   run() {
-    const render: FrameRequestCallback = async (t) => {
+    const render: FrameRequestCallback = (t) => {
       this.#timePassed = t;
       let ctx = this.context2d;
-      ctx.clearRect(0, 0, this.width, this.height);
-      this.#renderCallbacks.forEach(async (renderCallback) => {
+      ctx.clearRect(0, 0, this.#width, this.#height);
+      this.#renderCallbacks.forEach((renderCallback) => {
         ctx.save();
         renderCallback(this);
         ctx.restore();
@@ -63,28 +71,25 @@ class CanvasContext {
   }
 }
 
-export const setCanvasContext = (canvasGetter: CanvasGetter) => {
-  let context = setContext("canvas", new CanvasContext(canvasGetter));
+export const setCanvasContext = (canvas: HTMLCanvasElement) => {
+  const context = new CanvasContext(canvas);
+
   onMount(() => {
     context.run();
   });
   onDestroy(() => {
     context.quit();
   });
-  return context;
+  return setContext("canvas", context);
 };
 export const getCanvasContext: () => CanvasContext = () => {
   return getContext("canvas");
 };
-export const onCanvasRender = (
-  renderFn: (canvasContext: CanvasContext) => any
-) => {
-  const canvasContext = getCanvasContext();
-  onMount(() => {
-    canvasContext.subscribe(renderFn);
-  });
+export const onCanvasRender = (renderFn: (props: CanvasContext) => any) => {
+  const props = getCanvasContext();
+  props.subscribe(renderFn);
 
   onDestroy(() => {
-    canvasContext.unsubscribe(renderFn);
+    props.unsubscribe(renderFn);
   });
 };

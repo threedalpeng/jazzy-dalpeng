@@ -13,8 +13,7 @@
   export let strokeStyle: string | CanvasGradient | CanvasPattern = "#000";
   export let lineWidth: number = 1;
 
-  onCanvasRender(({ getContext2D }) => {
-    const ctx = getContext2D();
+  onCanvasRender(({ context2d: ctx }) => {
     ctx.fillStyle = fillStyle;
     ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = lineWidth;

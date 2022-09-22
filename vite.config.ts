@@ -36,13 +36,24 @@ export default defineConfig({
   ],
   optimizeDeps: { include: ["svelte"], exclude: ["svelte-routing"] },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-      "@lib": path.resolve(__dirname, "src/lib"),
-      "@assets": path.resolve(__dirname, "src/assets"),
-      "@components": path.resolve(__dirname, "src/components"),
-      "@page": path.resolve(__dirname, "src/page"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "src") },
+      { find: "@lib", replacement: path.resolve(__dirname, "src/lib") },
+      { find: "@assets", replacement: path.resolve(__dirname, "src/assets") },
+      {
+        find: "@components",
+        replacement: path.resolve(__dirname, "src/components"),
+      },
+      {
+        find: /^@canvas$/,
+        replacement: path.resolve(__dirname, "src/components/canvas/index.ts"),
+      },
+      {
+        find: "@canvas",
+        replacement: path.resolve(__dirname, "src/components/canvas"),
+      },
+      { find: "@page", replacement: path.resolve(__dirname, "src/page") },
+    ],
   },
   server: {
     host: "0.0.0.0",

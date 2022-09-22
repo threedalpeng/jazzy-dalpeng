@@ -6,8 +6,7 @@
   export let lineCap: CanvasLineCap = "butt";
   export let lineWidth: number = 1;
 
-  onCanvasRender(({ getContext2D }) => {
-    const ctx = getContext2D();
+  onCanvasRender(({ context2d: ctx }) => {
     ctx.strokeStyle = strokeStyle;
     ctx.lineCap = lineCap;
     ctx.lineWidth = lineWidth;

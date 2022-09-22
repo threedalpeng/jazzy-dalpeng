@@ -20,6 +20,8 @@
       "@/*": ["src/*"],
       "@lib/*": ["src/lib/*"],
       "@components/*": ["src/components/*"],
+      "@canvas": ["src/components/canvas/index.ts"],
+      "@canvas/*": ["src/components/canvas/*"],
       "@assets/*": ["src/assets/*"],
       "@page/*": ["src/page/*"]
     }
