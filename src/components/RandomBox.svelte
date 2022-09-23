@@ -3,8 +3,8 @@
   import { Icon } from "@steeze-ui/svelte-icon";
 
   import { onDestroy } from "svelte";
-  import BeatPresenter from "./Practice/BeatPresenter.svelte";
-  import { debounce } from "./utils/basic";
+  import BeatPresenter from "./practice/BeatPresenter.svelte";
+  import { debounce } from "../utils/basic";
 
   export let bpm = 120;
   export let beat = 4;
