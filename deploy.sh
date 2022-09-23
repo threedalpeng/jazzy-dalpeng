@@ -13,7 +13,7 @@ cd dist
 # echo 'www.example.com' > CNAME
 
 git init
-git add -A
+git add --all -- :!soundfonts/*
 git commit -m 'deploy'
 
 git push -f git@github.com:threedalpeng/jazz.git main:gh-pages
