@@ -1,22 +1,33 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight, ChevronUp } from "@steeze-ui/heroicons";
   import { Icon } from "@steeze-ui/svelte-icon";
-  import { Link, Route, Router } from "svelte-routing";
-  import PitchNameOnFingerBoardPage from "./01-pitch-name-on-finger-board/PitchNameOnFingerBoardPage.svelte";
-  import MelodyTonePage from "./03-melody-tone/MelodyTonePage.svelte";
+  import { Link, navigate, Route, Router } from "svelte-routing";
+  import RootWithPitchNamePage from "./RootWithPitchName/RootWithPitchNamePage.svelte";
+  import BasicChordsPage from "./BasicChords/BasicChordsPage.svelte";
+  import PitchNameOnFingerBoardPage from "./PitchNameOnFingerBoard/PitchNameOnFingerBoardPage.svelte";
 
   const routes = [
     {
-      name: "01. Pitch Name on Finger Board",
-      to: "01-pitch-name-on-finger-board",
+      name: "Root with Pitch Name",
+      component: RootWithPitchNamePage,
+    },
+    {
+      name: "Pitch Name on Finger Board",
       component: PitchNameOnFingerBoardPage,
     },
     {
-      name: "03. Melody Tone",
-      to: "03-melody-tone",
-      component: MelodyTonePage,
+      name: "Basic Chords",
+      component: BasicChordsPage,
     },
-  ];
+  ].map((route, idx) => {
+    const name = `${(idx + 1).toString().padStart(2, "0")}. ${route.name}`;
+    const to = name.toLowerCase().replaceAll(".", "").replaceAll(" ", "-");
+    return {
+      ...route,
+      name,
+      to,
+    };
+  });
   let currentPageIndex = 0;
 </script>
 

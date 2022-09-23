@@ -1,8 +1,28 @@
+<script lang="ts" context="module">
+  export interface FingerPosition {
+    line: number;
+    fret: number | "mute" | "open";
+  }
+</script>
+
 <script lang="ts">
   import Crop from "@/components/canvas/Crop.svelte";
   import { Canvas, Circle, Text } from "@canvas";
-  import { getXFromFretNumber, setFingerBoardContext } from "./context";
+  import {
+    getXFromFretNumber,
+    getYFromStringNumber,
+    setFingerBoardContext,
+  } from "./context";
   import FingerBoardBackground from "./elements/FingerBoardBackground.svelte";
+
+  const {
+    FRET_START,
+    FRET_GAP,
+    STRING_START,
+    STRING_GAP,
+    FINGER_RADIUS,
+    FRET_MAX,
+  } = setFingerBoardContext();
 
   export let fretRange: {
     start: number;
@@ -13,21 +33,19 @@
     end: 12,
     visibility: "start",
   };
-  export let fingers: { line: number; fret: number }[] = [];
-  export let inlayVisible: boolean = true;
-
-  const {
-    FRET_START,
-    FRET_GAP,
-    STRING_START,
-    STRING_GAP,
-    FINGER_RADIUS,
-    FRET_MAX,
-  } = setFingerBoardContext();
   const fretNumberPadding = 0.3;
-
   $: fretRangeGap = fretRange.end - fretRange.start;
   $: fretRangeWidth = FRET_GAP * (fretRangeGap + fretNumberPadding * 2);
+
+  export let fingers: FingerPosition[] = [];
+  $: fingersOnFret = fingers.filter(
+    (finger) => typeof finger.fret === "number" && finger.fret > 0
+  ) as { fret: number; line: number }[];
+  $: noneFingers = fingers.filter(
+    (finger) => !(typeof finger.fret === "number" && finger.fret > 0)
+  ) as { fret: 0 | "open" | "mute"; line: number }[];
+
+  export let inlayVisible: boolean = true;
 </script>
 
 <Canvas
@@ -44,14 +62,25 @@
     destArea={{ x: FRET_START }}
   >
     <FingerBoardBackground {inlayVisible} />
-    {#each fingers as finger}
+    {#each fingersOnFret as finger}
       <Circle
-        x={FRET_START + (finger.fret - 0.5) * FRET_GAP}
-        y={STRING_START + (6 - finger.line) * STRING_GAP}
+        x={getXFromFretNumber(finger.fret - 0.5)}
+        y={getYFromStringNumber(finger.line)}
         radius={FINGER_RADIUS}
       />
     {/each}
   </Crop>
+  {#each noneFingers as noneFinger}
+    <Text
+      fontSize="20px"
+      fontFamily="FinaleJazz"
+      textAlign="left"
+      textBaseline="middle"
+      text={noneFinger.fret === "mute" ? "X" : "O"}
+      x={getXFromFretNumber(-fretNumberPadding)}
+      y={getYFromStringNumber(noneFinger.line)}
+    />
+  {/each}
   {#if fretRange.visibility === "all" || fretRange.visibility === "start"}
     <Text
       fontSize="20px"
