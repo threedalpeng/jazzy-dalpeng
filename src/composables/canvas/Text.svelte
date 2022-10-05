@@ -24,7 +24,7 @@
     | "in"
     | "pc"
     | "pt";
-  type Length = `${number}${LengthUnit}`;
+  type Length = `${number}${LengthUnit}` | 0;
 
   export let text: string;
   export let fontStyle: "normal" | "italic" | "oblique" | `oblique ${Angle}` =
