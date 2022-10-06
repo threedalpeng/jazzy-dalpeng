@@ -24,16 +24,20 @@ class BoxOffice<Type extends Function> {
       cb(data);
     });
   }
+
+  close() {
+    this.#map.clear();
+  }
 }
 
-interface MetronomeOption {
-  beatCount?: number;
-  beatNote?: number;
+export interface MetronomeOption {
+  beatPerBar?: number;
+  beatUnit?: number;
   bpm?: number;
 }
-interface MetronomeState {
-  beatCount: number;
-  beatNote: number;
+export interface MetronomeState {
+  beatPerBar: number;
+  beatUnit: number;
   bpm: number;
   currentBeat: number;
   barPassed: number;
@@ -44,36 +48,36 @@ type OnBarCallback = (state: MetronomeState) => any;
 // beat per minute == beat/minute == beat/(second * 60) === beat/(ms * 60 * 1000)
 const MILLISECOND_PER_MINUTE = 60000;
 class Metronome {
-  #beatCount = 4;
-  #beatNote = 4;
-  get beatCount() {
-    return this.#beatCount;
+  #beatPerBar = 4;
+  get beatPerBar() {
+    return this.#beatPerBar;
   }
-  set beatCount(value: number) {
-    this.#beatCount = value;
+  set beatPerBar(value: number) {
+    this.#beatPerBar = value;
   }
-  get beatNote() {
-    return this.#beatNote;
+  #beatUnit = 4;
+  get beatUnit() {
+    return this.#beatUnit;
   }
-  set beatNote(value: number) {
-    this.#beatNote = value;
-    this.#timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatNote);
+  set beatUnit(value: number) {
+    this.#beatUnit = value;
+    this.#timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatUnit);
   }
 
   #bpm = 120;
-  #timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatNote);
+  #timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatUnit);
   get bpm() {
     return this.#bpm;
   }
   set bpm(value: number) {
     this.#bpm = value;
-    this.#timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatNote);
+    this.#timeout = MILLISECOND_PER_MINUTE / (this.#bpm * this.#beatUnit);
   }
 
   get state() {
     return {
-      beatCount: this.#beatCount,
-      beatNote: this.#beatNote,
+      beatPerBar: this.#beatPerBar,
+      beatUnit: this.#beatUnit,
       bpm: this.#bpm,
       currentBeat: this.#currentBeat,
       barPassed: this.#barPassed,
@@ -81,15 +85,18 @@ class Metronome {
   }
 
   static create(option: MetronomeOption = {}) {
-    const { beatCount = 4, beatNote = 4, bpm = 120 } = option;
+    const { beatPerBar = 4, beatUnit = 4, bpm = 120 } = option;
     const newMetronome = new Metronome();
-    newMetronome.beatCount = beatCount;
-    newMetronome.beatNote = beatNote;
+    newMetronome.beatPerBar = beatPerBar;
+    newMetronome.beatUnit = beatUnit;
     newMetronome.bpm = bpm;
     return newMetronome;
   }
 
   #isRunning = false;
+  get isRunning() {
+    return this.#isRunning;
+  }
   #currentBeat = 0;
   #barPassed = 0;
   #timerId: number;
@@ -103,7 +110,7 @@ class Metronome {
         }
 
         this.#currentBeat++;
-        if (this.#currentBeat > this.#beatCount) {
+        if (this.#currentBeat > this.#beatPerBar) {
           this.#barPassed++;
           this.#currentBeat = 0;
         }
@@ -120,6 +127,14 @@ class Metronome {
     }
   }
 
+  toggle() {
+    if (this.#isRunning) {
+      this.stop();
+    } else {
+      this.run();
+    }
+  }
+
   #onBeatStore = new BoxOffice<OnBeatCallback>();
   onBeat(cb: OnBeatCallback) {
     this.#onBeatStore.purchase(cb);
@@ -128,6 +143,12 @@ class Metronome {
   #onBarStore = new BoxOffice<OnBeatCallback>();
   onBar(cb: OnBarCallback) {
     this.#onBarStore.purchase(cb);
+  }
+
+  destroy() {
+    this.stop();
+    this.#onBeatStore.close();
+    this.#onBarStore.close();
   }
 }
 

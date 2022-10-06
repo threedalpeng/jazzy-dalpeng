@@ -1,13 +1,31 @@
 <script lang="ts">
+  import { getMetronomeContext } from "@components/device/metronome/context";
   import { Play, Stop } from "@steeze-ui/heroicons";
   import { Icon } from "@steeze-ui/svelte-icon";
 
-  import { onDestroy } from "svelte";
-  import BeatPresenter from "./practice/BeatPresenter.svelte";
-  import { debounce } from "../utils/basic";
+  import { onDestroy, onMount } from "svelte";
+  import BeatPresenter from "@components/device/metronome/BeatPresenter.svelte";
 
-  export let bpm = 120;
-  export let beat = 4;
+  const metronome = getMetronomeContext();
+
+  let bpm;
+  let beatUnit;
+  let beatPerBar;
+  let isRunning;
+  onMount(() => {
+    bpm = metronome.bpm;
+    beatUnit = metronome.beatUnit;
+    beatPerBar = metronome.beatPerBar;
+    isRunning = metronome.isRunning;
+    metronome.onBar((state) => {
+      bpm = state.bpm;
+      beatUnit = state.beatUnit;
+      beatPerBar = state.beatPerBar;
+      isRunning = metronome.isRunning;
+      openBox();
+    });
+  });
+
   export let shuffleMode: "each-turn" | "all-done" = "all-done";
   export let components: {
     component: any;
@@ -22,44 +40,14 @@
     return Math.floor(Math.random() * (max - min)) + min;
   }
 
-  let timerId;
-  let timerRunning = false;
   function toggleAutoShuffle() {
-    if (timerRunning) {
-      stopAutoShuffle();
-    } else {
-      startAutoShuffle();
-    }
+    metronome.toggle();
   }
-
-  let beatCount = 0;
-  let debouncedSpeed = 60000 / bpm;
-  $: debounce(() => {
-    if (beat && bpm && beat > 0 && bpm >= 40) {
-      debouncedSpeed = 60000 / bpm;
-      restartAutoShuffle();
-    }
-  }, 200);
-  async function startAutoShuffle() {
-    timerRunning = true;
-    timerId = window.setInterval(() => {
-      if (beatCount >= beat) {
-        beatCount = 0;
-        openBox();
-      }
-      beatCount++;
-    }, debouncedSpeed);
+  function startAutoShuffle() {
+    metronome.run();
   }
   function stopAutoShuffle() {
-    timerRunning = false;
-    beatCount = 0;
-    window.clearInterval(timerId);
-  }
-  function restartAutoShuffle() {
-    if (timerRunning) {
-      stopAutoShuffle();
-      startAutoShuffle();
-    }
+    metronome.stop();
   }
 
   function openBox() {
@@ -97,17 +85,13 @@
       (component) => !Object.is(component, selectedComponent)
     );
   }
-
-  onDestroy(() => {
-    stopAutoShuffle();
-  });
 </script>
 
 <div class="relative h-full">
   <div
     class="h-60px z-1 absolute right-0 flex w-screen flex-row items-center  justify-between"
   >
-    <div class="ml-8 flex flex-row gap-4">
+    <!-- <div class="ml-8 flex flex-row gap-4">
       <div class="flex h-full flex-col items-start justify-between">
         <label for="shuffle-mode" class="text-sm">Shuffle Mode</label>
         <select
@@ -143,12 +127,12 @@
           bind:value={beat}
         />
       </div>
-    </div>
+    </div> -->
     <button
       class="bg-indigo-9 aspect-1 mr-8 flex h-3/4 items-center justify-center rounded-full p-0 focus:outline-none"
       on:click={toggleAutoShuffle}
     >
-      {#if timerRunning}
+      {#if metronome.isRunning}
         <Icon
           class="color-indigo-1 h-20px w-20px m-0 p-0"
           src={Stop}
@@ -170,6 +154,6 @@
         {...selectedComponent.props}
       />
     </div>
-    <BeatPresenter {beat} {beatCount} />
+    <BeatPresenter />
   </div>
 </div>

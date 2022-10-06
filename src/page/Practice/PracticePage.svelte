@@ -5,6 +5,7 @@
   import RootWithPitchNamePage from "./RootWithPitchName/RootWithPitchNamePage.svelte";
   import BasicChordsPage from "./BasicChords/BasicChordsPage.svelte";
   import PitchNameOnFingerBoardPage from "./PitchNameOnFingerBoard/PitchNameOnFingerBoardPage.svelte";
+  import MetronomeProvider from "@/components/device/metronome/MetronomeProvider.svelte";
 
   const routes = [
     {

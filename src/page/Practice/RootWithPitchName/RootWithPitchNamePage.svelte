@@ -1,5 +1,6 @@
 <script lang="ts">
-  import RandomBox from "@components/RandomBox.svelte";
+  import MetronomeProvider from "@/components/device/metronome/MetronomeProvider.svelte";
+  import RandomBox from "@/components/practice/RandomBox/RandomBox.svelte";
   import Board from "./Board.svelte";
 
   const pitchData = [
@@ -73,5 +74,5 @@
 </script>
 
 <div class="h-full w-screen">
-  <RandomBox beat={6} {components} />
+  <MetronomeProvider><RandomBox {components} /></MetronomeProvider>
 </div>

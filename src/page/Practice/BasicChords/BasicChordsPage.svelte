@@ -1,8 +1,7 @@
 <script lang="ts">
-  import Line from "@/components/canvas/Line.svelte";
-  import type { FingerPosition } from "@/components/guitar/FingerBoard/FingerBoard.svelte";
   import type { ChordName } from "@/utils/chords";
-  import RandomBox from "@components/RandomBox.svelte";
+  import MetronomeProvider from "@components/device/metronome/MetronomeProvider.svelte";
+  import RandomBox from "@components/practice/RandomBox/RandomBox.svelte";
   import Board from "./Board.svelte";
 
   const chordsForm: {
@@ -123,5 +122,7 @@
 </script>
 
 <div class="h-full w-screen">
-  <RandomBox shuffleMode="all-done" {components} />
+  <MetronomeProvider
+    ><RandomBox shuffleMode="all-done" {components} /></MetronomeProvider
+  >
 </div>
