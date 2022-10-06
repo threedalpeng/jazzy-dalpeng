@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Rect } from "@/types/geometry";
-  import { getCanvasContext, setSubroutineCanvasContext } from "./context";
+  import { getCanvasContext, setSubroutineCanvasContext } from "../context";
 
   export let width: number;
   export let height: number;

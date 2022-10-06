@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onCanvasRender } from "./context";
+  import { onCanvasRender } from "../context";
 
   type AngleUnit = "deg" | "grad" | "rad" | "trun";
   type Angle = `${number}${AngleUnit}`;

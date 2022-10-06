@@ -6,8 +6,7 @@
 </script>
 
 <script lang="ts">
-  import Crop from "@/components/canvas/Crop.svelte";
-  import { Canvas, Circle, Text } from "@canvas";
+  import { Canvas, Circle, Text, Crop } from "@canvas";
   import {
     getXFromFretNumber,
     getYFromStringNumber,

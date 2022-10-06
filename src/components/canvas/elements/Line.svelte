@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onCanvasRender } from "./context";
+  import { onCanvasRender } from "../context";
 
   export let points: { x: number; y: number }[];
   export let strokeStyle: string | CanvasGradient | CanvasPattern = "#000";

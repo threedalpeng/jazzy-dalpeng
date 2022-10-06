@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onCanvasRender } from "./context";
+  import { onCanvasRender } from "../context";
 
   export let x: number;
   export let y: number;

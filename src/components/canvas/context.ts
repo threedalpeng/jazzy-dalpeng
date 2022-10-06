@@ -79,6 +79,8 @@ class CanvasContext {
 
   quit() {
     window.cancelAnimationFrame(this.#frameId);
+    this.#renderCallbacks = [];
+    this.#afterRenderCallbacks = [];
   }
 }
 
