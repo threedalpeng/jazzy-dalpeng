@@ -3,7 +3,7 @@
     getChordNotations,
     type ChordName,
     type ChordRoot,
-  } from "@/utils/chords";
+  } from "@/utils/music/chords";
 
   export let root: ChordRoot;
   export let name: ChordName;

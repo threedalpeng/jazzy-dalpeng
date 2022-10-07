@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ChordName } from "@/utils/chords";
+  import type { ChordName } from "@/utils/music/chords";
   import MetronomeProvider from "@components/device/metronome/MetronomeProvider.svelte";
   import RandomBox from "@components/practice/RandomBox/RandomBox.svelte";
   import Board from "./Board.svelte";

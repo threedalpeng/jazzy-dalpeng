@@ -6,7 +6,7 @@
 </script>
 
 <script lang="ts">
-  import { Canvas, Circle, Text, Crop } from "@canvas";
+  import { Canvas, Circle, Crop, Text } from "@canvas";
   import {
     getXFromFretNumber,
     getYFromStringNumber,
@@ -72,7 +72,7 @@
   {#each noneFingers as noneFinger}
     <Text
       fontSize="20px"
-      fontFamily="FinaleJazz"
+      fontFamily="Spoqa Han Sans Neo"
       textAlign="left"
       textBaseline="middle"
       text={noneFinger.fret === "mute" ? "X" : "O"}
@@ -85,10 +85,10 @@
       fontSize="20px"
       fontFamily="FinaleJazz"
       textAlign="center"
-      textBaseline="bottom"
+      textBaseline="top"
       text={`${fretRange.start}`}
       x={FRET_START + fretNumberPadding * FRET_GAP}
-      y={STRING_START}
+      y={STRING_START + STRING_GAP * 5 + 7}
     />
   {/if}
   {#if fretRange.visibility === "all" || fretRange.visibility === "end"}
@@ -99,7 +99,7 @@
       textBaseline="bottom"
       text={`${fretRange.end}`}
       x={FRET_START + fretRangeWidth - fretNumberPadding * FRET_GAP}
-      y={STRING_START}
+      y={STRING_START + STRING_GAP * 5 + 7}
     />
   {/if}
 </Canvas>

@@ -1,3 +1,5 @@
+import type { PitchName } from "./pitch";
+
 export type ChordName =
   | "dominantSeventh"
   | "majorSeventh"
@@ -6,24 +8,7 @@ export type ChordName =
   | "diminishedSeventh"
   | "none";
 
-export type ChordRoot =
-  | "C"
-  | "C#"
-  | "Db"
-  | "D"
-  | "D#"
-  | "Eb"
-  | "E"
-  | "F"
-  | "F#"
-  | "Gb"
-  | "G"
-  | "G#"
-  | "Ab"
-  | "A"
-  | "A#"
-  | "Bb"
-  | "B";
+export type ChordRoot = PitchName;
 
 const chordRootNotationMap: { [key in ChordRoot]: number[] } = {
   C: [38],
