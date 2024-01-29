@@ -14,39 +14,40 @@ export default defineConfig({
 			injectReset: '@unocss/reset/tailwind.css'
 		}),
 		sveltekit(),
-		SvelteKitPWA({
-			strategies: 'injectManifest',
-			srcDir: 'src',
-			filename: 'service-worker.ts',
-			manifest: {
-				name: 'JazzyDalpeng',
-				short_name: 'JazzyDalpeng',
-				description: 'Jazz Practice Application',
-				theme_color: '#ffffff',
-				icons: [
-					{
-						src: 'pwa-192x192.png',
-						sizes: '192x192',
-						type: 'image/png'
-					},
-					{
-						src: 'pwa-512x512.png',
-						sizes: '512x512',
-						type: 'image/png'
-					}
-				]
-			},
-			injectManifest: {
-				globPatterns: ['client/**/*.{js,css,ico,png,svg,webp,woff2}']
-			},
-			workbox: {
-				globPatterns: ['client/**/*.{js,css,ico,png,svg,webp,woff2}']
-			},
-			devOptions: {
-				enabled: true,
-				type: 'module'
-			}
-		})
+		// SvelteKitPWA({
+		// 	strategies: 'injectManifest',
+		// 	srcDir: 'src',
+		// 	// scope: '/jazz/',
+		// 	filename: 'service-worker.ts',
+		// 	manifest: {
+		// 		name: 'JazzyDalpeng',
+		// 		short_name: 'JazzyDalpeng',
+		// 		// scope: '/jazz/',
+		// 		// start_url: '/jazz/',
+		// 		description: 'Jazz Practice Application',
+		// 		theme_color: '#ffffff',
+		// 		icons: [
+		// 			{
+		// 				src: 'pwa-192x192.png',
+		// 				sizes: '192x192',
+		// 				type: 'image/png'
+		// 			},
+		// 			{
+		// 				src: 'pwa-512x512.png',
+		// 				sizes: '512x512',
+		// 				type: 'image/png'
+		// 			}
+		// 		]
+		// 	},
+		// 	workbox: {
+		// 		navigateFallbackAllowlist: [/^\/$/], // This regex will only match the "/" route
+		// 		navigateFallbackDenylist: [/^(?!\/$).*/] // This regex will match all routes except "/"
+		// 	},
+		// 	devOptions: {
+		// 		enabled: true,
+		// 		type: 'module'
+		// 	}
+		// })
 	],
 	server: {
 		host: true,

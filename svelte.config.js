@@ -1,14 +1,16 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	preprocess: vitePreprocess(),
 	kit: {
-		adapter: adapter(),
-		serviceWorker: {
-			register: false
-		},
+		adapter: adapter({
+			fallback: '404.html'
+		}),
+		// serviceWorker: {
+		// 	register: false
+		// },
 		alias: {
 			'$/*': 'src/*',
 			'$lib/*': 'src/lib/*',
@@ -19,9 +21,9 @@ const config = {
 		paths: {
 			base: '/jazz'
 		},
-		files: {
-			serviceWorker: 'src/service-worker.ts'
-		}
+		// files: {
+		// 	serviceWorker: 'src/service-worker.ts'
+		// }
 	}
 };
 
