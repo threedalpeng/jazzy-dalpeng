@@ -10,7 +10,7 @@
 	import { Canvas, Circle, Crop, Text } from '$lib/canvas';
 	import { createEventDispatcher } from 'svelte';
 	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
-	import FingerBoardBackground from './elements/FingerBoardBackground.svelte';
+	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 
 	const dispatch = createEventDispatcher<{ click: FingerPosition }>();
 
