@@ -19,7 +19,7 @@ const config = {
 			'$assets/*': 'src/assets/*'
 		},
 		paths: {
-			base: '/jazz'
+			base: '/jazzy-dalpeng'
 		},
 		// files: {
 		// 	serviceWorker: 'src/service-worker.ts'

@@ -29,7 +29,7 @@ jobs:
       # 프로젝트 빌드를 진행한다
       - name: build
         env:
-          BASE_PATH: '/jazz'
+          BASE_PATH: ${{ github.event.repository.name }}
         run: |
           npm run build
 
