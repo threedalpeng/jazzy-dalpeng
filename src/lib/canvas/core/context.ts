@@ -85,12 +85,11 @@ export class CanvasContext {
 
 	handleMouseEvent(ev: MouseEvent) {
 		const bounding = this.canvas.getBoundingClientRect();
-		const [r, g, b] = this.hitContext2d.getImageData(
-			ev.clientX - bounding.left,
-			ev.clientY - bounding.top,
-			1,
-			1
-		).data;
+		const [x, y] = [
+			((ev.clientX - bounding.left) * this.canvas.width) / bounding.width,
+			((ev.clientY - bounding.top) * this.canvas.height) / bounding.height
+		];
+		const [r, g, b] = this.hitContext2d.getImageData(x, y, 1, 1).data;
 		const code = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 		const onHit = this.#onHitMap.get(code);
 		if (onHit !== undefined) {
