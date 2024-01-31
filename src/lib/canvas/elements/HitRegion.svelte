@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { onCanvasHit } from '../core';
-	import type { CanvasPointerEvent } from '../core/hit-test';
+	import { onCanvasHit } from '../core/hooks';
+	import type { CanvasPointerEvent } from '../core/events';
 
 	export let active: boolean = true;
 	export let render: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => any;

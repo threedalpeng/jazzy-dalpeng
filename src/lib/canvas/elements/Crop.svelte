@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Rect } from '$/types/geometry';
-	import { getCanvasContext } from '../core';
+	import { getCanvasContext } from '../core/hooks';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
 
 	export let width: number;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { setCanvasContext } from './core';
+	import { setCanvasContext } from './core/hooks';
 
 	let canvas: HTMLCanvasElement;
 	export let width = 100;

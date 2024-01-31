@@ -5,7 +5,7 @@ import {
 	type CanvasRenderCallback,
 	type OffscreenCanvasRenderCallback
 } from './context';
-import { CanvasEventHandler, type OnHitCallback } from './hit-test';
+import { CanvasEventHandler, type OnHitCallback } from './events';
 
 export const setCanvasContext = (canvasGetter: CanvasGetter) => {
 	let context = setContext('canvas', new CanvasContext(canvasGetter));

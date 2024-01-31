@@ -5,5 +5,5 @@ import Clip from './elements/Clip.svelte';
 import Ellipse from './elements/Ellipse.svelte';
 import Text from './elements/Text.svelte';
 import Crop from './elements/Crop.svelte';
-import { onCanvasRender } from './core';
+import { onCanvasRender } from './core/hooks';
 export { Line, Circle, Canvas, Clip, Ellipse, Text, onCanvasRender, Crop };

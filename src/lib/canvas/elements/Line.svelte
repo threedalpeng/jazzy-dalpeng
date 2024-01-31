@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onCanvasRender } from '../core';
+	import { onCanvasRender } from '../core/hooks';
 	import HitRegion from './HitRegion.svelte';
 
 	export let active: boolean = true;

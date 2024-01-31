@@ -1,4 +1,4 @@
-import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './hit-test';
+import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './events';
 
 export type CanvasGetter = () => HTMLCanvasElement;
 export type CanvasRenderCallback = (canvasContext: CanvasContext) => any;

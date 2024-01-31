@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onCanvasHit, onCanvasRender } from '../core';
+	import { onCanvasHit, onCanvasRender } from '../core/hooks';
 
 	export let x: number;
 	export let y: number;
