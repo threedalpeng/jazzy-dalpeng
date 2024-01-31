@@ -15,7 +15,6 @@
 	const offscreenCanvas = document.createElement('canvas');
 	offscreenCanvas.width = width;
 	offscreenCanvas.height = height;
-	console.log("ready for sub")
 	setSubroutineCanvasContext(upperCanvasContext, () => offscreenCanvas, {
 		afterRender: ({ canvas, hitContext2d }) => {
 			const hitCanvas = hitContext2d.canvas;

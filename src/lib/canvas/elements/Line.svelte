@@ -26,4 +26,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:hit></HitRegion>
+<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>

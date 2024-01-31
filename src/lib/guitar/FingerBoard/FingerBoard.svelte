@@ -6,13 +6,13 @@
 </script>
 
 <script lang="ts">
-	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
 	import { Canvas, Circle, Crop, Text } from '$lib/canvas';
 	import { createEventDispatcher } from 'svelte';
-	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
+	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
+	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
 
-	const dispatch = createEventDispatcher<{ click: FingerPosition }>();
+	const dispatch = createEventDispatcher<{ click: FingerPosition; hover: FingerPosition }>();
 
 	const { FRET_START, FRET_GAP, STRING_START, STRING_GAP, FINGER_RADIUS, FRET_MAX } =
 		setFingerBoardContext();
@@ -66,18 +66,13 @@
 			{#each Array(6) as _, j}
 				{@const lineNum = j + 1}
 				{@const centerY = getYFromStringNumber(lineNum)}
-				<HitRegion
-					render={(ctx) => {
-						const width = FRET_GAP;
-						const height = STRING_GAP;
-						ctx.fillRect(leftX, centerY - height / 2, width, height);
+				<FingerBoardPoisitionIndicator
+					{leftX}
+					{centerY}
+					on:click={() => {
+						dispatch('click', { fret: fretNum, line: lineNum });
 					}}
-					on:hit={({ detail: ev }) => {
-						if (ev.type === 'click') {
-							dispatch('click', { fret: fretNum, line: lineNum });
-						}
-					}}
-				></HitRegion>
+				></FingerBoardPoisitionIndicator>
 			{/each}
 		{/each}
 	</Crop>

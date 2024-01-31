@@ -19,5 +19,10 @@
 	{strokeStyle}
 	{lineWidth}
 	{active}
-	on:hit
+	on:up
+	on:down
+	on:move
+	on:click
+	on:over
+	on:out
 />

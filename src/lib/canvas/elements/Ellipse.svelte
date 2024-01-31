@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { onCanvasRender } from '..';
-	import { onCanvasHit } from '../core';
 	import HitRegion from './HitRegion.svelte';
 
 	export let active: boolean = true;
@@ -32,4 +30,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:hit></HitRegion>
+<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>

@@ -1,11 +1,11 @@
-import { setContext, onMount, onDestroy, getContext } from 'svelte';
+import { getContext, onDestroy, onMount, setContext } from 'svelte';
 import {
-	type CanvasGetter,
 	CanvasContext,
+	type CanvasGetter,
 	type CanvasRenderCallback,
 	type OffscreenCanvasRenderCallback
 } from './context';
-import { getNextHitCode } from './hit-test';
+import { CanvasEventHandler, type OnHitCallback } from './hit-test';
 
 export const setCanvasContext = (canvasGetter: CanvasGetter) => {
 	let context = setContext('canvas', new CanvasContext(canvasGetter));
@@ -47,10 +47,10 @@ export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
 export const onCanvasHit = (
 	active: boolean,
 	hitboxRenderFn: OffscreenCanvasRenderCallback,
-	onHit: (ev: MouseEvent) => any
+	onHit: OnHitCallback
 ) => {
 	const canvasContext = getCanvasContext();
-	const nextHitCode = getNextHitCode();
+	const nextHitCode = CanvasEventHandler.nextHitCode;
 	function render(ctx: OffscreenCanvasRenderingContext2D) {
 		ctx.fillStyle = nextHitCode;
 		ctx.strokeStyle = nextHitCode;
