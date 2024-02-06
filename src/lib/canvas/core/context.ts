@@ -56,7 +56,6 @@ export class CanvasContext {
 
 	#afterRenderCallbacks: Set<CanvasRenderCallback> = new Set();
 	onAfterRender(callback: CanvasRenderCallback) {
-		console.log(callback);
 		this.#afterRenderCallbacks.add(callback);
 	}
 	removeAfterRender(callback: CanvasRenderCallback) {
@@ -89,6 +88,9 @@ export class CanvasContext {
 		// this.testCanvas.height = canvas.height;
 		// document.body.appendChild(this.testCanvas);
 
+		canvas.addEventListener('contextmenu', (ev) => {
+			ev.preventDefault();
+		});
 		pointerEventTypes.forEach((evtype) => canvas.addEventListener(evtype, this.#eventHandler));
 		this.#setupCallbacks.forEach(async (setupCallback) => {
 			setupCallback(this);
@@ -110,7 +112,6 @@ export class CanvasContext {
 		await this.#eventHandler.render();
 		this.#afterRenderCallbacks.forEach(async (afterRenderCallback) => {
 			ctx.save();
-			console.log(afterRenderCallback);
 			afterRenderCallback(this);
 			ctx.restore();
 		});
