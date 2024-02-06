@@ -23,6 +23,7 @@ export interface CanvasPointerEvent {
 }
 
 export type OnHitCallback = (ev: CanvasPointerEvent) => any;
+type PointerState = 'down' | 'up' | 'pressed';
 
 export class CanvasEventHandler {
 	static #nextHitCode = 0;
@@ -66,10 +67,12 @@ export class CanvasEventHandler {
 	#pointerInfoMap = new Map<
 		number,
 		{
-			state: Map<number, 'down' | 'up' | 'pressed'>;
-			mouseDelta: { x: number; y: number };
-			mousePosition: { x: number; y: number };
-			mouseMoved: boolean;
+			id: number;
+			type: string;
+			state: Map<number, PointerState>;
+			delta: { x: number; y: number };
+			position: { x: number; y: number };
+			moved: boolean;
 			hitCode: string;
 			lastDownHitCode: string;
 		}
@@ -78,9 +81,9 @@ export class CanvasEventHandler {
 		number,
 		{
 			buttons: Set<number>;
-			mouseDelta: { x: number; y: number };
-			mousePosition: { x: number; y: number };
-			mouseMoved: boolean;
+			delta: { x: number; y: number };
+			position: { x: number; y: number };
+			moved: boolean;
 			hitCode: string;
 		}
 	>();
@@ -103,10 +106,12 @@ export class CanvasEventHandler {
 		let currentPointerInfo = this.#pointerInfoMap.get(ev.pointerId);
 		if (currentPointerInfo === undefined) {
 			currentPointerInfo = {
+				id: ev.pointerId,
+				type: ev.pointerType,
 				state: new Map<number, 'down' | 'up' | 'pressed'>(),
-				mouseDelta: { x: 0, y: 0 },
-				mousePosition: { x: 0, y: 0 },
-				mouseMoved: false,
+				delta: { x: 0, y: 0 },
+				position: { x: 0, y: 0 },
+				moved: false,
 				hitCode,
 				lastDownHitCode: ''
 			};
@@ -116,9 +121,9 @@ export class CanvasEventHandler {
 		if (unpolledPointerInfo === undefined) {
 			unpolledPointerInfo = {
 				buttons: new Set<number>(),
-				mouseDelta: { x: 0, y: 0 },
-				mousePosition: { x: 0, y: 0 },
-				mouseMoved: false,
+				delta: { x: 0, y: 0 },
+				position: { x: 0, y: 0 },
+				moved: false,
 				hitCode
 			};
 			this.#unpolledPointerInfoMap.set(ev.pointerId, unpolledPointerInfo);
@@ -133,17 +138,17 @@ export class CanvasEventHandler {
 				unpolledPointerInfo.buttons.delete(ev.button);
 				break;
 			case 'pointermove':
-				unpolledPointerInfo.mousePosition = { x, y };
-				unpolledPointerInfo.mouseMoved = true;
-				unpolledPointerInfo.mouseDelta = {
-					x: x - currentPointerInfo.mousePosition.x,
-					y: y - currentPointerInfo.mousePosition.y
+				unpolledPointerInfo.position = { x, y };
+				unpolledPointerInfo.moved = true;
+				unpolledPointerInfo.delta = {
+					x: x - currentPointerInfo.position.x,
+					y: y - currentPointerInfo.position.y
 				};
 				break;
 			case 'pointerout':
 			case 'pointerleave':
-				unpolledPointerInfo.mouseMoved = true;
-				unpolledPointerInfo.mouseDelta = {
+				unpolledPointerInfo.moved = true;
+				unpolledPointerInfo.delta = {
 					x: 0,
 					y: 0
 				};
@@ -163,8 +168,8 @@ export class CanvasEventHandler {
 			const pointerInfo = this.#pointerInfoMap.get(pointerId)!!;
 			const onHit = this.#onHitMap.get(unpolledInfo.hitCode);
 			const prevTargetOnHit = this.#onHitMap.get(pointerInfo.hitCode);
-			const hitEventTypes: CanvasPointerEventType[] = [];
-			const prevTargetHitEventTypes: CanvasPointerEventType[] = [];
+			const hitEventTypes: [CanvasPointerEventType, number | null][] = [];
+			const prevTargetHitEventTypes: [CanvasPointerEventType, number | null][] = [];
 
 			const hitRegionChanged = unpolledInfo.hitCode != pointerInfo.hitCode;
 
@@ -173,7 +178,7 @@ export class CanvasEventHandler {
 					if (unpolledInfo.buttons.has(button)) {
 						pointerInfo.state.set(button, 'down');
 						pointerInfo.lastDownHitCode = unpolledInfo.hitCode;
-						hitEventTypes.push('down');
+						hitEventTypes.push(['down', button]);
 					} else {
 						pointerInfo.state.delete(button);
 					}
@@ -182,9 +187,9 @@ export class CanvasEventHandler {
 						pointerInfo.state.set(button, 'pressed');
 					} else {
 						pointerInfo.state.set(button, 'up');
-						hitEventTypes.push('up');
+						hitEventTypes.push(['up', button]);
 						if (unpolledInfo.hitCode === pointerInfo.lastDownHitCode) {
-							hitEventTypes.push('click');
+							hitEventTypes.push(['click', button]);
 						}
 					}
 				}
@@ -193,34 +198,43 @@ export class CanvasEventHandler {
 				if (!pointerInfo.state.has(button)) {
 					pointerInfo.state.set(button, 'down');
 					pointerInfo.lastDownHitCode = unpolledInfo.hitCode;
-					hitEventTypes.push('down');
+					hitEventTypes.push(['down', button]);
 				}
 			}
 
-			if (unpolledInfo.mouseMoved) {
-				pointerInfo.mouseDelta = structuredClone(unpolledInfo.mouseDelta);
-				unpolledInfo.mouseDelta.x = 0;
-				unpolledInfo.mouseDelta.y = 0;
-				unpolledInfo.mouseMoved = false;
+			if (unpolledInfo.moved) {
+				pointerInfo.delta = structuredClone(unpolledInfo.delta);
+				unpolledInfo.delta.x = 0;
+				unpolledInfo.delta.y = 0;
+				unpolledInfo.moved = false;
 
-				hitEventTypes.push('move');
+				hitEventTypes.push(['move', null]);
 			}
 
 			if (hitRegionChanged) {
-				hitEventTypes.push('over');
-				prevTargetHitEventTypes.push('out');
+				hitEventTypes.push(['over', null]);
+				prevTargetHitEventTypes.push(['out', null]);
 			}
 
 			pointerInfo.hitCode = unpolledInfo.hitCode;
+			pointerInfo.position = unpolledInfo.position;
 
 			// if (hitEventTypes.length !== 0) {
 			// 	console.log(hitEventTypes);
 			// }
-			hitEventTypes.forEach((type) => {
-				if (onHit) onHit({ type, detail: pointerInfo });
+			hitEventTypes.forEach(([type, button]) => {
+				if (onHit)
+					onHit({
+						type,
+						detail: { ...pointerInfo, button, state: Object.entries(pointerInfo.state) }
+					});
 			});
-			prevTargetHitEventTypes.forEach((type) => {
-				if (prevTargetOnHit) prevTargetOnHit({ type, detail: pointerInfo });
+			prevTargetHitEventTypes.forEach(([type, button]) => {
+				if (prevTargetOnHit)
+					prevTargetOnHit({
+						type,
+						detail: { ...pointerInfo, button, state: Object.entries(pointerInfo.state) }
+					});
 			});
 		}
 	}
