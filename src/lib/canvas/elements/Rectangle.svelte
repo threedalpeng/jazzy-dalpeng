@@ -2,7 +2,7 @@
 	import { onCanvasRender } from '..';
 	import HitRegion from './HitRegion.svelte';
 
-	export let active: boolean = true;
+	export let active: boolean = false;
 	export let x: number;
 	export let y: number;
 	export let width: number;

@@ -13,9 +13,5 @@
 	<ChordNotation {root} {name} />
 </div>
 {#if !isFingerboardHidden}
-	<FingerBoard
-		{fingers}
-		fretRange={{ start: 0, end: 12, visibility: 'all' }}
-		on:click
-	/>
+	<FingerBoard {fingers} fretRange={{ start: 0, end: 12, visibility: 'all' }} on:click />
 {/if}

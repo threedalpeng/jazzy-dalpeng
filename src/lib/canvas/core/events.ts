@@ -102,7 +102,7 @@ export class CanvasEventHandler {
 		const [r, g, b] = this.context2d.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
 
 		const hitCode = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-		// console.log(hitCode);
+
 		let currentPointerInfo = this.#pointerInfoMap.get(ev.pointerId);
 		if (currentPointerInfo === undefined) {
 			currentPointerInfo = {
@@ -218,10 +218,7 @@ export class CanvasEventHandler {
 
 			pointerInfo.hitCode = unpolledInfo.hitCode;
 			pointerInfo.position = unpolledInfo.position;
-
-			// if (hitEventTypes.length !== 0) {
-			// 	console.log(hitEventTypes);
-			// }
+			
 			hitEventTypes.forEach(([type, button]) => {
 				if (onHit)
 					onHit({

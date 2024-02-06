@@ -104,21 +104,24 @@
 		};
 	});
 
-	let fingers: FingerPosition[] = [];
+	let fingers: Record<number, FingerPosition> = {};
+	function updateFingerPosition(position: FingerPosition) {
+		if (fingers[position.line]?.fret === position.fret) {
+			delete fingers[position.line];
+		} else {
+			fingers[position.line] = position;
+		}
+		fingers = fingers;
+	}
 </script>
 
 <div class="h-full w-screen">
 	<Board
 		root="G"
 		name="halfDiminishedSeventh"
-		{fingers}
+		fingers={Object.values(fingers)}
 		on:click={({ detail: { fret, line } }) => {
-			const idx = fingers.findIndex((f) => f.fret === fret && f.line === line);
-			if (idx === -1) {
-				fingers = fingers.concat({ fret, line });
-			} else {
-				fingers = fingers.filter((f) => f.fret !== fret || f.line !== line);
-			}
+			updateFingerPosition({ fret, line });
 		}}
 	></Board>
 	<!-- <MetronomeProvider><RandomBox {components} /></MetronomeProvider> -->

@@ -2,7 +2,7 @@
 	import { onCanvasRender } from '../core/hooks';
 	import HitRegion from './HitRegion.svelte';
 
-	export let active: boolean = true;
+	export let active: boolean = false;
 	export let points: { x: number; y: number }[];
 	export let strokeStyle: string | CanvasGradient | CanvasPattern = '#000';
 	export let lineCap: CanvasLineCap = 'butt';

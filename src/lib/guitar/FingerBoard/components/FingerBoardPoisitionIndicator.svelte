@@ -19,8 +19,8 @@
 	active={false}
 	x={leftX + FRET_GAP / 2}
 	y={centerY}
-	fillStyle="#bbbbbb"
-	strokeStyle="#bbbbbb"
+	fillStyle="#888888"
+	strokeStyle="#888888"
 	radius={$indicatorSize}
 ></Circle>
 <HitRegion

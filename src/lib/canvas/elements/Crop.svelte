@@ -57,6 +57,7 @@
 			width={sourceArea.width ?? width}
 			height={sourceArea.height ?? height}
 			lineWidth={4}
+			active={false}
 		/>
 	{/if}
 {/if}

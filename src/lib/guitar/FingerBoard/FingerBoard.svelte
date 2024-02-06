@@ -11,11 +11,14 @@
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
 	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
+	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
 
 	const dispatch = createEventDispatcher<{ click: FingerPosition; hover: FingerPosition }>();
 
-	const { FRET_START, FRET_GAP, STRING_START, STRING_GAP, FINGER_RADIUS, FRET_MAX } =
+	const { FRET_START, FRET_WIDTH, FRET_GAP, STRING_START, STRING_GAP, FINGER_RADIUS, FRET_MAX } =
 		setFingerBoardContext();
+
+	export let readonly: boolean = false;
 
 	export let fretRange: {
 		start: number;
@@ -46,10 +49,11 @@
 		width={FRET_START * 2 + FRET_GAP * FRET_MAX}
 		height={STRING_START * 2 + STRING_GAP * 5}
 		sourceArea={{
-			x: getXFromFretNumber(fretRange.start - fretNumberPadding),
+			x: getXFromFretNumber(fretRange.start) - FRET_WIDTH - 4,
 			width: fretRangeWidth
 		}}
 		destArea={{ x: FRET_START }}
+		debug={false}
 	>
 		<FingerBoardBackground {inlayVisible} />
 		{#each fingersOnFret as finger}
@@ -60,22 +64,42 @@
 				radius={FINGER_RADIUS}
 			/>
 		{/each}
-		{#each Array(fretRange.end - fretRange.start) as _, i}
-			{@const fretNum = i + 1 + fretRange.start}
-			{@const leftX = getXFromFretNumber(fretNum - 1)}
-			{#each Array(6) as _, j}
-				{@const lineNum = j + 1}
-				{@const centerY = getYFromStringNumber(lineNum)}
-				<FingerBoardPoisitionIndicator
-					{leftX}
-					{centerY}
-					on:click={() => {
-						dispatch('click', { fret: fretNum, line: lineNum });
-					}}
-				></FingerBoardPoisitionIndicator>
+		{#if !readonly}
+			{#each Array(fretRange.end - fretRange.start) as _, i}
+				{@const fretNum = i + 1 + fretRange.start}
+				{@const leftX = getXFromFretNumber(fretNum - 1)}
+				{#each Array(6) as _, j}
+					{@const lineNum = j + 1}
+					{@const centerY = getYFromStringNumber(lineNum)}
+					<FingerBoardPoisitionIndicator
+						{leftX}
+						{centerY}
+						on:click={(ev) => {
+							if (ev.detail.button === 0) {
+								dispatch('click', { fret: fretNum, line: lineNum });
+							} else if (ev.detail.button === 2) {
+								dispatch('click', { fret: 'mute', line: lineNum });
+							}
+						}}
+					/>
+				{/each}
 			{/each}
-		{/each}
+		{/if}
 	</Crop>
+	{#each Array(6) as _, j}
+		{@const lineNum = j + 1}
+		{@const centerY = getYFromStringNumber(lineNum)}
+		<HitRegion
+			on:click={() => {
+				dispatch('click', { fret: 'open', line: lineNum });
+			}}
+			render={(ctx) => {
+				const width = FRET_GAP;
+				const height = STRING_GAP;
+				ctx.fillRect(FRET_START - FRET_GAP, centerY - height / 2, width, height);
+			}}
+		></HitRegion>
+	{/each}
 	{#each noneFingers as noneFinger}
 		<Text
 			fontSize="20px"

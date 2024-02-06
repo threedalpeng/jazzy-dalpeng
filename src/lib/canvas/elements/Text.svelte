@@ -27,7 +27,7 @@
 		| 'pt';
 	type Length = `${number}${LengthUnit}` | 0;
 
-	export let active: boolean = true;
+	export let active: boolean = false;
 	export let text: string;
 	export let fontStyle: 'normal' | 'italic' | 'oblique' | `oblique ${Angle}` = 'normal';
 	export let fontVariant: 'normal' | 'small-caps' = 'normal';
