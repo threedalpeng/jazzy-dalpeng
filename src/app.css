@@ -1,6 +1,10 @@
 @import url(./assets/fonts/FinaleJazz/FinaleJazz.css);
 @import url(./assets/fonts/SpoqaHanSans/SpoqaHanSansNeo.css);
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
 	font-family: 'Spoqa Han Sans Neo', Inter, Avenir, Helvetica, Arial, sans-serif, 'FinaleJazz';
 	font-size: 16px;

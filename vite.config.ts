@@ -1,5 +1,4 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import Unocss from '@unocss/svelte-scoped/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { defineConfig } from 'vite';
 
@@ -10,10 +9,7 @@ export default defineConfig({
 		'process.env.NODE_ENV': process.env.NODE_ENV === 'production' ? '"production"' : '"development"'
 	},
 	plugins: [
-		Unocss({
-			injectReset: '@unocss/reset/tailwind.css'
-		}),
-		sveltekit(),
+		sveltekit()
 		// SvelteKitPWA({
 		// 	strategies: 'injectManifest',
 		// 	srcDir: 'src',
