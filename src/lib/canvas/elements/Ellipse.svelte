@@ -11,8 +11,8 @@
 	export let startAngle: number = 0;
 	export let endAngle: number = 2 * Math.PI;
 	export let counterclockwise: boolean = false;
-	export let fillStyle: string | CanvasGradient | CanvasPattern = '#000';
-	export let strokeStyle: string | CanvasGradient | CanvasPattern = '#000';
+	export let fillStyle: CanvasStyle = '#000';
+	export let strokeStyle: CanvasStyle = '#000';
 	export let lineWidth: number = 1;
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {

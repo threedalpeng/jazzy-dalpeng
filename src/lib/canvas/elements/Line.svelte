@@ -4,7 +4,7 @@
 
 	export let active: boolean = false;
 	export let points: { x: number; y: number }[];
-	export let strokeStyle: string | CanvasGradient | CanvasPattern = '#000';
+	export let strokeStyle: CanvasStyle = '#000';
 	export let lineCap: CanvasLineCap = 'butt';
 	export let lineWidth: number = 1;
 

@@ -7,8 +7,8 @@
 	export let y: number;
 	export let width: number;
 	export let height: number;
-	export let fillStyle: string | CanvasGradient | CanvasPattern = '#000';
-	export let strokeStyle: string | CanvasGradient | CanvasPattern = '#000';
+	export let fillStyle: CanvasStyle = '#000';
+	export let strokeStyle: CanvasStyle = '#000';
 	export let lineWidth: number = 1;
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
