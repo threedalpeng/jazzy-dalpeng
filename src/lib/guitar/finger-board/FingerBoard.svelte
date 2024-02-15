@@ -25,7 +25,6 @@
 		end: number;
 		visibility: 'none' | 'all' | 'start' | 'end';
 	} = {
-		start: 3,
 		end: 12,
 		visibility: 'start'
 	};
@@ -33,13 +32,7 @@
 	$: fretRangeGap = fretRange.end - fretRange.start;
 	$: fretRangeWidth = FRET_GAP * (fretRangeGap + fretNumberPadding * 2);
 
-	export let fingers: FingerPosition[] = [];
 	$: fingersOnFret = fingers.filter(
-		(finger) => typeof finger.fret === 'number' && finger.fret > 0
-	) as { fret: number; line: number }[];
-	$: noneFingers = fingers.filter(
-		(finger) => !(typeof finger.fret === 'number' && finger.fret > 0)
-	) as { fret: 0 | 'open' | 'mute'; line: number }[];
 
 	export let inlayVisible: boolean = true;
 </script>
@@ -57,12 +50,7 @@
 	>
 		<FingerBoardBackground {inlayVisible} />
 		{#each fingersOnFret as finger}
-			<Circle
-				active={false}
-				x={getXFromFretNumber(finger.fret - 0.5)}
-				y={getYFromStringNumber(finger.line)}
-				radius={FINGER_RADIUS}
-			/>
+				<Circle
 		{/each}
 		{#if !readonly}
 			{#each Array(fretRange.end - fretRange.start) as _, i}
@@ -90,8 +78,7 @@
 		{@const lineNum = j + 1}
 		{@const centerY = getYFromStringNumber(lineNum)}
 		<HitRegion
-			on:click={() => {
-				dispatch('click', { fret: 'open', line: lineNum });
+					dispatch('click', { fret: 'open', line: lineNum });
 			}}
 			render={(ctx) => {
 				const width = FRET_GAP;
@@ -100,15 +87,10 @@
 			}}
 		></HitRegion>
 	{/each}
-	{#each noneFingers as noneFinger}
 		<Text
 			fontSize="20px"
 			fontFamily="Spoqa Han Sans Neo"
-			textAlign="left"
 			textBaseline="middle"
-			text={noneFinger.fret === 'mute' ? 'X' : 'O'}
-			x={getXFromFretNumber(-fretNumberPadding)}
-			y={getYFromStringNumber(noneFinger.line)}
 		/>
 	{/each}
 	{#if fretRange.visibility === 'all' || fretRange.visibility === 'start'}
