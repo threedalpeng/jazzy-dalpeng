@@ -5,13 +5,14 @@
 	export let y: number;
 	export let width: number;
 	export let height: number;
+	export let removeHitRegion: boolean = false;
 
 	onCanvasRender(({ context2d: ctx }) => {
 		ctx.clearRect(x, y, width, height);
 	});
 
 	onCanvasHit(
-		true,
+		removeHitRegion,
 		(hitCtx) => {
 			hitCtx.clearRect(x, y, width, height);
 		},

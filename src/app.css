@@ -16,3 +16,23 @@
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
 }
+
+@layer components {
+	[data-theme='dalpeng'] .select {
+		@apply hover:border-primary-light focus:border-primary rounded-none border-0 border-b-2 border-gray-300 ring-0
+		transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0;
+	}
+	[data-theme='dalpeng'] .input {
+		@apply hover:border-primary-light focus:border-primary min-h-12 rounded-none border-0 border-b-2 border-gray-300 ring-0
+		transition ease-in-out focus:text-gray-700 focus:outline-none focus:ring-0;
+	}
+	[data-theme='dalpeng'] input[type='number'] {
+		-webkit-appearance: textfield;
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+	[data-theme='dalpeng'] input[type='number']::-webkit-inner-spin-button,
+	[data-theme='dalpeng'] input[type='number']::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+	}
+}

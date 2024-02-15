@@ -1,14 +1,14 @@
-import { getContext, onMount, setContext } from 'svelte';
+import { getContext, setContext } from 'svelte';
 import Metronome, {
 	type MetronomeOption,
 	type OnBarCallback,
 	type OnBeatCallback
-} from './Metronome';
+} from './metronome';
 
 const CONTEXT_KEY = 'metronome';
 
 export const setMetronomeContext = (option: MetronomeOption) => {
-	let context = setContext(CONTEXT_KEY, Metronome.create(option));
+	const context = setContext(CONTEXT_KEY, new Metronome(option));
 	return context;
 };
 

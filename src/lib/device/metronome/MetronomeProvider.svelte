@@ -1,16 +1,15 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
-  import { setMetronomeContext } from "./context";
+	import { onDestroy } from 'svelte';
+	import { setMetronomeContext } from './context';
 
-  export let beatPerBar = 4;
-  export let beatUnit = 4;
-  export let bpm = 120;
+	export let beatPerBar = 4;
+	export let bpm = 120;
 
-  const metronome = setMetronomeContext({ beatPerBar, beatUnit, bpm });
+	const metronome = setMetronomeContext({ beatPerBar, bpm });
 
-  onDestroy(() => {
-    metronome.destroy();
-  });
+	onDestroy(() => {
+		metronome.destroy();
+	});
 </script>
 
 <slot />
