@@ -1,7 +1,14 @@
 import TimerWorker from './timer-worker?worker';
 
-export type AudioTickCallback = (state: { audioCtx: AudioContext; startSec: number }) => unknown;
-export type TickCallback = (state: { startSec: number }) => unknown;
+export interface TickState {
+	/** shows the order of current tick after startup */
+	tickPassed: number;
+	/** scheduled tick time, in seconds */
+	time: number;
+}
+export type AudioTickState = { audioCtx: AudioContext } & TickState;
+export type TickCallback = (state: TickState) => unknown;
+export type AudioTickCallback = (state: AudioTickState) => unknown;
 
 const LOOKAHEAD_INTERVAL_MS = 100;
 const SCHEDULE_AHEAD_SEC = 0.1;
@@ -22,6 +29,7 @@ class AudioTickTimer {
 
 	#isRunning = false;
 	#nextTick: number = 0;
+	#tickPassed: number = 0;
 	tickIntervalMs = 10;
 	get isRunning() {
 		return this.#isRunning;
@@ -38,21 +46,25 @@ class AudioTickTimer {
 		}
 		if (!this.#isRunning) {
 			this.#isRunning = true;
+			// fast initial lookhead
+			this.#onLookahead();
 			this.lookaheadTimer.postMessage('start');
 			this.#nextTick = this.audioCtx.currentTime;
+			this.#tickPassed = 0;
 		}
 	}
 
-	#tickQueue: number[] = [];
+	#tickQueue: TickState[] = [];
 	#onLookahead() {
 		// schedule audio
 		// and push expected events to queues
 		// in this case, metronome ticks will be queued
 		while (this.#nextTick < this.audioCtx!!.currentTime + SCHEDULE_AHEAD_SEC) {
 			this.#audioTickCallbacks.forEach((cb) =>
-				cb({ audioCtx: this.audioCtx!!, startSec: this.#nextTick })
+				cb({ audioCtx: this.audioCtx!!, time: this.#nextTick, tickPassed: this.#tickPassed })
 			);
-			this.#tickQueue.push(this.#nextTick);
+			this.#tickQueue.push({ time: this.#nextTick, tickPassed: this.#tickPassed });
+			this.#tickPassed += 1;
 			this.#nextTick += 0.001 * this.tickIntervalMs;
 		}
 	}
@@ -73,16 +85,16 @@ class AudioTickTimer {
 		this.#tickCallbacks.delete(cb);
 	}
 
-	#onAnimationFrame(time: DOMHighResTimeStamp) {
+	#onAnimationFrame() {
 		if (this.audioCtx) {
 			const currentTime = this.audioCtx.currentTime;
-			let nextTick = this.#tickQueue[0];
-			while (nextTick !== undefined && nextTick <= currentTime) {
+			let tickState = this.#tickQueue[0];
+			while (tickState !== undefined && tickState.time <= currentTime) {
 				this.#tickQueue.shift();
 				this.#tickCallbacks.forEach((cb) => {
-					cb({ startSec: nextTick!! });
+					cb(tickState);
 				});
-				nextTick = this.#tickQueue[0];
+				tickState = this.#tickQueue[0];
 			}
 		}
 		window.requestAnimationFrame(this.#onAnimationFrame.bind(this));

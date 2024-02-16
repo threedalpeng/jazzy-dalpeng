@@ -1,4 +1,4 @@
-import AudioTickTimer from '../../timer/tick';
+import AudioTickTimer, { type AudioTickState, type TickState } from '../../timer/tick';
 
 export interface MetronomeOption {
 	beatPerBar?: number;
@@ -78,20 +78,44 @@ class Metronome {
 
 	#currentBeat = 0;
 	#barPassed = 0;
-	onTick({ startSec }: { startSec: number }) {
+	onTick({ time, tickPassed }: TickState) {
+		console.log(tickPassed, 'in Tick');
+		this.#currentBeat = (tickPassed % 4) + 1;
 		this.#onBeatCallbacks.forEach((cb) => cb(this.state));
-		if (this.#currentBeat === 0) {
+		if (tickPassed % 4 === 0) {
 			this.#onBarCallbacks.forEach((cb) => cb(this.state));
 		}
 
-		this.#currentBeat++;
 		if (this.#currentBeat >= this.#beatPerBar) {
 			this.#barPassed++;
-			this.#currentBeat = 0;
 		}
 	}
 
-	scheduleAudio({ audioCtx, startSec }: { audioCtx: AudioContext; startSec: number }) {}
+	#masterGain: GainNode | null = null;
+	scheduleAudio({ audioCtx, time, tickPassed }: AudioTickState) {
+		console.log(tickPassed, 'in AudioTick');
+		if (!this.#masterGain) {
+			this.#masterGain = audioCtx.createGain();
+			this.#masterGain.connect(audioCtx.destination);
+		}
+
+		const osc = audioCtx.createOscillator();
+		const gain = audioCtx.createGain();
+		osc.connect(gain);
+		gain.connect(this.#masterGain);
+		if (tickPassed % 4 === 0) {
+			osc.frequency.value = 880;
+		} else {
+			osc.frequency.value = 440;
+		}
+		osc.start(time);
+		osc.stop(time + 0.1);
+		gain.gain.setValueAtTime(gain.gain.value, time + 0.01);
+		gain.gain.linearRampToValueAtTime(0.0001, time + 0.1);
+		osc.addEventListener('ended', () => {
+			gain.disconnect();
+		});
+	}
 
 	stop() {
 		if (this.#isRunning) {

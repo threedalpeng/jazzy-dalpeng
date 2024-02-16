@@ -5,7 +5,7 @@
 	const metronome = getMetronomeContext();
 
 	let beatPerBar = 4,
-		currentBeat = 0;
+		currentBeat = 1;
 	onMount(() => {
 		beatPerBar = metronome.state.beatPerBar;
 		currentBeat = metronome.state.currentBeat;
@@ -21,12 +21,12 @@
 <div class="relative top-[60px] flex w-screen flex-row items-center justify-center gap-[40px]">
 	{#each new Array(beatPerBar) as _, i}
 		{#if i === 0}
-			{#if i === currentBeat}
+			{#if i === currentBeat - 1}
 				<div class="h-[30px] w-[30px] rounded-full bg-indigo-500" />
 			{:else}
 				<div class="h-[30px] w-[30px] rounded-full bg-indigo-900" />
 			{/if}
-		{:else if i === currentBeat}
+		{:else if i === currentBeat - 1}
 			<div class="h-[20px] w-[20px] rounded-full bg-indigo-500" />
 		{:else}
 			<div class="h-[20px] w-[20px] rounded-full bg-indigo-900" />
