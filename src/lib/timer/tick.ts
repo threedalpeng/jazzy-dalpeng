@@ -46,10 +46,9 @@ class AudioTickTimer {
 		}
 		if (!this.#isRunning) {
 			this.#isRunning = true;
-			// fast initial lookhead
-			this.#onLookahead();
+			// delay initial lookhead
+			this.#nextTick = this.audioCtx.currentTime + 0.1;
 			this.lookaheadTimer.postMessage('start');
-			this.#nextTick = this.audioCtx.currentTime;
 			this.#tickPassed = 0;
 		}
 	}
