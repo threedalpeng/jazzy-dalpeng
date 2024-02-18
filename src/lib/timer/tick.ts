@@ -1,3 +1,4 @@
+import type { WithCleanup } from '$/utils/types';
 import TimerWorker from './timer-worker?worker';
 
 export interface TickState {
@@ -245,5 +246,43 @@ export class TempoTimer extends AudioClockTimer {
 			case 'millisecond':
 				return ticks * this.tickIntervalMs;
 		}
+	}
+
+	onTimeAfter(
+		time: { start: number; duration?: number },
+		cb: WithCleanup<TickCallback>,
+		audioCb: AudioTickCallback
+	) {
+		const start = this.convert(time.start, 'note', 'second');
+		const duration = time.duration ? this.convert(time.duration, 'note', 'second') : -1;
+
+		let currentTime = this.currentTime;
+		let cleanup: TickCallback | null = null;
+		const onStart: TickCallback = (state) => {
+			if (currentTime + start <= state.time) {
+				cleanup = cb(state) ?? null;
+				this.removeTick(onStart);
+			}
+		};
+		const onEnd: TickCallback = (state) => {
+			if (currentTime + start + duration <= state.time) {
+				if (cleanup) {
+					cleanup(state);
+				}
+				this.removeTick(onEnd);
+			}
+		};
+		const onAudioTick: AudioTickCallback = (state) => {
+			if (currentTime + start >= state.time) {
+				audioCb(state);
+				this.removeAudioTick(onAudioTick);
+			}
+		};
+
+		this.onTick(onStart);
+		if (duration > 0) {
+			this.onTick(onEnd);
+		}
+		this.onAudioTick(onAudioTick);
 	}
 }

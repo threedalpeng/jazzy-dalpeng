@@ -9,10 +9,8 @@
 	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
 	import RandomBoxOptions from '$/lib/practice/RandomBox/RandomBoxOptions.svelte';
 	import { getRandomBoxContext } from '$/lib/practice/RandomBox/context';
-	import { type AudioTickCallback, type TickCallback } from '$/lib/timer/tick';
+	import type { PracticeBoard, PracticeScore } from '$/lib/practice/types';
 	import { getPitchFromFingerPosition } from '$/utils/music/pitch';
-	import { Play, Stop } from '@steeze-ui/heroicons';
-	import { Icon } from '@steeze-ui/svelte-icon';
 	import { onDestroy, onMount } from 'svelte';
 	import { practice } from './data';
 
@@ -22,7 +20,6 @@
 	const timer = metronome.timer;
 	let score = replaceScore();
 	let isRunning: boolean = metronome.isRunning;
-	let testNum = 0;
 
 	function replaceScore() {
 		let score = randomBox.open();
@@ -34,112 +31,80 @@
 		return score;
 	}
 
-	let currentBoard: (typeof score.boards)[number];
+	let currentBoard: PracticeBoard = score.boards[0];
 	let currentActiveFingers = new Set<number>();
+	let nextNotes: number[] = [];
 	$: fingers = (currentBoard?.fingers ?? []).map((finger) => {
+		const order = nextNotes.findIndex((f) => f === finger);
 		return {
-			position: score.notes[finger].position,
-			style: { color: currentActiveFingers.has(finger) ? 'red' : undefined }
+			position: score.positions[finger],
+			style: {
+				color: currentActiveFingers.has(finger) ? 'red' : undefined
+				// scale: currentActiveFingers.has(finger) ? 1 : order >= 0 ? (4 - order) / 4 : 0.5
+			}
 		};
 	}) as FingerInfo[];
+	// $: console.log(nextNotes);
 
-	function scheduleScore(score: (typeof practice.scores)[number]) {
+	function scheduleScore(score: PracticeScore) {
 		/** Now scheduleing */
 
 		// 1. board replacement
 		score.boards.map((board) => {
-			const notes = board.fingers.map((finger) => {
-				const note = score.notes[finger];
-				const pitch = getPitchFromFingerPosition(
-					note.position as FingerPosition,
-					practice.guitar.tuning
-				);
-				return { ...note, id: finger, pitch };
-			});
-
-			onTimeAfter(
+			timer.onTimeAfter(
 				board.time,
 				() => {
+					currentActiveFingers.clear();
 					currentBoard = board;
-					// 2. active note(finger)
-					notes.forEach((note) => {
-						onTimeAfter(
-							note.time,
-							() => {
-								currentActiveFingers.add(note.id);
-								currentActiveFingers = currentActiveFingers;
-								return () => {
-									currentActiveFingers.delete(note.id);
-									currentActiveFingers = currentActiveFingers;
-								};
-							},
-							({ audioCtx }) => {}
-						);
-					});
 				},
 				({ audioCtx }) => {}
 			);
 		});
-	}
 
-	function onTimeAfter(
-		time: { start: number; duration?: number },
-		cb: TickCallback,
-		audioCb: AudioTickCallback
-	) {
-		const start = timer.convert(time.start, 'note', 'second');
-		const duration = time.duration ? timer.convert(time.duration, 'note', 'second') : -1;
-
-		let currentTime = metronome.timer.currentTime;
-		let cleanup: TickCallback | null = null;
-		const onStart: TickCallback = (state) => {
-			if (currentTime + start <= state.time) {
-				cleanup = cb(state) as TickCallback;
-				timer.removeTick(onStart);
-			}
-		};
-		const onEnd: TickCallback = (state) => {
-			if (currentTime + start + duration <= state.time) {
-				if (cleanup) {
-					cleanup(state);
+		// 2. notes
+		const notes = score.notes.map((note) => {
+			const pitch = getPitchFromFingerPosition(
+				score.positions[note.position] as FingerPosition,
+				practice.guitar.tuning
+			);
+			return { ...note, pitch };
+		});
+		for (let i = 0; i < notes.length; i++) {
+			const note = notes[i];
+			const nextThreeFingers = notes.slice(i + 1, i + 4).map((n) => n.position);
+			timer.onTimeAfter(
+				note.time,
+				() => {
+					currentActiveFingers.add(note.position);
+					currentActiveFingers = currentActiveFingers;
+					nextNotes = nextThreeFingers;
+					return () => {
+						currentActiveFingers.delete(note.position);
+						currentActiveFingers = currentActiveFingers;
+					};
+				},
+				({ audioCtx }) => {
+					// play audio with pitch
 				}
-				timer.removeTick(onEnd);
-			}
-		};
-		const onAudioTick: AudioTickCallback = (state) => {
-			if (currentTime + start >= state.time) {
-				audioCb(state);
-				timer.removeAudioTick(onAudioTick);
-			}
-		};
-
-		metronome.timer.onTick(onStart);
-		if (duration > 0) {
-			metronome.timer.onTick(onEnd);
+			);
 		}
-		metronome.timer.onAudioTick(onAudioTick);
 	}
 
 	onMount(() => {
 		metronome.onBar(onMetronomeBar);
 		metronome.onOptionChange(onMetronomeOptionChange);
-		timer.onTick(onTimerTick);
 	});
 
 	onDestroy(() => {
 		metronome.removeBar(onMetronomeBar);
 		metronome.removeOptionChange(onMetronomeOptionChange);
-		timer.removeTick(onTimerTick);
 	});
 
 	const onMetronomeBar: OnBarCallback = () => {
-		score = replaceScore();
+		// score = replaceScore();
 	};
 	const onMetronomeOptionChange: OnOptionChangeCallback = ({ bpm }) => {
 		// timer.tickIntervalMs = calcTickIntervalMs(bpm);
-	};
-	const onTimerTick: TickCallback = ({ tickPassed }) => {
-		testNum = Math.floor(timer.convert(tickPassed, 'tick', 'beat'));
 	};
 </script>
 
