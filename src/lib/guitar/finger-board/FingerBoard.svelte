@@ -165,6 +165,8 @@
 			textAlign="center"
 			textBaseline="middle"
 			text={nonFinger.position.fret === 'mute' ? 'X' : 'O'}
+			fillStyle={nonFinger.style?.color}
+			strokeStyle={nonFinger.style?.color}
 			x={getXFromFretNumber(-fretNumberPadding / 2)}
 			y={getYFromStringNumber(nonFinger.position.line)}
 		/>
