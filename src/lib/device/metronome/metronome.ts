@@ -1,8 +1,8 @@
-import AudioTickTimer, { type AudioTickState, type TickState } from '../../timer/tick';
+import { TempoTimer, type AudioTickState, type TickState } from '../../timer/tick';
 
 export interface MetronomeOption {
 	beatPerBar?: number;
-	beatUnit?: number;
+	signatureUnit?: number;
 	bpm?: number;
 }
 export interface MetronomeState {
@@ -19,20 +19,21 @@ export type OnOptionChangeCallback = (state: MetronomeState) => unknown;
 const MILLISECOND_PER_MINUTE = 60000;
 class Metronome {
 	constructor(option: MetronomeOption = {}) {
-		const { beatPerBar = 4, bpm = 120 } = option;
+		const { beatPerBar = 4, bpm = 120, signatureUnit = 4 } = option;
 		this.beatPerBar = beatPerBar;
 		this.bpm = bpm;
-		this.#timer.onTick(this.onTick.bind(this));
-		this.#timer.onAudioTick(this.scheduleAudio.bind(this));
+		this.timer.signatureUnit = signatureUnit;
+		console.log(beatPerBar);
+		this.timer.onTick(this.#onTick.bind(this));
+		this.timer.onAudioTick(this.#scheduleAudio.bind(this));
 	}
 
-	#beatPerBar = 4;
 	get beatPerBar() {
-		return this.#beatPerBar;
+		return this.timer.beatPerBar;
 	}
 	set beatPerBar(value: number) {
-		this.#beatPerBar = value;
-		this.updateInterval();
+		console.log('set', value);
+		this.timer.beatPerBar = value;
 		this.#onOptionChangeCallbacks.forEach((cb) => cb(this.state));
 		this.restart();
 	}
@@ -42,24 +43,16 @@ class Metronome {
 		return this.#bpm;
 	}
 	set bpm(value: number) {
-		this.#bpm = value;
-		this.updateInterval();
+		this.timer.bpm = value;
 		this.#onOptionChangeCallbacks.forEach((cb) => cb(this.state));
-		this.restart();
 	}
 
-	#interval = MILLISECOND_PER_MINUTE / this.#bpm;
-	updateInterval() {
-		this.#interval = MILLISECOND_PER_MINUTE / this.#bpm;
-		this.#timer.tickIntervalMs = this.#interval;
-	}
-
-	#timer = new AudioTickTimer(this.#interval);
+	timer = new TempoTimer();
 
 	get state() {
 		return {
-			beatPerBar: this.#beatPerBar,
-			bpm: this.#bpm,
+			beatPerBar: this.beatPerBar,
+			bpm: this.bpm,
 			currentBeat: this.#currentBeat,
 			barPassed: this.#barPassed
 		};
@@ -72,28 +65,37 @@ class Metronome {
 	start() {
 		if (!this.#isRunning) {
 			this.#isRunning = true;
-			this.#timer.start();
+			this.timer.start();
 		}
 	}
 
 	#currentBeat = 0;
 	#barPassed = 0;
-	onTick({ time, tickPassed }: TickState) {
-		console.log(tickPassed, 'in Tick');
-		this.#currentBeat = (tickPassed % 4) + 1;
+	#onTick({ time, tickPassed }: TickState) {
+		if (tickPassed % this.#ticksPerBeat !== 0) {
+			return;
+		}
+		this.#currentBeat = ((tickPassed / this.#ticksPerBeat) % this.timer.beatPerBar) + 1;
 		this.#onBeatCallbacks.forEach((cb) => cb(this.state));
-		if (tickPassed % 4 === 0) {
+		if (this.#currentBeat % this.timer.beatPerBar === 1) {
 			this.#onBarCallbacks.forEach((cb) => cb(this.state));
 		}
 
-		if (this.#currentBeat >= this.#beatPerBar) {
+		if (this.#currentBeat >= this.timer.beatPerBar) {
 			this.#barPassed++;
 		}
 	}
 
 	#masterGain: GainNode | null = null;
-	scheduleAudio({ audioCtx, time, tickPassed }: AudioTickState) {
-		console.log(tickPassed, 'in AudioTick');
+	get #ticksPerBeat() {
+		return this.timer.convert(1, 'beat', 'tick');
+	}
+	#scheduleAudio({ audioCtx, time, tickPassed }: AudioTickState) {
+		if (tickPassed % this.#ticksPerBeat !== 0) {
+			return;
+		}
+		const beatNum = (tickPassed / this.#ticksPerBeat) % this.timer.beatPerBar;
+
 		if (!this.#masterGain) {
 			this.#masterGain = audioCtx.createGain();
 			this.#masterGain.connect(audioCtx.destination);
@@ -103,7 +105,7 @@ class Metronome {
 		const gain = audioCtx.createGain();
 		osc.connect(gain);
 		gain.connect(this.#masterGain);
-		if (tickPassed % 4 === 0) {
+		if (beatNum === 0) {
 			osc.frequency.value = 880;
 		} else {
 			osc.frequency.value = 440;
@@ -120,7 +122,7 @@ class Metronome {
 	stop() {
 		if (this.#isRunning) {
 			this.#isRunning = false;
-			this.#timer.stop();
+			this.timer.stop();
 			this.#currentBeat = 0;
 			this.#barPassed = 0;
 		}
@@ -144,15 +146,24 @@ class Metronome {
 	onBeat(cb: OnBeatCallback) {
 		this.#onBeatCallbacks.add(cb);
 	}
+	removeBeat(cb: OnBeatCallback) {
+		this.#onBeatCallbacks.delete(cb);
+	}
 
 	#onBarCallbacks = new Set<OnBeatCallback>();
 	onBar(cb: OnBarCallback) {
 		this.#onBarCallbacks.add(cb);
 	}
+	removeBar(cb: OnBarCallback) {
+		this.#onBarCallbacks.delete(cb);
+	}
 
 	#onOptionChangeCallbacks = new Set<OnOptionChangeCallback>();
 	onOptionChange(cb: OnOptionChangeCallback) {
 		this.#onOptionChangeCallbacks.add(cb);
+	}
+	removeOptionChange(cb: OnOptionChangeCallback) {
+		this.#onOptionChangeCallbacks.delete(cb);
 	}
 
 	destroy() {

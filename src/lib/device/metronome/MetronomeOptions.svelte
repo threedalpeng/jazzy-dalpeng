@@ -3,8 +3,8 @@
 	import { getMetronomeContext } from './context';
 
 	const metronome = getMetronomeContext();
-	export let bpm = 120;
-	export let beatPerBar = 4;
+	export let bpm = metronome.bpm;
+	export let beatPerBar = metronome.beatPerBar;
 
 	let lastTapTimestamp = -1;
 	let tapIntervalStore: number[] = [];
