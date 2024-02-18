@@ -9,7 +9,8 @@
 
 <canvas
 	bind:this={canvas}
-	class="w-screen object-contain object-center md:w-auto"
+	{...$$restProps}
+	class="{$$props.class} object-contain object-center"
 	{width}
 	{height}
 />

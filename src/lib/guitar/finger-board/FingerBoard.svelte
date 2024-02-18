@@ -83,7 +83,12 @@
 	export let inlayVisible: boolean = true;
 </script>
 
-<Canvas width={FRET_START * 2 + fretRangeWidth} height={STRING_START * 2 + STRING_GAP * 5}>
+<Canvas
+	{...$$restProps}
+	class={$$props.class}
+	width={FRET_START * 2 + fretRangeWidth}
+	height={STRING_START * 2 + STRING_GAP * 5}
+>
 	<Crop
 		width={FRET_START * 2 + FRET_GAP * FRET_MAX}
 		height={STRING_START * 2 + STRING_GAP * 5}

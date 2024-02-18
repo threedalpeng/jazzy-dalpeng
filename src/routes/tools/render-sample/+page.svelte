@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
 	import MetronomeOptions from '$/lib/device/metronome/MetronomeOptions.svelte';
+	import MetronomePlayButton from '$/lib/device/metronome/MetronomePlayButton.svelte';
 	import { getMetronomeContext } from '$/lib/device/metronome/context';
 	import type { OnBarCallback, OnOptionChangeCallback } from '$/lib/device/metronome/metronome';
 	import FingerBoard, {
@@ -115,24 +116,11 @@
 				<MetronomeOptions />
 				<RandomBoxOptions />
 			</div>
-			<button
-				class="mr-8 flex aspect-square h-3/4 items-center justify-center rounded-full bg-indigo-900 p-0 focus:outline-none"
-				on:click={() => {
-					metronome.toggle();
-					isRunning = metronome.isRunning;
-				}}
-			>
-				{#if isRunning}
-					<Icon class="m-0 h-[20px] w-[20px] p-0 text-indigo-100" src={Stop} theme="solid" />
-				{:else}
-					<Icon class="m-0 h-[20px] w-[20px] p-0 text-indigo-100" src={Play} theme="solid" />
-				{/if}
-			</button>
 		</div>
 		<div class="relative flex h-full flex-col items-center justify-center">
-			<div class="relative" style="left: {0}em;">{testNum}</div>
-			<FingerBoard readonly {fingers}></FingerBoard>
-			<MetronomeBeats />
+			<FingerBoard class="" readonly {fingers} fretRange={score.fretRange}></FingerBoard>
+			<MetronomeBeats class="p-20" />
+			<MetronomePlayButton class="h-20" />
 		</div>
 	</div>
 </div>
