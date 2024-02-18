@@ -12,12 +12,20 @@ export type AudioTickCallback = (state: AudioTickState) => unknown;
 
 const LOOKAHEAD_INTERVAL_MS = 100;
 const SCHEDULE_AHEAD_SEC = 0.1;
-class AudioTickTimer {
+const MS_PER_MIN = 60000;
+export class AudioClockTimer {
 	audioCtx: AudioContext | null = null;
 	lookaheadTimer = new TimerWorker();
 
+	get currentTime() {
+		if (!this.audioCtx) {
+			throw new TypeError("Timer hasn't yet started.");
+		}
+		return this.audioCtx.currentTime;
+	}
+
 	constructor(tickIntervalMs: number = 10) {
-		this.tickIntervalMs = tickIntervalMs;
+		this.#tickIntervalMs = tickIntervalMs;
 		this.lookaheadTimer.postMessage({ interval: LOOKAHEAD_INTERVAL_MS });
 		this.lookaheadTimer.addEventListener('message', (e) => {
 			if (e.data === 'tick') {
@@ -30,7 +38,13 @@ class AudioTickTimer {
 	#isRunning = false;
 	#nextTick: number = 0;
 	#tickPassed: number = 0;
-	tickIntervalMs = 10;
+	#tickIntervalMs = 10;
+	get tickIntervalMs() {
+		return this.#tickIntervalMs;
+	}
+	set tickIntervalMs(value: number) {
+		this.#tickIntervalMs = value;
+	}
 	get isRunning() {
 		return this.#isRunning;
 	}
@@ -64,7 +78,7 @@ class AudioTickTimer {
 			);
 			this.#tickQueue.push({ time: this.#nextTick, tickPassed: this.#tickPassed });
 			this.#tickPassed += 1;
-			this.#nextTick += 0.001 * this.tickIntervalMs;
+			this.#nextTick += 0.001 * this.#tickIntervalMs;
 		}
 	}
 
@@ -127,4 +141,109 @@ class AudioTickTimer {
 	}
 }
 
-export default AudioTickTimer;
+type TimeUnit = 'tick' | 'note' | 'beat' | 'bar' | 'second' | 'millisecond';
+
+export class TempoTimer extends AudioClockTimer {
+	#bpm = 120;
+	get bpm() {
+		return this.#bpm;
+	}
+	set bpm(value: number) {
+		this.#bpm = value;
+		this.#updateTickInterval();
+	}
+
+	#ticksPerNote = 192;
+	get ticksPerNote() {
+		return this.#ticksPerNote;
+	}
+	set ticksPerNote(value: number) {
+		this.#ticksPerNote = value;
+		this.#updateTickInterval();
+	}
+	#beatPerBar: number = 6;
+	get beatPerBar() {
+		return this.#beatPerBar;
+	}
+	set beatPerBar(value: number) {
+		this.#beatPerBar = value;
+	}
+
+	#signatureUnit: number = 8;
+	get signatureUnit() {
+		return this.#signatureUnit;
+	}
+	set signatureUnit(value: number) {
+		this.#signatureUnit = value;
+		this.#updateTickInterval();
+	}
+
+	get timeSignature() {
+		return { upper: this.#beatPerBar, lower: this.#signatureUnit };
+	}
+	set timeSignature({ upper, lower }: { upper: number; lower: number }) {
+		this.beatPerBar = upper;
+		this.signatureUnit = lower;
+	}
+
+	// #tickIntervalMs: number = (MS_PER_MIN * this.#signatureUnit) / (this.#bpm * this.#ticksPerNote);
+	get tickIntervalMs(): number {
+		return super.tickIntervalMs;
+	}
+	set tickIntervalMs(_: never) {
+		throw new TypeError('Cannot set tickIntervalMs directly');
+	}
+
+	constructor() {
+		super();
+		this.#updateTickInterval();
+	}
+	#updateTickInterval() {
+		super.tickIntervalMs = (MS_PER_MIN * this.#signatureUnit) / (this.#bpm * this.#ticksPerNote);
+	}
+
+	/**
+	 * convert the {value} in units {from} into units {to}.
+	 *
+	 * This will round up in tick units, so the same time
+	 * unit in {from} and {to} doesn't guarantee the same result.
+	 * */
+	convert(value: number, from: TimeUnit, to: TimeUnit) {
+		let ticks = 0;
+		switch (from) {
+			case 'tick':
+				ticks = value;
+				break;
+			case 'note':
+				ticks = value * this.#ticksPerNote;
+				break;
+			case 'beat':
+				ticks = (value * this.#ticksPerNote) / this.#signatureUnit;
+				break;
+			case 'bar':
+				ticks = (value * this.#ticksPerNote * this.#beatPerBar) / this.#signatureUnit;
+				break;
+			case 'second':
+				ticks = (value / this.tickIntervalMs) * 1000;
+				break;
+			case 'millisecond':
+				ticks = value / this.tickIntervalMs;
+				break;
+		}
+		ticks = Math.round(ticks);
+		switch (to) {
+			case 'tick':
+				return ticks;
+			case 'note':
+				return ticks / this.#ticksPerNote;
+			case 'beat':
+				return (value * this.#signatureUnit) / this.#ticksPerNote;
+			case 'bar':
+				return (value * this.#signatureUnit) / (this.#ticksPerNote * this.#beatPerBar);
+			case 'second':
+				return (ticks * this.tickIntervalMs) / 1000;
+			case 'millisecond':
+				return ticks * this.tickIntervalMs;
+		}
+	}
+}
