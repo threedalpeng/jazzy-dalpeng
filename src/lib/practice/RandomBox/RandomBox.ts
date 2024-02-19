@@ -55,7 +55,6 @@ export class RandomBox<T> {
 				this.#indexSelected = [...this.#remains][RandomBox.getRandomInt(0, this.#remains.size)];
 				selected = this.#items[this.#indexSelected];
 				this.#remains.delete(this.#indexSelected);
-				console.log([...this.#remains]);
 				break;
 		}
 		return selected;

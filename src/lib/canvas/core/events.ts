@@ -1,6 +1,5 @@
 type PickByValue<T, Value> = { [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P] };
 export interface PointerEventMap extends PickByValue<HTMLElementEventMap, PointerEvent> {}
-// const m: PointerEventMap = {};
 export const pointerEventTypes: (keyof PointerEventMap)[] = [
 	'gotpointercapture',
 	'lostpointercapture',
@@ -218,7 +217,7 @@ export class CanvasEventHandler {
 
 			pointerInfo.hitCode = unpolledInfo.hitCode;
 			pointerInfo.position = unpolledInfo.position;
-			
+
 			hitEventTypes.forEach(([type, button]) => {
 				if (onHit)
 					onHit({

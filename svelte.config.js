@@ -20,7 +20,7 @@ const config = {
 		},
 		paths: {
 			base: '/jazzy-dalpeng'
-		},
+		}
 		// files: {
 		// 	serviceWorker: 'src/service-worker.ts'
 		// }

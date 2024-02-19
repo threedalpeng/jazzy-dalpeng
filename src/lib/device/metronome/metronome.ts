@@ -23,7 +23,6 @@ class Metronome {
 		this.beatPerBar = beatPerBar;
 		this.bpm = bpm;
 		this.timer.signatureUnit = signatureUnit;
-		console.log(beatPerBar);
 		this.timer.onTick(this.#onTick.bind(this));
 		this.timer.onAudioTick(this.#scheduleAudio.bind(this));
 	}
@@ -32,7 +31,6 @@ class Metronome {
 		return this.timer.beatPerBar;
 	}
 	set beatPerBar(value: number) {
-		console.log('set', value);
 		this.timer.beatPerBar = value;
 		this.#onOptionChangeCallbacks.forEach((cb) => cb(this.state));
 		this.restart();

@@ -1,7 +1,7 @@
 <script lang="ts" generics="T">
 	import { onDestroy } from 'svelte';
-	import { setRandomBoxContext } from './context';
 	import { RandomBox } from './RandomBox';
+	import { setRandomBoxContext } from './context';
 
 	export let items: T[] = [];
 

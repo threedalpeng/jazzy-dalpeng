@@ -1,5 +1,5 @@
-import 'vite-plugin-pwa/svelte';
 import 'vite-plugin-pwa/info';
+import 'vite-plugin-pwa/svelte';
 import 'vite-plugin-pwa/types';
 
 // See https://kit.svelte.dev/docs/types#app
@@ -20,4 +20,4 @@ declare global {
 	}
 }
 
-export {};
+export { };

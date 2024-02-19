@@ -41,13 +41,13 @@
 </script>
 
 <script lang="ts">
+	import Clip from '$/lib/canvas/elements/Clip.svelte';
+	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
 	import { Canvas, Circle, Crop, Text } from '$lib/canvas';
 	import { createEventDispatcher } from 'svelte';
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
 	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
-	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
-	import Clip from '$/lib/canvas/elements/Clip.svelte';
 
 	const dispatch = createEventDispatcher<{ click: FingerPosition; hover: FingerPosition }>();
 

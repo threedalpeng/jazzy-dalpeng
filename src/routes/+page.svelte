@@ -7,6 +7,6 @@
 	<br /> I hope it'll open soon :)
 </p>
 <a
-	class="cursor-pointer underline text-indigo hover:text-indigo-600"
+	class="text-indigo cursor-pointer underline hover:text-indigo-600"
 	href="{base}/practice/render-sample">Here's Sample</a
 >

@@ -45,10 +45,9 @@
 			}
 		};
 	}) as FingerInfo[];
-	// $: console.log(nextNotes);
 
 	function scheduleScore(score: PracticeScore) {
-		/** Now scheduleing */
+		/** Now scheduling */
 
 		// 1. board replacement
 		score.boards.map((board) => {
