@@ -273,7 +273,7 @@ export class TempoTimer extends AudioClockTimer {
 			}
 		};
 		const onAudioTick: AudioTickCallback = (state) => {
-			if (currentTime + start >= state.time) {
+			if (currentTime + start <= state.time) {
 				audioCb(state);
 				this.removeAudioTick(onAudioTick);
 			}
