@@ -124,6 +124,7 @@ class Metronome {
 			this.#isRunning = false;
 			this.timer.stop();
 			if (this.#stopScheduling) this.#stopScheduling();
+			this.clearSchedule();
 			this.#currentBeat = 0;
 			this.#currentBeatInAudioTick = 0;
 			this.#barPassed = 0;
@@ -168,10 +169,15 @@ class Metronome {
 		this.#onOptionChangeCallbacks.delete(cb);
 	}
 
-	destroy() {
-		this.stop();
+	clearSchedule() {
+		this.timer.clearSchedule();
 		this.#onBeatCallbacks.clear();
 		this.#onBarCallbacks.clear();
+	}
+
+	destroy() {
+		this.stop();
+		this.clearSchedule();
 		this.#onOptionChangeCallbacks.clear();
 	}
 }

@@ -137,10 +137,112 @@ const practices: Record<string, Practice> = {
 				}
 			}
 		]
+	},
+	'rhythm-test': {
+		tempo: {
+			bpm: 120,
+			beatPerBar: 4,
+			signatureUnit: 4
+		},
+		guitar: {
+			tuning: TUNE.standard
+		},
+		scores: [
+			{
+				positions: [
+					{ line: 5, fret: 3 },
+					{ line: 6, fret: 3 },
+					{ line: 1, fret: 'open' },
+					{ line: 2, fret: 1 },
+					{ line: 3, fret: 'open' }
+				],
+				notes: [
+					{ position: 0, time: { start: 0, duration: 1 / 4 } },
+					{ position: 2, time: { start: 1 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 1 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 1 / 4, duration: 1 / 4 } },
+					{ position: 1, time: { start: 2 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 3 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 3 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 3 / 4, duration: 1 / 4 } },
+					{ position: 0, time: { start: 4 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 5 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 5 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 5 / 4, duration: 1 / 4 } },
+					{ position: 1, time: { start: 6 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 7 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 7 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 7 / 4, duration: 1 / 4 } },
+					{ position: 0, time: { start: 8 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 9 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 9 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 9 / 4, duration: 1 / 4 } },
+					{ position: 1, time: { start: 10 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 11 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 11 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 11 / 4, duration: 1 / 4 } },
+					{ position: 0, time: { start: 12 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 13 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 13 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 13 / 4, duration: 1 / 4 } },
+					{ position: 1, time: { start: 14 / 4, duration: 1 / 4 } },
+					{ position: 2, time: { start: 15 / 4, duration: 1 / 4 } },
+					{ position: 3, time: { start: 15 / 4, duration: 1 / 4 } },
+					{ position: 4, time: { start: 15 / 4, duration: 1 / 4 } }
+				],
+				boards: [
+					{
+						title: 'C line 1',
+						fingers: [0, 2, 3, 4],
+						time: { start: 0 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [1, 2, 3, 4],
+						time: { start: 1 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [0, 2, 3, 4],
+						time: { start: 2 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [1, 2, 3, 4],
+						time: { start: 3 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [0, 2, 3, 4],
+						time: { start: 4 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [1, 2, 3, 4],
+						time: { start: 5 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [0, 2, 3, 4],
+						time: { start: 6 / 2 }
+					},
+					{
+						title: 'C line 1',
+						fingers: [1, 2, 3, 4],
+						time: { start: 7 / 2 }
+					}
+				],
+				fretRange: {
+					start: 0,
+					end: 12,
+					visibility: 'all'
+				}
+			}
+		]
 	}
 };
 
-export const practice: Practice = practices['major-scale'];
+export const practice: Practice = practices['rhythm-test'];
 
 export const items = [
 	{

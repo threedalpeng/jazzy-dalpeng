@@ -60,11 +60,11 @@ export class AudioClockTimer {
 			node.start(0);
 		}
 		if (!this.#isRunning) {
+			this.#startCallbacks.forEach((cb) => cb());
 			this.#isRunning = true;
 			// delay initial lookhead
 			this.#nextTick = this.audioCtx.currentTime + 0.1;
 			this.lookaheadTimer.postMessage('start');
-			this.#startCallbacks.forEach((cb) => cb());
 			this.#tickPassed = 0;
 		}
 	}
@@ -144,10 +144,15 @@ export class AudioClockTimer {
 		}
 	}
 
-	destroy() {
-		this.stop();
+	clearSchedule() {
 		this.#audioTickCallbacks.clear();
 		this.#tickCallbacks.clear();
+	}
+
+	destroy() {
+		this.#audioTickCallbacks.clear();
+		this.#tickCallbacks.clear();
+		this.stop();
 	}
 }
 
