@@ -17,7 +17,8 @@
 		"@steeze-ui/heroicons": "^2.3.0",
 		"@steeze-ui/svelte-icon": "^1.5.0",
 		"idb": "^8.0.0",
-		"mini-svg-data-uri": "^1.4.4"
+		"mini-svg-data-uri": "^1.4.4",
+		"smplr": "^0.12.2"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.1.0",

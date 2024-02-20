@@ -23,8 +23,6 @@ class Metronome {
 		this.beatPerBar = beatPerBar;
 		this.bpm = bpm;
 		this.timer.signatureUnit = signatureUnit;
-		this.timer.onTick(this.#onTick.bind(this));
-		this.timer.onAudioTick(this.#scheduleAudio.bind(this));
 	}
 
 	get beatPerBar() {
@@ -60,20 +58,26 @@ class Metronome {
 	get isRunning() {
 		return this.#isRunning;
 	}
-	start() {
+	start(): void {
 		if (!this.#isRunning) {
 			this.#isRunning = true;
 			this.timer.start();
 		}
 	}
 
+	#stopScheduling: (() => void) | null = null;
+	schedule() {
+		this.#stopScheduling = this.timer.loop(
+			{ start: 0, duration: this.#notesPerBeat },
+			this.#onTick.bind(this),
+			this.#scheduleAudio.bind(this)
+		);
+	}
+
 	#currentBeat = 0;
 	#barPassed = 0;
 	#onTick({ time, tickPassed }: TickState) {
-		if (tickPassed % this.#ticksPerBeat !== 0) {
-			return;
-		}
-		this.#currentBeat = ((tickPassed / this.#ticksPerBeat) % this.timer.beatPerBar) + 1;
+		this.#currentBeat += 1;
 		this.#onBeatCallbacks.forEach((cb) => cb(this.state));
 		if (this.#currentBeat % this.timer.beatPerBar === 1) {
 			this.#onBarCallbacks.forEach((cb) => cb(this.state));
@@ -81,19 +85,16 @@ class Metronome {
 
 		if (this.#currentBeat >= this.timer.beatPerBar) {
 			this.#barPassed++;
+			this.#currentBeat = 0;
 		}
 	}
 
 	#masterGain: GainNode | null = null;
-	get #ticksPerBeat() {
-		return this.timer.convert(1, 'beat', 'tick');
+	get #notesPerBeat() {
+		return this.timer.convert(1, 'beat', 'note');
 	}
+	#currentBeatInAudioTick = 0;
 	#scheduleAudio({ audioCtx, time, tickPassed }: AudioTickState) {
-		if (tickPassed % this.#ticksPerBeat !== 0) {
-			return;
-		}
-		const beatNum = (tickPassed / this.#ticksPerBeat) % this.timer.beatPerBar;
-
 		if (!this.#masterGain) {
 			this.#masterGain = audioCtx.createGain();
 			this.#masterGain.connect(audioCtx.destination);
@@ -103,7 +104,7 @@ class Metronome {
 		const gain = audioCtx.createGain();
 		osc.connect(gain);
 		gain.connect(this.#masterGain);
-		if (beatNum === 0) {
+		if (this.#currentBeatInAudioTick % this.timer.beatPerBar === 0) {
 			osc.frequency.value = 880;
 		} else {
 			osc.frequency.value = 440;
@@ -115,18 +116,22 @@ class Metronome {
 		osc.addEventListener('ended', () => {
 			gain.disconnect();
 		});
+		this.#currentBeatInAudioTick += 1;
 	}
 
 	stop() {
 		if (this.#isRunning) {
 			this.#isRunning = false;
 			this.timer.stop();
+			if (this.#stopScheduling) this.#stopScheduling();
+			this.clearSchedule();
 			this.#currentBeat = 0;
+			this.#currentBeatInAudioTick = 0;
 			this.#barPassed = 0;
 		}
 	}
 
-	toggle() {
+	toggle(): void {
 		if (this.#isRunning) {
 			this.stop();
 		} else {
@@ -164,10 +169,15 @@ class Metronome {
 		this.#onOptionChangeCallbacks.delete(cb);
 	}
 
-	destroy() {
-		this.stop();
+	clearSchedule() {
+		this.timer.clearSchedule();
 		this.#onBeatCallbacks.clear();
 		this.#onBarCallbacks.clear();
+	}
+
+	destroy() {
+		this.stop();
+		this.clearSchedule();
 		this.#onOptionChangeCallbacks.clear();
 	}
 }

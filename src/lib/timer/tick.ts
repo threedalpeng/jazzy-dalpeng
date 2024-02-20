@@ -60,6 +60,7 @@ export class AudioClockTimer {
 			node.start(0);
 		}
 		if (!this.#isRunning) {
+			this.#startCallbacks.forEach((cb) => cb());
 			this.#isRunning = true;
 			// delay initial lookhead
 			this.#nextTick = this.audioCtx.currentTime + 0.1;
@@ -81,6 +82,14 @@ export class AudioClockTimer {
 			this.#tickPassed += 1;
 			this.#nextTick += 0.001 * this.#tickIntervalMs;
 		}
+	}
+
+	#startCallbacks: Set<() => any> = new Set();
+	onStart(cb: () => any) {
+		this.#startCallbacks.add(cb);
+	}
+	removeStart(cb: () => any) {
+		this.#startCallbacks.delete(cb);
 	}
 
 	#audioTickCallbacks: Set<AudioTickCallback> = new Set();
@@ -135,10 +144,15 @@ export class AudioClockTimer {
 		}
 	}
 
-	destroy() {
-		this.stop();
+	clearSchedule() {
 		this.#audioTickCallbacks.clear();
 		this.#tickCallbacks.clear();
+	}
+
+	destroy() {
+		this.#audioTickCallbacks.clear();
+		this.#tickCallbacks.clear();
+		this.stop();
 	}
 }
 
@@ -273,7 +287,7 @@ export class TempoTimer extends AudioClockTimer {
 			}
 		};
 		const onAudioTick: AudioTickCallback = (state) => {
-			if (currentTime + start >= state.time) {
+			if (currentTime + start <= state.time) {
 				audioCb(state);
 				this.removeAudioTick(onAudioTick);
 			}
@@ -284,5 +298,34 @@ export class TempoTimer extends AudioClockTimer {
 			this.onTick(onEnd);
 		}
 		this.onAudioTick(onAudioTick);
+	}
+
+	loop(time: { start: number; duration?: number }, cb: TickCallback, audioCb: AudioTickCallback) {
+		const start = this.convert(time.start, 'note', 'second');
+		const duration = time.duration ? this.convert(time.duration, 'note', 'second') : -1;
+
+		let currentTime = this.currentTime;
+		let tickSchedule = currentTime + start;
+		let audioTickSchedule = currentTime + start;
+		const onStart: TickCallback = (state) => {
+			while (tickSchedule <= state.time) {
+				cb(state);
+				tickSchedule += duration;
+			}
+		};
+		const onAudioTick: AudioTickCallback = (state) => {
+			if (audioTickSchedule <= state.time) {
+				audioCb(state);
+				audioTickSchedule += duration;
+			}
+		};
+		const stop = () => {
+			this.removeAudioTick(onAudioTick);
+			this.removeTick(onStart);
+		};
+
+		this.onTick(onStart);
+		this.onAudioTick(onAudioTick);
+		return stop;
 	}
 }

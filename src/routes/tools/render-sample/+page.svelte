@@ -11,9 +11,10 @@
 	import RandomBoxOptions from '$/lib/practice/RandomBox/RandomBoxOptions.svelte';
 	import { getRandomBoxContext } from '$/lib/practice/RandomBox/context';
 	import type { PracticeBoard, PracticeScore } from '$/lib/practice/types';
-	import { getPitchFromFingerPosition } from '$/utils/music/pitch';
+	import { getPitchFromFingerPosition, numberingPitch } from '$/utils/music/pitch';
 	import { onDestroy, onMount } from 'svelte';
 	import { practice } from './data';
+	import { Soundfont, CacheStorage } from 'smplr';
 
 	const metronome = getMetronomeContext();
 	const randomBox = getRandomBoxContext<(typeof practice.scores)[number]>();
@@ -25,10 +26,19 @@
 	function replaceScore() {
 		let score = randomBox.open();
 		const schedule = () => {
-			scheduleScore(score);
-			timer.removeTick(schedule);
+			if (!guitarSoundfont) {
+				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
+					instrument: 'acoustic_guitar_steel',
+					storage: new CacheStorage()
+				});
+			}
+			// preload soundfont
+			guitarSoundfont.load.then(() => {
+				metronome.schedule();
+				scheduleScore(score);
+			});
 		};
-		timer.onTick(schedule);
+		timer.onStart(schedule);
 		return score;
 	}
 
@@ -46,6 +56,9 @@
 		};
 	}) as FingerInfo[];
 
+	let guitarSoundfont: Soundfont | null = null;
+
+	let previousTime = 0;
 	function scheduleScore(score: PracticeScore) {
 		/** Now scheduling */
 
@@ -57,7 +70,11 @@
 					currentActiveFingers.clear();
 					currentBoard = board;
 				},
-				({ audioCtx }) => {}
+				({ audioCtx }) => {
+					// guitarSoundfont!!.start({
+					// 	note: 50 + 12
+					// });
+				}
 			);
 		});
 
@@ -69,6 +86,7 @@
 			);
 			return { ...note, pitch };
 		});
+
 		for (let i = 0; i < notes.length; i++) {
 			const note = notes[i];
 			const nextThreeFingers = notes.slice(i + 1, i + 4).map((n) => n.position);
@@ -83,8 +101,17 @@
 						currentActiveFingers = currentActiveFingers;
 					};
 				},
-				({ audioCtx }) => {
+				({ audioCtx, time }) => {
 					// play audio with pitch
+					if (note.pitch) {
+						guitarSoundfont!!.start({
+							note: numberingPitch(note.pitch) + 12,
+							time: time,
+							duration: note.time.duration
+								? timer.convert(note.time.duration, 'note', 'second')
+								: note.time.duration
+						});
+					}
 				}
 			);
 		}
