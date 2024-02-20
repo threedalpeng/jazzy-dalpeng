@@ -34,11 +34,11 @@
 			}
 			// preload soundfont
 			guitarSoundfont.load.then(() => {
+				metronome.schedule();
 				scheduleScore(score);
 			});
-			timer.removeTick(schedule);
 		};
-		timer.onTick(schedule);
+		timer.onStart(schedule);
 		return score;
 	}
 
