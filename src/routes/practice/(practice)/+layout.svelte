@@ -5,11 +5,6 @@
 	import type { LayoutData } from './$types';
 
 	export let data: LayoutData;
-	$: console.log(data);
-	let currentCategoryName: 'core' | 'custom' = 'core';
-	let currentPageIndex = 0;
-	$: currentCategoryRoutes = data.routes[currentCategoryName] ?? [];
-	$: currentPage = currentCategoryRoutes[currentPageIndex];
 
 	let practiceListOpen: boolean = false;
 </script>
@@ -23,38 +18,38 @@
 	</div>
 	<nav class="relative h-[60px] w-screen">
 		<div class="flex h-full flex-row items-center justify-between">
-			{#if currentPageIndex >= 1}
-				{@const previousPage = currentCategoryRoutes[currentPageIndex - 1]}
+			{#if data.pages.previous}
 				<a
-					href={`${base}/practice/${currentCategoryName}/${previousPage.slug}`}
-					on:click={() => currentPageIndex--}
-					class="color-indigo-4 hover:color-indigo-6 active:color-indigo-8 mr-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
+					href={`${base}/practice/${data.category}/${data.pages.previous.slug}`}
+					class="mr-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 text-indigo-400 transition duration-200 hover:text-indigo-600 active:text-indigo-800"
 				>
 					<Icon class="h-[30px] w-auto" src={ChevronLeft} theme="solid" />
-					<span class="color-black invisible whitespace-nowrap lg:visible"
-						>{previousPage.title}</span
+					<span
+						class="invisible whitespace-nowrap text-black hover:text-indigo-600 active:text-indigo-800 lg:visible"
+						>{data.pages.previous.title}</span
 					>
 				</a>
 			{:else}
 				<div
-					class="color-gray mr-8 flex h-full select-none flex-row items-center gap-4 transition duration-200"
+					class="mr-8 flex h-full select-none flex-row items-center gap-4 text-gray-300 transition duration-200"
 				>
 					<Icon class="h-[30px] w-auto" src={ChevronLeft} theme="solid" />
 				</div>
 			{/if}
-			{#if currentPageIndex < currentCategoryRoutes.length - 1}
-				{@const nextPage = currentCategoryRoutes[currentPageIndex + 1]}
+			{#if data.pages.next}
 				<a
-					href={`${base}/practice/${currentCategoryName}/${nextPage.slug}`}
-					on:click={() => currentPageIndex++}
-					class="color-indigo-400 hover:color-indigo-600 active:color-indigo-800 ml-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 transition duration-200"
+					href={`${base}/practice/${data.category}/${data.pages.next.slug}`}
+					class="ml-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 text-indigo-400 transition duration-200 hover:text-indigo-600 active:text-indigo-800"
 				>
-					<span class="color-black invisible whitespace-nowrap lg:visible">{nextPage.title}</span>
+					<span
+						class="invisible whitespace-nowrap text-black hover:text-indigo-600 active:text-indigo-800 lg:visible"
+						>{data.pages.next.title}</span
+					>
 					<Icon class="h-[30px] w-auto" src={ChevronRight} theme="solid" />
 				</a>
 			{:else}
 				<div
-					class="color-gray ml-8 flex h-full select-none flex-row items-center gap-4 transition duration-200"
+					class="ml-8 flex h-full select-none flex-row items-center gap-4 text-gray-300 transition duration-200"
 				>
 					<Icon class="h-[30px] w-auto" src={ChevronRight} theme="solid" />
 				</div>
@@ -74,9 +69,9 @@
 					<div
 						class="absolute bottom-full left-1/2 max-h-80 w-80 -translate-x-1/2 -translate-y-[1rem] rounded bg-gray-500 p-4"
 					>
-						{#each currentCategoryRoutes as route}
+						{#each data.routes[data.category] as route}
 							<div class="text-start">
-								<a href={`${base}/practice/${currentCategoryName}/${route.slug}`}>
+								<a href={`${base}/practice/${data.category}/${route.slug}`}>
 									{route.title}
 								</a>
 							</div>
@@ -84,7 +79,7 @@
 					</div>
 				{/if}
 			</div>
-			<p class="whitespace-nowrap">{currentPage.title}</p>
+			<p class="whitespace-nowrap">{data.pages.current.title}</p>
 		</button>
 	</nav>
 </div>

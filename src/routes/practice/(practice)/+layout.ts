@@ -1,40 +1,13 @@
-import { redirect } from '@sveltejs/kit';
-import type { LayoutLoad } from '../$types';
 import { base } from '$app/paths';
-
-interface PracticeData {
-	title: string;
-	slug: string;
-	practice: object;
-}
-
-interface PracticeRoutes {
-	core: PracticeData[];
-	custom: PracticeData[];
-}
+import { redirect } from '@sveltejs/kit';
+import { routes, type PracticeRoute, type PracticeRouteCategory } from '../data';
+import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = (data) => {
-	const routes: PracticeRoutes = {
-		core: [
-			{
-				title: 'ABC',
-				slug: 'abc',
-				practice: {}
-			},
-			{
-				title: 'ANC',
-				slug: 'sdfwe',
-				practice: {}
-			}
-		],
-		custom: []
-	};
-
 	const { category, slug } = data.params;
 
-	console.log(category, slug);
 	if (category !== 'core' && category !== 'custom') {
-		redirect(303, `${base}/practice/core/${routes['core'][0].slug}`);
+		redirect(303, `${base}/practice`);
 	}
 
 	const currentCategoryRoutes = routes[category];
@@ -44,9 +17,9 @@ export const load: LayoutLoad = (data) => {
 	}
 
 	const pages: {
-		previous?: PracticeData;
-		current: PracticeData;
-		next?: PracticeData;
+		previous?: PracticeRoute;
+		current: PracticeRoute;
+		next?: PracticeRoute;
 	} = {
 		previous: currentPageIndex - 1 >= 0 ? currentCategoryRoutes[currentPageIndex - 1] : undefined,
 		current: currentCategoryRoutes[currentPageIndex],
@@ -56,5 +29,5 @@ export const load: LayoutLoad = (data) => {
 				: undefined
 	};
 
-	return { routes, category, pages };
+	return { routes, category: category as PracticeRouteCategory, pages };
 };
