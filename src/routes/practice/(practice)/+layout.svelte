@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { clickoutside } from '$/utils/hooks/click-outside';
 	import { base } from '$app/paths';
 	import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
@@ -59,7 +60,11 @@
 			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
 			on:click={() => (practiceListOpen = !practiceListOpen)}
 		>
-			<div class="absolute -top-[30px] left-[50%] h-[40px] w-auto -translate-x-[50%]">
+			<div
+				use:clickoutside
+				on:clickoutside={() => (practiceListOpen = false)}
+				class="absolute -top-[30px] left-[50%] h-[40px] w-auto -translate-x-[50%]"
+			>
 				<Icon
 					class="opacity-25% hover:opacity-100% h-[20px] w-auto cursor-pointer transition-opacity"
 					src={practiceListOpen ? ChevronDown : ChevronUp}
