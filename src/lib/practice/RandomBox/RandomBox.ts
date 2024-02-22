@@ -12,6 +12,7 @@ export class RandomBox<T> {
 		this.init();
 	}
 	init() {
+		this.#indexSelected = -1;
 		this.#remains = new Set(new Array(this.#items.length).keys());
 	}
 
@@ -25,6 +26,15 @@ export class RandomBox<T> {
 	}
 
 	#items: T[] = [];
+	get items() {
+		return this.#items;
+	}
+	set items(value: T[]) {
+		console.log(value);
+		this.#items = value;
+		this.init();
+	}
+
 	#indexSelected: number = -1;
 	#remains: Set<number> = new Set<number>();
 	get remains() {
