@@ -1,4 +1,4 @@
-class MultiMap<K, V> extends Map {
+export class MultiMap<K, V> extends Map {
 	clear(): void {
 		super.clear();
 	}
