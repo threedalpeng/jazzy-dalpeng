@@ -1,7 +1,7 @@
 import { MultiMap } from '$/utils/multimap';
 import type { WithCleanup } from '$/utils/types';
 import type { ScoreTimestamp } from '../practice/types';
-import { TickEvent } from './event';
+import { TickEvent, type TickEventCallbacks, type TickEventOption } from './event';
 import TimerWorker from './timer-worker?worker';
 
 export interface TickState {
@@ -58,12 +58,14 @@ export class AudioClockTimer {
 			this.audioCtx.resume();
 			this.#tickPassed = 0;
 		}
-		if (!this.#isRunning) {
-			this.#isRunning = true;
-			// delay initial lookhead
-			this.#nextTickOnSecond = this.audioCtx.currentTime + 0.1;
-			this.lookaheadTimer.postMessage('start');
-			this.#startCallbacks.forEach((cb) => cb());
+		if (!this.#isRunning && this.audioCtx.state === 'running') {
+			Promise.all([...this.#beforeStartCallbacks].map((cb) => cb())).then(() => {
+				this.#isRunning = true;
+				// delay initial lookhead
+				this.#nextTickOnSecond = this.audioCtx!!.currentTime + 0.1;
+				this.lookaheadTimer.postMessage('start');
+				this.#startCallbacks.forEach((cb) => cb());
+			});
 		}
 	}
 
@@ -83,8 +85,8 @@ export class AudioClockTimer {
 			if (scheduleIdList) {
 				scheduleIdList.forEach((id) => {
 					const event = this.#events.get(id);
-					if (event && event.audioCb) {
-						event.audioCb(audioState);
+					if (event && event.audio) {
+						event.audio(audioState);
 					}
 				});
 			}
@@ -96,8 +98,8 @@ export class AudioClockTimer {
 						event.start <= this.#tickPassed &&
 						(this.#tickPassed - event.start) % event.interval === 0
 					) {
-						if (event.audioCb) {
-							event.audioCb(audioState);
+						if (event.audio) {
+							event.audio(audioState);
 						}
 					}
 				}
@@ -114,12 +116,24 @@ export class AudioClockTimer {
 			let tickState = this.#tickQueue[0];
 			while (tickState !== undefined && tickState.time <= currentTime) {
 				this.#tickQueue.shift();
-				const scheduleIdList = this.#schedules.getAll(this.#tickPassed);
+
+				const cleanupIdList = this.#cleanupSchedules.getAll(tickState.tickPassed);
+				if (cleanupIdList) {
+					console.log(cleanupIdList);
+					cleanupIdList.forEach((id) => {
+						const event = this.#events.get(id);
+						if (event && event.cleanup) {
+							event.cleanup(tickState);
+						}
+					});
+				}
+
+				const scheduleIdList = this.#schedules.getAll(tickState.tickPassed);
 				if (scheduleIdList !== undefined) {
 					scheduleIdList.forEach((id) => {
 						const event = this.#events.get(id);
-						if (event && event.cb) {
-							event.cb(tickState);
+						if (event && event.animation) {
+							event.animation(tickState);
 						}
 					});
 				}
@@ -131,8 +145,8 @@ export class AudioClockTimer {
 							event.start <= tickState.tickPassed &&
 							(tickState.tickPassed - event.start) % event.interval === 0
 						) {
-							if (event.cb) {
-								event.cb(tickState);
+							if (event.animation) {
+								event.animation(tickState);
 							}
 						}
 					}
@@ -143,6 +157,14 @@ export class AudioClockTimer {
 		window.requestAnimationFrame(this.#onAnimationFrame.bind(this));
 	}
 
+	#beforeStartCallbacks: Set<() => Promise<any>> = new Set();
+	beforeStart(cb: () => Promise<any>) {
+		this.#beforeStartCallbacks.add(cb);
+		return () => this.removeStart(cb);
+	}
+	removeBeforeStart(cb: () => Promise<any>) {
+		this.#beforeStartCallbacks.delete(cb);
+	}
 	#startCallbacks: Set<() => any> = new Set();
 	onStart(cb: () => any) {
 		this.#startCallbacks.add(cb);
@@ -161,10 +183,14 @@ export class AudioClockTimer {
 	}
 
 	#schedules: MultiMap<number, number> = new MultiMap();
+	#cleanupSchedules: MultiMap<number, number> = new MultiMap();
 	#events: Map<number, TickEvent> = new Map();
 	schedule(event: TickEvent) {
 		this.#events.set(event.id, event);
 		this.#schedules.set(event.start, event.id);
+		if (event.duration) {
+			this.#cleanupSchedules.set(event.start + event.duration, event.id);
+		}
 		return event.id;
 	}
 
@@ -183,6 +209,14 @@ export class AudioClockTimer {
 			if (schedulesOnTick) {
 				const idx = schedulesOnTick.indexOf(eventId);
 				if (idx >= 0) schedulesOnTick.splice(idx, 1);
+			}
+
+			if (event.duration) {
+				const cleanupSchedulesOnTick = this.#cleanupSchedules.getAll(event.start + event.duration);
+				if (cleanupSchedulesOnTick) {
+					const idx = cleanupSchedulesOnTick.indexOf(eventId);
+					if (idx >= 0) cleanupSchedulesOnTick.splice(idx, 1);
+				}
 			}
 		}
 	}
@@ -219,8 +253,8 @@ export class AudioClockTimer {
 type TimeUnit = 'tick' | 'note' | 'beat' | 'bar' | 'second' | 'millisecond';
 export interface TempoSchedule {
 	time: ScoreTimestamp;
-	cb?: WithCleanup<TickCallback>;
-	audioCb?: AudioTickCallback;
+	animation?: WithCleanup<TickCallback>;
+	audio?: AudioTickCallback;
 }
 export interface TempoState {
 	bpm: number;
@@ -353,33 +387,39 @@ export class TempoTimer extends AudioClockTimer {
 		this.#tempoChangedCallbacks.delete(cb);
 	}
 
-	scheduleOnTempo({ time, cb, audioCb }: TempoSchedule): number {
+	scheduleOnTempo({ time, animation, audio }: TempoSchedule): number {
 		const start = this.convert(time.start, 'note', 'tick');
 		const duration = time.duration ? this.convert(time.duration, 'note', 'tick') : undefined;
 		const interval = time.interval ? this.convert(time.interval, 'note', 'tick') : undefined;
 
+		const callbacks: Partial<TickEventCallbacks> = {
+			animation: animation
+				? (state) => {
+						callbacks.cleanup = animation(state) ?? undefined;
+					}
+				: undefined,
+			audio
+		};
+
 		return this.schedule(
 			new TickEvent({
-				start,
-				duration,
-				interval,
-				cb,
-				audioCb
+				time: { start, duration, interval },
+				callbacks
 			})
 		);
 	}
-	scheduleLoopOnTempo({ time, cb, audioCb }: TempoSchedule): number {
+	scheduleLoopOnTempo({ time, animation, audio }: TempoSchedule): number {
 		const start = this.convert(time.start, 'note', 'tick');
 		const duration = time.duration ? this.convert(time.duration, 'note', 'tick') : undefined;
 		const interval = time.interval ? this.convert(time.interval, 'note', 'tick') : undefined;
 
 		return this.scheduleLoop(
 			new TickEvent({
-				start,
-				duration,
-				interval,
-				cb,
-				audioCb
+				time: { start, duration, interval },
+				callbacks: {
+					animation,
+					audio
+				}
 			})
 		);
 	}

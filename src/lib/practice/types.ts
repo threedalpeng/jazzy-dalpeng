@@ -9,6 +9,7 @@ export interface Tempo {
 export interface ScoreTimestamp {
 	start: number;
 	duration?: number;
+	interval?: number;
 }
 
 export interface PracticeNote {

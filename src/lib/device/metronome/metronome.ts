@@ -36,8 +36,8 @@ class Metronome {
 			this.#isScheduled = true;
 			this.#timer.scheduleLoopOnTempo({
 				time: { start: 0, interval: this.#notesPerBeat },
-				cb: this.#onTick.bind(this),
-				audioCb: this.#scheduleAudio.bind(this)
+				animation: this.#onTick.bind(this),
+				audio: this.#scheduleAudio.bind(this)
 			});
 			return this.removeSchedule.bind(this);
 		}

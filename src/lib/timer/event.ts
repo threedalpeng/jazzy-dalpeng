@@ -1,12 +1,17 @@
+import type { ScoreTimestamp } from '../practice/types';
 import { MAX_TICK_SIZE } from './constant';
 import { type AudioTickCallback, type TickCallback } from './tick';
 
+export type TickTimestamp = ScoreTimestamp;
+export interface TickEventCallbacks {
+	audio: AudioTickCallback;
+	animation: TickCallback;
+	cleanup: TickCallback;
+}
+
 export interface TickEventOption {
-	start: number;
-	interval?: number;
-	duration?: number;
-	audioCb?: AudioTickCallback;
-	cb?: TickCallback;
+	time: TickTimestamp;
+	callbacks?: Partial<TickEventCallbacks>;
 }
 
 export class TickEvent {
@@ -20,41 +25,42 @@ export class TickEvent {
 		return this.#id;
 	}
 
-	#start: number;
+	#time: TickTimestamp;
+
 	get start() {
-		return this.#start;
+		return this.#time.start;
 	}
 
-	#interval?: number;
 	get interval() {
-		return this.#interval;
+		return this.#time.interval;
 	}
 
-	#duration?: number;
 	get duration() {
-		return this.#duration;
+		return this.#time.duration;
 	}
 
-	#cb?: TickCallback;
-	get cb() {
-		return this.#cb;
+	#callbacks?: Partial<TickEventCallbacks>;
+	get callbacks() {
+		return this.#callbacks;
 	}
-	#audioCb: AudioTickCallback | undefined;
-	get audioCb() {
-		return this.#audioCb;
+	get animation() {
+		return this.#callbacks?.animation;
 	}
-	constructor({ start, interval, duration, audioCb, cb }: TickEventOption) {
-		if (start < 0 || MAX_TICK_SIZE <= start) {
+	get cleanup() {
+		return this.#callbacks?.cleanup;
+	}
+	get audio() {
+		return this.#callbacks?.audio;
+	}
+	constructor({ time, callbacks }: TickEventOption) {
+		if (time.start < 0 || MAX_TICK_SIZE <= time.start + (time.duration ?? 0)) {
 			throw RangeError('tick out of range');
 		}
-		if (!audioCb && !cb) {
-			throw TypeError('either audioCb or cb should be defined');
+		if (!callbacks?.audio && !callbacks?.animation) {
+			throw TypeError('either audio or animation callback should be defined');
 		}
 		this.#id = TickEvent.#nextId;
-		this.#start = start;
-		this.#interval = interval;
-		this.#duration = duration;
-		this.#audioCb = audioCb;
-		this.#cb = cb;
+		this.#time = time;
+		this.#callbacks = callbacks;
 	}
 }
