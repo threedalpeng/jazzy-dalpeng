@@ -30,7 +30,6 @@ export class RandomBox<T> {
 		return this.#items;
 	}
 	set items(value: T[]) {
-		console.log(value);
 		this.#items = value;
 		this.init();
 	}

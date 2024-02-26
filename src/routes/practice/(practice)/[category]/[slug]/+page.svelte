@@ -1,9 +1,7 @@
 <script lang="ts">
 	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
 	import MetronomeOptions from '$/lib/device/metronome/MetronomeOptions.svelte';
-	import MetronomePlayButton from '$/lib/device/metronome/MetronomePlayButton.svelte';
 	import { getMetronomeContext } from '$/lib/device/metronome/context';
-	import type { OnBarCallback, OnOptionChangeCallback } from '$/lib/device/metronome/metronome';
 	import FingerBoard, {
 		type FingerInfo,
 		type FingerPosition
@@ -12,8 +10,8 @@
 	import { getRandomBoxContext } from '$/lib/practice/RandomBox/context';
 	import type { PracticeScore } from '$/lib/practice/types';
 	import { getPitchFromFingerPosition, numberingPitch } from '$/utils/music/pitch';
+	import MetronomePlayButton from '$lib/device/metronome/MetronomePlayButton.svelte';
 	import { CacheStorage, Soundfont } from 'smplr';
-	import { onDestroy, onMount } from 'svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -23,39 +21,15 @@
 	const randomBox = getRandomBoxContext<PracticeScore>();
 
 	const timer = metronome.timer;
-	$: score = replaceScore();
-	$: fretRange = score.fretRange;
-	$: practice, (score = replaceScore());
-	$: console.log(score);
-	let isRunning: boolean = metronome.isRunning;
-
-	function replaceScore() {
-		let score = randomBox.open();
-		const schedule = () => {
-			if (!guitarSoundfont) {
-				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
-					instrument: 'acoustic_guitar_steel',
-					storage: new CacheStorage()
-				});
-			}
-			// preload soundfont
-			guitarSoundfont.load.then(() => {
-				metronome.clearSchedule();
-				metronome.schedule();
-				scheduleScore(score);
-			});
-		};
-		timer.onStart(schedule);
-		return score;
-	}
-
-	$: currentBoard = score.boards[0];
+	$: currentScore = practice.scores[0];
+	$: fretRange = currentScore.fretRange;
+	$: currentBoard = currentScore.boards[0];
 	let currentActiveFingers = new Set<number>();
 	let nextNotes: number[] = [];
 	$: fingers = (currentBoard?.fingers ?? []).map((finger) => {
 		const order = nextNotes.findIndex((f) => f === finger);
 		return {
-			position: score.positions[finger],
+			position: currentScore.positions[finger],
 			style: {
 				color: currentActiveFingers.has(finger) ? 'red' : undefined
 				// scale: currentActiveFingers.has(finger) ? 1 : order >= 0 ? (4 - order) / 4 : 0.5
@@ -65,23 +39,47 @@
 
 	let guitarSoundfont: Soundfont | null = null;
 
+	$: practice,
+		(() => {
+			currentScore = replaceScore();
+		})();
+	function replaceScore() {
+		let score = randomBox.open();
+		const cancel = timer.beforeStart(async () => {
+			if (!guitarSoundfont) {
+				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
+					instrument: 'acoustic_guitar_steel',
+					storage: new CacheStorage()
+				});
+			}
+			// preload soundfont
+			guitarSoundfont.load.then(() => {
+				console.count('afterload');
+				currentScheduleIdList.forEach((id) => {
+					timer.cancelSchedule(id);
+				});
+				scheduleScore(score);
+				cancel();
+			});
+		});
+		return score;
+	}
+
+	let currentScheduleIdList: number[] = [];
 	function scheduleScore(score: PracticeScore) {
 		/** Now scheduling */
 
 		// 1. board replacement
 		score.boards.map((board) => {
-			timer.onTimeAfter(
-				board.time,
-				() => {
+			const boardScheduleId = timer.scheduleOnTempo({
+				time: board.time,
+				animation: () => {
+					console.log('replace board');
 					currentActiveFingers.clear();
 					currentBoard = board;
-				},
-				({ audioCtx }) => {
-					// guitarSoundfont!!.start({
-					// 	note: 50 + 12
-					// });
 				}
-			);
+			});
+			currentScheduleIdList.push(boardScheduleId);
 		});
 
 		// 2. notes
@@ -96,18 +94,19 @@
 		for (let i = 0; i < notes.length; i++) {
 			const note = notes[i];
 			const nextThreeFingers = notes.slice(i + 1, i + 4).map((n) => n.position);
-			timer.onTimeAfter(
-				note.time,
-				() => {
+			const noteScheduleId = timer.scheduleOnTempo({
+				time: note.time,
+				animation: () => {
 					currentActiveFingers.add(note.position);
 					currentActiveFingers = currentActiveFingers;
 					nextNotes = nextThreeFingers;
 					return () => {
+						console.log('?');
 						currentActiveFingers.delete(note.position);
 						currentActiveFingers = currentActiveFingers;
 					};
 				},
-				({ audioCtx, time }) => {
+				audio: ({ audioCtx, time }) => {
 					// play audio with pitch
 					if (note.pitch) {
 						guitarSoundfont!!.start({
@@ -119,26 +118,10 @@
 						});
 					}
 				}
-			);
+			});
+			currentScheduleIdList.push(noteScheduleId);
 		}
 	}
-
-	onMount(() => {
-		metronome.onBar(onMetronomeBar);
-		metronome.onOptionChange(onMetronomeOptionChange);
-	});
-
-	onDestroy(() => {
-		metronome.removeBar(onMetronomeBar);
-		metronome.removeOptionChange(onMetronomeOptionChange);
-	});
-
-	const onMetronomeBar: OnBarCallback = () => {
-		// score = replaceScore();
-	};
-	const onMetronomeOptionChange: OnOptionChangeCallback = ({ bpm }) => {
-		// timer.tickIntervalMs = calcTickIntervalMs(bpm);
-	};
 </script>
 
 <div class="h-full w-screen">
