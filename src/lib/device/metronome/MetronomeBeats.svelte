@@ -15,7 +15,7 @@
 
 <div
 	{...$$restProps}
-	class="{$$props.class} relative flex w-5/6 flex-row flex-wrap items-center justify-center gap-[40px]"
+	class="{$$props.class} relative flex w-screen flex-row flex-wrap items-center justify-center gap-[40px]"
 >
 	{#each new Array(beatPerBar) as _, i}
 		{#if i === 0}

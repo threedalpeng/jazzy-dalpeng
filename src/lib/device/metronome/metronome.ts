@@ -127,6 +127,7 @@ class Metronome {
 	}
 
 	destroy() {
+		this.removeSchedule();
 		this.clearDerivedSchedule();
 	}
 }
