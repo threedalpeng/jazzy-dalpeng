@@ -119,7 +119,6 @@ export class AudioClockTimer {
 
 				const cleanupIdList = this.#cleanupSchedules.getAll(tickState.tickPassed);
 				if (cleanupIdList) {
-					console.log(cleanupIdList);
 					cleanupIdList.forEach((id) => {
 						const event = this.#events.get(id);
 						if (event && event.cleanup) {

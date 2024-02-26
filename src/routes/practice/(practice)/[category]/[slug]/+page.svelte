@@ -54,7 +54,6 @@
 			}
 			// preload soundfont
 			guitarSoundfont.load.then(() => {
-				console.count('afterload');
 				currentScheduleIdList.forEach((id) => {
 					timer.cancelSchedule(id);
 				});
@@ -74,7 +73,6 @@
 			const boardScheduleId = timer.scheduleOnTempo({
 				time: board.time,
 				animation: () => {
-					console.log('replace board');
 					currentActiveFingers.clear();
 					currentBoard = board;
 				}
@@ -101,7 +99,6 @@
 					currentActiveFingers = currentActiveFingers;
 					nextNotes = nextThreeFingers;
 					return () => {
-						console.log('?');
 						currentActiveFingers.delete(note.position);
 						currentActiveFingers = currentActiveFingers;
 					};
@@ -133,7 +130,9 @@
 			</div>
 		</div>
 		<div class="relative flex h-full flex-col items-center justify-center">
-			<FingerBoard class="" readonly {fingers} {fretRange}></FingerBoard>
+			<button on:click={replaceScore}>
+				<FingerBoard class="max-w-[100vw]" readonly {fingers} {fretRange}></FingerBoard>
+			</button>
 			<MetronomeBeats class="p-20" />
 			<MetronomePlayButton class="h-20" />
 		</div>

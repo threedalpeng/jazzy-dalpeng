@@ -38,7 +38,7 @@
 				min={20}
 			/>
 		</div>
-		<div class="tooltip tooltip-right min-h-0" data-tip="Only last 5 taps will be calculated">
+		<div class="tooltip tooltip-bottom min-h-0" data-tip="Only last 5 taps will be calculated">
 			<button
 				class="btn btn-square btn-primary aspect-square h-10 min-h-0 p-0"
 				on:click={(e) => {

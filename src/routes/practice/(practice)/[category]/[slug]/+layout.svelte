@@ -12,8 +12,6 @@
 		timer.beatPerBar = practice.tempo.beatPerBar;
 		timer.signatureUnit = practice.tempo.signatureUnit;
 	}
-
-	console.log(timer);
 </script>
 
 <MetronomeProvider {timer}>
