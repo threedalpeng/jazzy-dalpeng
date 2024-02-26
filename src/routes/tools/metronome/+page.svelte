@@ -4,10 +4,22 @@
 	import { getMetronomeContext } from '$/lib/device/metronome/context';
 	import { Play, Stop } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
+	import { onDestroy } from 'svelte';
 
 	const metronome = getMetronomeContext();
+	metronome.schedule();
 
-	let isRunning: boolean = metronome.isRunning;
+	let isRunning = false;
+	const cancelStart = metronome.timer.onStart(() => {
+		isRunning = true;
+	});
+	const cancelStop = metronome.timer.onStop(() => {
+		isRunning = false;
+	});
+	onDestroy(() => {
+		cancelStart();
+		cancelStop();
+	});
 </script>
 
 <div class="h-full w-screen">
@@ -19,8 +31,7 @@
 			<button
 				class="mr-8 flex aspect-square h-3/4 items-center justify-center rounded-full bg-indigo-900 p-0 focus:outline-none"
 				on:click={() => {
-					metronome.toggle();
-					isRunning = metronome.isRunning;
+					metronome.timer.toggle();
 				}}
 			>
 				{#if isRunning}
