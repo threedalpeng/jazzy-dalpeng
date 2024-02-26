@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { getChordNotations, type ChordRoot } from '$/utils/music/chords';
+	import { type ChordRoot } from '$/utils/music/chords';
+	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
+	import { chordRootToFinaleJazzChordSignMap } from './chord/chord-map';
 
 	export let note: ChordRoot;
 	export let octave: number;
 
-	$: chordNotations = getChordNotations(note, 'none');
+	$: chordNotation = stringifyFinaleJazzChordSigns(chordRootToFinaleJazzChordSignMap[note]);
 </script>
 
-<span class="font-chord">{chordNotations.default.short}</span><span class="font-jazz">{octave}</span
->
+<span class="font-chord">{chordNotation}</span><span class="font-jazz">{octave}</span>
