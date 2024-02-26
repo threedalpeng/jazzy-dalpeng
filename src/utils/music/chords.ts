@@ -45,12 +45,10 @@ export function identifyChordsFromPitches(pitches: Pitch[]) {
 	const numberedNotes = [
 		...new Set(pitches.map((pitch) => ((numberingPitch(pitch) % 12) + 12) % 12))
 	].toSorted();
-	console.log(numberedNotes);
 	for (const root of numberedNotes) {
 		const intervals = new Set(
 			numberedNotes.map((n) => (n >= root ? n - root : n - root + 12)).filter((n) => n !== 0)
 		);
-		console.log([...intervals]);
 		identifiedChords.push(identifyChordFromIntervals(bassNumber, root, intervals));
 	}
 	identifiedChords.sort(
@@ -103,7 +101,6 @@ function identifyChordFromIntervals(
 
 	// now we found 3rd! it's very critical to determine its quality
 	if (third !== bassInterval) {
-		console.log(third, bassInterval);
 		intervals.delete(bassInterval);
 		intervals.delete(bassInterval + 12);
 	}

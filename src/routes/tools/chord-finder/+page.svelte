@@ -14,11 +14,13 @@
 </script>
 
 <div class="h-full w-screen">
-	<Board
-		fingers={Object.values(fingers)}
-		on:click={({ detail: { fret, line } }) => {
-			updateFingerPosition({ fret, line });
-		}}
-	></Board>
+	<div class="relative flex h-full flex-col items-center">
+		<Board
+			fingers={Object.values(fingers)}
+			on:click={({ detail: { fret, line } }) => {
+				updateFingerPosition({ fret, line });
+			}}
+		></Board>
+	</div>
 	<!-- <MetronomeProvider><RandomBox {components} /></MetronomeProvider> -->
 </div>
