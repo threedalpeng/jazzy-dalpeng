@@ -6,6 +6,9 @@
 	export let items: T[] = [];
 
 	const randomBox = setRandomBoxContext(new RandomBox<T>(items));
+	$: randomBox.items = items;
+
+	console.log(randomBox);
 
 	onDestroy(() => {
 		randomBox.destroy();

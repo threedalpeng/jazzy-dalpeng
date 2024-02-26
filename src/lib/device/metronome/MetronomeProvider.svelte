@@ -1,12 +1,11 @@
 <script lang="ts">
+	import { TempoTimer } from '$/lib/timer/tick';
 	import { onDestroy } from 'svelte';
 	import { setMetronomeContext } from './context';
 
-	export let beatPerBar = 4;
-	export let signatureUnit = 4;
-	export let bpm = 120;
+	export let timer: TempoTimer | undefined;
 
-	const metronome = setMetronomeContext({ beatPerBar, bpm, signatureUnit });
+	const metronome = setMetronomeContext(timer);
 
 	onDestroy(() => {
 		metronome.destroy();

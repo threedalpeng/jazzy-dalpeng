@@ -3,14 +3,19 @@
 	import { getMetronomeContext } from './context';
 
 	const metronome = getMetronomeContext();
-	export let bpm = metronome.bpm;
-	export let beatPerBar = metronome.beatPerBar;
+	export let bpm = metronome.timer.bpm;
+	export let beatPerBar = metronome.timer.beatPerBar;
+
+	metronome.timer.onTempoChanged((state) => {
+		bpm = state.bpm;
+		beatPerBar = state.beatPerBar;
+	});
 
 	let lastTapTimestamp = -1;
 	let tapIntervalStore: number[] = [];
 
-	$: metronome.bpm = bpm;
-	$: metronome.beatPerBar = beatPerBar;
+	$: metronome.timer.bpm = bpm;
+	$: metronome.timer.beatPerBar = beatPerBar;
 </script>
 
 <div class="flex h-full flex-col items-start justify-between">

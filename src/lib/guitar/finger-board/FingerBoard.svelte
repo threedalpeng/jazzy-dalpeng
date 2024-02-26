@@ -60,7 +60,8 @@
 		end: 12,
 		visibility: 'start'
 	};
-	let range = Object.assign(
+
+	$: range = Object.assign(
 		{
 			start: 0,
 			end: 12,
