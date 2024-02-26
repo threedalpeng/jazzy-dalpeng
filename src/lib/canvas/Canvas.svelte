@@ -10,9 +10,16 @@
 <canvas
 	bind:this={canvas}
 	{...$$restProps}
-	class="{$$props.class} object-contain object-center"
+	class="{$$props.class ?? ''} object-contain object-center"
 	{width}
 	{height}
+	on:pointermove
+	on:pointerdown
+	on:pointerup
+	on:pointerenter
+	on:pointerleave
+	on:pointerout
+	on:pointerover
 />
 {#if canvas}
 	<slot />
