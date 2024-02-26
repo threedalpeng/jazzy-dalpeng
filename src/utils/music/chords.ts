@@ -13,6 +13,25 @@ export type ChordName =
 	| 'diminishedSeventh'
 	| 'none';
 
+export type ChordThirdTonePitch = 2 | 3 | 4 | 5;
+export type ChordFifthTonePitch = 6 | 7 | 8;
+/** -1 means that there are both 7th and major 7th */
+export type ChordSeventhTonePitch = 8 | 9 | 10 | 11 | -1;
+export type ChordTensionPitch = 13 | 14 | 15 | 17 | 18 | 20 | 21;
+export type ChordDetail = {
+	tones: {
+		third: ChordThirdTonePitch | null;
+		fifth: ChordFifthTonePitch | null;
+		seventh: ChordSeventhTonePitch | null;
+		tensions: ChordTensionPitch[];
+	};
+	symbols: {
+		root: number;
+		quality: ChordQuality;
+		extension: ChordExtension | null;
+	};
+};
+
 export function identifyChordsFromPitches(pitches: Pitch[]) {
 	if (pitches.length === 0) {
 		return null;
@@ -34,10 +53,17 @@ export function identifyChordsFromPitches(pitches: Pitch[]) {
 		console.log([...intervals]);
 		identifiedChords.push(identifyChordFromIntervals(bassNumber, root, intervals));
 	}
-	return { chords: identifiedChords, bass: bass };
+	identifiedChords.sort(
+		(a, b) => scoreChordComplexity(a, bassNumber) - scoreChordComplexity(b, bassNumber)
+	);
+	return { chords: identifiedChords, bass: bassNumber };
 }
 
-function identifyChordFromIntervals(bass: number, root: number, intervals: Set<number>) {
+function identifyChordFromIntervals(
+	bass: number,
+	root: number,
+	intervals: Set<number>
+): ChordDetail {
 	const bassInterval = bass >= root ? bass - root : bass - root + 12;
 	/**
 	 * chord tones
@@ -47,10 +73,10 @@ function identifyChordFromIntervals(bass: number, root: number, intervals: Set<n
 	 *            6th can be tensions but 7th cannot.
 	 * - tensions: others
 	 */
-	let third: null | 2 | 3 | 4 | 5 = null;
-	let fifth: null | 6 | 7 | 8 = null;
-	let seventh: null | 8 | 9 | 10 | 11 | -1 = null;
-	const tensions = new Set<13 | 14 | 15 | 17 | 18 | 20 | 21>();
+	let third: null | ChordThirdTonePitch = null;
+	let fifth: null | ChordFifthTonePitch = null;
+	let seventh: null | ChordSeventhTonePitch = null;
+	const tensions = new Set<ChordTensionPitch>();
 
 	// b2 to b9
 	if (intervals.has(1)) {
@@ -59,7 +85,7 @@ function identifyChordFromIntervals(bass: number, root: number, intervals: Set<n
 	}
 
 	// find 3rd
-	const thirdPriority: (2 | 3 | 4 | 5)[] = [4, 3, 5, 2];
+	const thirdPriority: ChordThirdTonePitch[] = [4, 3, 5, 2];
 	for (const [i, p] of thirdPriority.entries()) {
 		if (intervals.has(p)) {
 			intervals.delete(p);
@@ -319,7 +345,6 @@ function identifyChordFromIntervals(bass: number, root: number, intervals: Set<n
 			break;
 		case 5: // sus4
 			quality = 'sus4';
-			console.log('seventh:', seventh, fifth);
 			switch (seventh) {
 				case 10: // dominant 7th
 					extension = '7';
@@ -419,6 +444,14 @@ function identifyChordFromIntervals(bass: number, root: number, intervals: Set<n
 			}
 			break;
 	}
+
+	intervals.forEach((interval) => {
+		if (![1, 2, 3, 5, 6, 8, 9].includes(interval)) {
+			throw Error('interval is strange');
+		} else {
+			tensions.add((interval + 12) as ChordTensionPitch);
+		}
+	});
 	return {
 		tones: {
 			third,
@@ -432,4 +465,43 @@ function identifyChordFromIntervals(bass: number, root: number, intervals: Set<n
 			extension
 		}
 	};
+}
+
+export function scoreChordComplexity(chord: ChordDetail, bass: number) {
+	let score = 0;
+
+	switch (chord.symbols.quality) {
+		case 'dim':
+		case 'aug':
+		case 'half-dim':
+			score += 1;
+			break;
+		case 'sus2':
+		case 'sus4':
+			score += 2;
+			break;
+	}
+
+	switch (chord.symbols.extension) {
+		case '5':
+		case '7':
+		case 'dim7':
+		case 'maj7':
+			score += 1;
+			break;
+		case '6':
+		case '6/9':
+		case 'b6':
+			score += 2;
+			break;
+		case '7, maj7':
+			score += 99;
+			break;
+	}
+
+	score += chord.tones.tensions.length;
+	if (chord.symbols.root !== bass) {
+		score += 1.5;
+	}
+	return score;
 }
