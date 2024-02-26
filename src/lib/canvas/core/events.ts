@@ -39,7 +39,7 @@ export class CanvasEventHandler {
 	setup(width: number, height: number) {
 		this.#canvas = new OffscreenCanvas(width, height);
 		this.#context2d = this.#canvas.getContext('2d', {
-			alpha: false,
+			alpha: true,
 			willReadFrequently: true
 		})!!;
 		this.#context2d.imageSmoothingEnabled = false;
