@@ -106,11 +106,11 @@ export function getNoteSign(pitchNote: PitchNote): NoteSignName {
 
 export function numberingPitch(pitch: Pitch): number {
 	const index = pitchNoteIndexMap[pitch.note];
-	return index + pitch.octave * 12;
+	return index + (pitch.octave + 1) * 12;
 }
 export function getPitchFromNumber(i: number, sign: 'flat' | 'sharp' = 'sharp'): Pitch {
-	const octave = Math.floor(i / 12);
-	const index = i - octave * 12;
+	const octave = Math.floor(i / 12) - 1;
+	const index = i - (octave + 1) * 12;
 	return { note: pitchNoteIndexReverseMap[sign][index], octave };
 }
 
