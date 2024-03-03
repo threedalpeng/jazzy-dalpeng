@@ -10,6 +10,10 @@
 
 	offscreenCanvas.width = upperCanvasContext.canvas.width;
 	offscreenCanvas.height = upperCanvasContext.canvas.height;
+	upperCanvasContext.onResize(({ width, height }) => {
+		offscreenCanvas.width = width;
+		offscreenCanvas.height = height;
+	});
 	setSubroutineCanvasContext(upperCanvasContext, () => offscreenCanvas, {
 		afterRender: ({ canvas, hitContext2d }) => {
 			const hitCanvas = hitContext2d.canvas;

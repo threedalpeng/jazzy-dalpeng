@@ -5,6 +5,13 @@
 	export let width = 100;
 	export let height = 100;
 	setCanvasContext(() => canvas);
+
+	$: {
+		if (canvas) {
+			canvas.width = width;
+			canvas.height = height;
+		}
+	}
 </script>
 
 <canvas
