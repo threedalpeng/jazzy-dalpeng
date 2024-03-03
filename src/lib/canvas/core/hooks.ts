@@ -3,6 +3,7 @@ import {
 	CanvasContext,
 	type CanvasGetter,
 	type CanvasRenderCallback,
+	type CanvasResizeCallback,
 	type OffscreenCanvasRenderCallback
 } from './context';
 import { CanvasEventHandler, type OnHitCallback } from './events';
@@ -30,6 +31,17 @@ export const onCanvasSetup = (setupFn: CanvasRenderCallback) => {
 
 	onDestroy(() => {
 		canvasContext.removeSetup(setupFn);
+	});
+};
+
+export const onCanvasResize = (resizeFn: CanvasResizeCallback) => {
+	const canvasContext = getCanvasContext();
+	onMount(() => {
+		canvasContext.onResize(resizeFn);
+	});
+
+	onDestroy(() => {
+		canvasContext.removeResize(resizeFn);
 	});
 };
 

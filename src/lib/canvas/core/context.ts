@@ -1,7 +1,9 @@
+import type { Size } from '$/types/geometry';
 import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './events';
 
 export type CanvasGetter = () => HTMLCanvasElement;
 export type CanvasRenderCallback = (canvasContext: CanvasContext) => any;
+export type CanvasResizeCallback = (canvasContext: Size) => any;
 export type OffscreenCanvasRenderCallback = (ctx: OffscreenCanvasRenderingContext2D) => any;
 export class CanvasContext {
 	#canvasGetter: CanvasGetter;
@@ -36,6 +38,14 @@ export class CanvasContext {
 	}
 	set height(h) {
 		this.canvas.height = h;
+	}
+
+	#resizeCallbacks: Set<CanvasResizeCallback> = new Set();
+	onResize(callback: CanvasResizeCallback) {
+		this.#resizeCallbacks.add(callback);
+	}
+	removeResize(callback: CanvasResizeCallback) {
+		this.#resizeCallbacks.delete(callback);
 	}
 
 	#setupCallbacks: Set<CanvasRenderCallback> = new Set();
@@ -82,7 +92,10 @@ export class CanvasContext {
 	setup() {
 		const canvas = this.canvas;
 		this.#eventHandler.setup(this.canvas.width, this.canvas.height);
-
+		this.onResize(({ width, height }) => {
+			this.hitContext2d.canvas.width = width;
+			this.hitContext2d.canvas.height = height;
+		});
 		// this.testCanvas = document.createElement('canvas');
 		// this.testCanvas.width = canvas.width;
 		// this.testCanvas.height = canvas.height;
@@ -97,9 +110,20 @@ export class CanvasContext {
 		});
 	}
 
+	#prevSize: Size = { width: -1, height: -1 };
 	render: FrameRequestCallback = async (t) => {
 		this.#timePassed = t;
 		let ctx = this.context2d;
+
+		if (this.width !== this.#prevSize.width || this.height !== this.#prevSize.height) {
+			this.#resizeCallbacks.forEach((cb) => {
+				cb({
+					width: this.width,
+					height: this.height
+				});
+			});
+		}
+		this.#prevSize = { width: this.width, height: this.height };
 
 		ctx.clearRect(0, 0, this.width, this.height);
 		this.#eventHandler.beforeRender();
@@ -134,6 +158,7 @@ export class CanvasContext {
 
 	quit() {
 		window.cancelAnimationFrame(this.#frameId);
+		this.#resizeCallbacks.clear();
 		this.#renderCallbacks.clear();
 		this.#afterRenderCallbacks.clear();
 		this.#eventHandler.clear();

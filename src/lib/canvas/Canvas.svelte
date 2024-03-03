@@ -16,6 +16,13 @@
 
 	let canvas: HTMLCanvasElement;
 	setCanvasContext(() => canvas);
+
+	$: {
+		if (canvas) {
+			canvas.width = width;
+			canvas.height = height;
+		}
+	}
 </script>
 
 <canvas
