@@ -107,7 +107,7 @@
 					// play audio with pitch
 					if (note.pitch) {
 						guitarSoundfont!!.start({
-							note: numberingPitch(note.pitch) + 12,
+							note: numberingPitch(note.pitch),
 							time: time,
 							duration: note.time.duration
 								? timer.convert(note.time.duration, 'note', 'second')

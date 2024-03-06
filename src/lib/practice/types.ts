@@ -11,10 +11,14 @@ export interface ScoreTimestamp {
 	duration?: number;
 	interval?: number;
 }
+export interface NoteTimestamp {
+	start: number;
+	duration: number;
+}
 
 export interface PracticeNote {
 	position: number;
-	time: ScoreTimestamp;
+	time: NoteTimestamp;
 }
 export interface PracticeBoard {
 	title?: string;

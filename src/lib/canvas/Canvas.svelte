@@ -27,6 +27,7 @@
 	on:pointerleave
 	on:pointerout
 	on:pointerover
+	on:wheel
 />
 {#if canvas}
 	<slot />
