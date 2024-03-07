@@ -1,6 +1,9 @@
 <script lang="ts">
+	import type { Point } from '$/types/geometry';
 	import { getCanvasContext } from '../core/hooks';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
+
+	export let offset: Partial<Point> = { x: 0, y: 0 };
 
 	/* Outer Context */
 	const upperCanvasContext = getCanvasContext();
@@ -24,8 +27,8 @@
 				0,
 				canvas.width,
 				canvas.height,
-				0,
-				0,
+				offset.x ?? 0,
+				offset.y ?? 0,
 				canvas.width,
 				canvas.height
 			);
@@ -35,8 +38,8 @@
 				0,
 				canvas.width,
 				canvas.height,
-				0,
-				0,
+				offset.x ?? 0,
+				offset.y ?? 0,
 				canvas.width,
 				canvas.height
 			);
