@@ -144,6 +144,24 @@ export function getPitchesFromFingerPositions(
 		.filter((pitch): pitch is Pitch => pitch !== null);
 }
 
+export function getFingerPositionsFromPitch(
+	pitch: number | 'mute',
+	tune: TuneInfo = TUNE.standard
+) {
+	const results: FingerPosition[] = [];
+	for (const [line, basePitch] of Object.entries(tune)) {
+		if (pitch === 'mute') {
+			results.push({ line: Number.parseInt(line), fret: 'mute' });
+			continue;
+		}
+		const baseNumber = numberingPitch(basePitch);
+		const gap = pitch - baseNumber;
+		if (gap < 0 || 20 < gap) continue;
+		results.push({ line: Number.parseInt(line), fret: gap });
+	}
+	return results;
+}
+
 export function sortPitches(pitches: Pitch[]) {
 	return pitches
 		.map((p) => numberingPitch(p))
