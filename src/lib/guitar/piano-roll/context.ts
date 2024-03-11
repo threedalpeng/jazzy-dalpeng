@@ -4,7 +4,7 @@ import { derived, writable } from 'svelte/store';
 
 export const PIANO_ROLL_KEY = 'pianoroll';
 
-interface PianoRollBaseContext {
+export interface PianoRollBaseContext {
 	timeGridlineHeight: number;
 	noteFrameStart: number;
 	noteWidth: number;
@@ -19,7 +19,7 @@ interface PianoRollDerivedContext {
 	pianoHeight: number;
 }
 
-type PianoRollContext = WritableProperties<PianoRollBaseContext> &
+export type PianoRollContext = WritableProperties<PianoRollBaseContext> &
 	ReadableProperties<PianoRollDerivedContext>;
 
 export const setPianoRollContext = (context?: Partial<PianoRollBaseContext>) => {

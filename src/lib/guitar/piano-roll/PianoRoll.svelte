@@ -14,7 +14,7 @@
 	import { rangeFloat, rangeInt } from '$/utils/basic';
 	import { createEventDispatcher } from 'svelte';
 	import Timeline from './Timeline.svelte';
-	import { setPianoRollContext } from './context';
+	import { getPianoRollContext, setPianoRollContext } from './context';
 	import Text from '$/lib/canvas/elements/Text.svelte';
 	import Clip from '$/lib/canvas/elements/Clip.svelte';
 
@@ -39,7 +39,7 @@
 		pianoHeight,
 		beatPerBar,
 		quantizingUnit
-	} = setPianoRollContext();
+	} = getPianoRollContext();
 
 	let hoverPointNote = 0;
 	$: hoverPointX = (hoverPointNote - $noteFrameStart) * $noteWidth + $pianoWidth;
@@ -54,7 +54,6 @@
 	let dragEndNote = 0;
 
 	function updateNoteFrameStart(deltaX: number) {
-		console.log(deltaX * 0.05);
 		const newNoteFrameStart = $noteFrameStart + deltaX * 0.05;
 		$noteFrameStart = newNoteFrameStart > 0 ? newNoteFrameStart : 0;
 	}
@@ -117,6 +116,7 @@
 			{#each notes as note}
 				{#if note.pitch !== 'mute'}
 					<Rectangle
+						active={true}
 						x={$pianoWidth + $noteWidth * (note.time.start - $noteFrameStart)}
 						y={(pitchEnd - note.pitch) * $noteHeight}
 						width={$noteWidth * note.time.duration}
@@ -124,6 +124,9 @@
 						strokeStyle="#111111"
 						fillStyle="#ffffff"
 						rounded={$noteHeight / 2}
+						on:click={() => {
+							console.log(note);
+						}}
 					></Rectangle>{/if}
 			{/each}
 			{#if isSelecting}
@@ -174,15 +177,6 @@
 					></Rectangle>
 				{/if}
 			{/each}
-			<Rectangle
-				x={0}
-				y={0}
-				width={$pianoWidth}
-				height={$noteHeight * (pitchEnd - pitchStart + 1)}
-				lineWidth={1}
-				strokeStyle="black"
-				fillStyle="transparent"
-			></Rectangle>
 			<Clip
 				x={0}
 				y={$noteHeight * (pitchEnd - pitchStart + 1)}
@@ -191,6 +185,15 @@
 			></Clip>
 			<Text x={0} y={$noteHeight * (pitchEnd - pitchStart + 3)} textBaseline="bottom" text="mute"
 			></Text>
+			<Rectangle
+				x={-1}
+				y={0}
+				width={innerWidth}
+				height={$noteHeight * (pitchEnd - pitchStart + 1)}
+				lineWidth={1}
+				strokeStyle="black"
+				fillStyle="transparent"
+			></Rectangle>
 		</Layer>
 	</Layer>
 	<Layer>

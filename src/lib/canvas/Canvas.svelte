@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { HTMLCanvasAttributes } from 'svelte/elements';
 	import { setCanvasContext } from './core/hooks';
-	import type { Snippet } from 'svelte';
 
 	interface CanvasProps {
 		children: Snippet;
