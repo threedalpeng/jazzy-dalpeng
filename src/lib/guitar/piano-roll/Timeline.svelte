@@ -29,8 +29,7 @@
 	});
 </script>
 
-<Layer>
-	<!--Background-->
+<Layer name="Background">
 	{#each pitchRange as i}
 		<Rectangle
 			active
@@ -67,7 +66,7 @@
 		></Line>
 	{/each}
 </Layer>
-<Layer>
+<Layer name="Selected Pitch">
 	<!--Selected-->
 	{#if pitchHighlight !== null}
 		<Rectangle
@@ -85,8 +84,7 @@
 		></Rectangle>
 	{/if}
 </Layer>
-<Layer>
-	<!--Vertical Line-->
+<Layer name="Vertical Lines">
 	<!--Per Beat-->
 	{#each rangeFloat( $noteFrameStart, $noteFrameStart + (width - $pianoWidth) / $noteWidth, { gap: 1 / $beatPerBar, quantized: true } ) as i}
 		<Line

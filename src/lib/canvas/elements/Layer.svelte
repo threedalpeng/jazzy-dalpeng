@@ -3,6 +3,7 @@
 	import { getCanvasContext } from '../core/hooks';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
 
+	export const name: string = '';
 	export let offset: Partial<Point> = { x: 0, y: 0 };
 
 	/* Outer Context */

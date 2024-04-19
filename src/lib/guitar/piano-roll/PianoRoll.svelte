@@ -112,7 +112,7 @@
 				if (!isDragging) cursorPitch = ev.detail.cursorPitch;
 			}}
 		/>
-		<Layer>
+		<Layer name="Notes">
 			{#each notes as note}
 				{#if note.pitch !== 'mute'}
 					<Rectangle
@@ -141,7 +141,7 @@
 				></Rectangle>
 			{/if}
 		</Layer>
-		<Layer>
+		<Layer name="Vertical Cursor Line">
 			<Line
 				points={[
 					{ x: hoverPointX, y: 0 },
@@ -150,7 +150,7 @@
 				strokeStyle="black"
 			></Line>
 		</Layer>
-		<Layer>
+		<Layer name="Piano">
 			<!--Piano -->
 			{@const offsetY = -($noteHeight * (11 - (pitchEnd % 12)))}
 			{@const numOfGroups = Math.floor(pitchEnd / 12) - Math.floor(pitchStart / 12) + 1}
@@ -196,8 +196,7 @@
 			></Rectangle>
 		</Layer>
 	</Layer>
-	<Layer>
-		<!--Gridline-->
+	<Layer name="Time Indicator Gridline">
 		<!--Per Beat-->
 		{#each rangeFloat( $noteFrameStart, $noteFrameStart + (innerWidth - $pianoWidth) / $noteWidth, { gap: 1 / $beatPerBar, quantized: true } ) as i}
 			<Line
