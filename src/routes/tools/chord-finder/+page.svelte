@@ -1,23 +1,23 @@
 <script lang="ts">
 	import type { FingerInfo, FingerPosition } from '$/lib/guitar/finger-board/FingerBoard.svelte';
+	import { Map } from 'svelte/reactivity';
 	import Board from './Board.svelte';
 
-	let fingers: Record<number, FingerInfo> = {};
+	const fingers = new Map<number, FingerInfo>();
 	function updateFingerPosition(position: FingerPosition) {
-		if (fingers[position.line]?.position.fret === position.fret) {
-			delete fingers[position.line];
+		if (fingers.get(position.line)?.position.fret === position.fret) {
+			fingers.delete(position.line);
 		} else {
-			fingers[position.line] = { position };
+			fingers.set(position.line, { position });
 		}
-		fingers = fingers;
 	}
 </script>
 
 <div class="h-full w-screen">
 	<div class="relative flex h-full flex-col items-center">
 		<Board
-			fingers={Object.values(fingers)}
-			on:click={({ detail: { fret, line } }) => {
+			fingers={[...fingers.values()]}
+			onclick={({ fret, line }) => {
 				updateFingerPosition({ fret, line });
 			}}
 		></Board>

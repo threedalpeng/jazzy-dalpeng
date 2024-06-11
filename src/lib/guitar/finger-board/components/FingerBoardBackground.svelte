@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { Line } from '$lib/canvas';
-	import { createEventDispatcher } from 'svelte';
 	import { getFingerBoardContext } from '../context';
 	import FingerBoardInlay from './FingerBoardInlay.svelte';
 
-	const dispatch = createEventDispatcher();
+	interface FingerBoardBackgroundProps {
+		inlayVisible: boolean;
+	}
 
-	export let inlayVisible: boolean = true;
+	const { inlayVisible = true }: FingerBoardBackgroundProps = $props();
 	const { FRET_START, FRET_GAP, FRET_WIDTH, STRING_START, STRING_GAP, STRING_WIDTH, FRET_MAX } =
 		getFingerBoardContext();
 

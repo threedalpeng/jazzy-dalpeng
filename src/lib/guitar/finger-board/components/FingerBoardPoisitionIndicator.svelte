@@ -1,18 +1,26 @@
 <script lang="ts">
 	import { Circle } from '$/lib/canvas';
-	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
+	import HitRegion, { type OnHitRegion } from '$/lib/canvas/elements/HitRegion.svelte';
 	import { tweened } from 'svelte/motion';
 	import { getFingerBoardContext } from '../context';
 
-	export let leftX: number;
-	export let centerY: number;
+	interface FingerBoardPoisitionIndicatorProps {
+		leftX: number;
+		centerY: number;
+		onclick?: OnHitRegion;
+	}
+
+	const { leftX, centerY, onclick }: FingerBoardPoisitionIndicatorProps = $props();
+
 	const { FRET_GAP, STRING_GAP, FINGER_RADIUS } = getFingerBoardContext();
 
-	let hovering: boolean = false;
+	let hovering = $state<boolean>(false);
 	const indicatorSize = tweened<number>(undefined, {
 		duration: 300
 	});
-	$: $indicatorSize = hovering ? FINGER_RADIUS : 0;
+	$effect(() => {
+		$indicatorSize = hovering ? FINGER_RADIUS : 0;
+	});
 </script>
 
 <Circle
@@ -29,6 +37,7 @@
 		const height = STRING_GAP;
 		ctx.fillRect(leftX, centerY - height / 2, width, height);
 	}}
+	{onclick}
 	onout={() => {
 		hovering = false;
 	}}

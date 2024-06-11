@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 
-interface FingerBoardContext {
+interface FingerBoardState {
 	FRET_START: number;
 	FRET_GAP: number;
 	FRET_WIDTH: number;
@@ -13,9 +13,13 @@ interface FingerBoardContext {
 	INLAY_STROKE_STYLE: string;
 	INLAY_FILL_STYLE: string;
 }
+interface FingerBoardContext extends FingerBoardState {
+	getXFromFretNumber: (fret: number) => number;
+	getYFromStringNumber: (string: number) => number;
+}
 
-export const setFingerBoardContext = (context?: Partial<FingerBoardContext>) => {
-	const defaultContext: FingerBoardContext = {
+export const createFingerBoardState = (state?: Partial<FingerBoardState>) => {
+	return {
 		FRET_START: 30,
 		FRET_GAP: 50,
 		FRET_WIDTH: 4,
@@ -26,19 +30,22 @@ export const setFingerBoardContext = (context?: Partial<FingerBoardContext>) => 
 		FINGER_RADIUS: 7,
 		INLAY_RADIUS: 3,
 		INLAY_STROKE_STYLE: '#555',
-		INLAY_FILL_STYLE: '#eee'
-	};
-	if (context) Object.assign(defaultContext, context);
-	return setContext<FingerBoardContext>('fingerboard', defaultContext);
+		INLAY_FILL_STYLE: '#eee',
+		...state
+	} as FingerBoardState;
+};
+
+export const setFingerBoardContext = (state?: Partial<FingerBoardState>) => {
+	const contextState = createFingerBoardState(state);
+	return setContext<FingerBoardContext>('fingerboard', {
+		...contextState,
+		getXFromFretNumber(fret) {
+			return contextState.FRET_START + fret * contextState.FRET_GAP;
+		},
+		getYFromStringNumber(string) {
+			return contextState.STRING_START + (string - 1) * contextState.STRING_GAP;
+		}
+	});
 };
 
 export const getFingerBoardContext = () => getContext<FingerBoardContext>('fingerboard');
-
-export const getXFromFretNumber = (fret: number) => {
-	const fc = getFingerBoardContext();
-	return fc.FRET_START + fret * fc.FRET_GAP;
-};
-export const getYFromStringNumber = (string: number) => {
-	const fc = getFingerBoardContext();
-	return fc.STRING_START + (string - 1) * fc.STRING_GAP;
-};

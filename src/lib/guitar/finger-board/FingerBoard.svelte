@@ -38,55 +38,80 @@
 		end: number;
 		visibility: 'none' | 'all' | 'start' | 'end';
 	}
+	export type OnFingerBoardClick = (fingerPosition: FingerPosition) => void;
 </script>
 
 <script lang="ts">
 	import Clip from '$/lib/canvas/elements/Clip.svelte';
 	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
 	import { Canvas, Circle, Crop, Text } from '$lib/canvas';
-	import { createEventDispatcher } from 'svelte';
+	import type { HTMLCanvasAttributes } from 'svelte/elements';
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
-	import { getXFromFretNumber, getYFromStringNumber, setFingerBoardContext } from './context';
+	import { setFingerBoardContext } from './context';
 
-	const dispatch = createEventDispatcher<{ click: FingerPosition; hover: FingerPosition }>();
+	const {
+		FRET_START,
+		FRET_WIDTH,
+		FRET_GAP,
+		STRING_START,
+		STRING_GAP,
+		FINGER_RADIUS,
+		FRET_MAX,
+		getXFromFretNumber,
+		getYFromStringNumber
+	} = setFingerBoardContext();
 
-	const { FRET_START, FRET_WIDTH, FRET_GAP, STRING_START, STRING_GAP, FINGER_RADIUS, FRET_MAX } =
-		setFingerBoardContext();
+	interface FingerBoardProps {
+		readonly?: boolean;
+		fretRange: Partial<FretRangeOption>;
+		fingers: FingerInfo[];
+		inlayVisible?: boolean;
+		onclick?: OnFingerBoardClick;
+	}
 
-	export let readonly: boolean = false;
-	export let fretRange: Partial<FretRangeOption> = {
-		start: 0,
-		end: 12,
-		visibility: 'start'
-	};
-
-	$: range = Object.assign(
-		{
+	const {
+		readonly = false,
+		fretRange = {
 			start: 0,
 			end: 12,
-			visibility: 'end'
+			visibility: 'start'
 		},
-		fretRange
+		fingers = [],
+		inlayVisible = true,
+		onclick = () => {},
+		...rest
+	}: FingerBoardProps & Omit<HTMLCanvasAttributes, 'onclick'> = $props();
+
+	const range = $derived(
+		Object.assign(
+			{
+				start: 0,
+				end: 12,
+				visibility: 'end'
+			},
+			fretRange
+		)
 	);
 	const fretNumberPadding = 0.3;
-	$: fretRangeGap = range.end - range.start;
-	$: fretRangeWidth = FRET_GAP * (fretRangeGap + fretNumberPadding * 2);
+	const fretRangeGap = $derived(range.end - range.start);
+	const fretRangeWidth = $derived(FRET_GAP * (fretRangeGap + fretNumberPadding * 2));
 
-	export let fingers: FingerInfo[] = [];
-	$: fingersOnFret = fingers.filter(
-		(finger) => typeof finger.position.fret === 'number' && finger.position.fret > 0
-	) as FingerOnFretInfo[];
-	$: nonFingers = fingers.filter(
-		(finger) => !(typeof finger.position.fret === 'number' && finger.position.fret > 0)
-	) as NonFingerInfo[];
-
-	export let inlayVisible: boolean = true;
+	const fingersOnFret = $derived(
+		fingers.filter(
+			(finger) => typeof finger.position.fret === 'number' && finger.position.fret > 0
+		) as FingerOnFretInfo[]
+	);
+	const nonFingers = $derived(
+		fingers.filter(
+			(finger) => !(typeof finger.position.fret === 'number' && finger.position.fret > 0)
+		) as NonFingerInfo[]
+	);
+	console.log('hi');
 </script>
 
 <Canvas
-	{...$$restProps}
-	class={$$props.class}
+	{...rest}
 	width={FRET_START * 2 + fretRangeWidth}
 	height={STRING_START * 2 + STRING_GAP * 5}
 >
@@ -144,9 +169,9 @@
 						{centerY}
 						onclick={({ button }) => {
 							if (button === 0) {
-								dispatch('click', { fret: fretNum, line: lineNum });
+								onclick({ fret: fretNum, line: lineNum });
 							} else if (button === 2) {
-								dispatch('click', { fret: 'mute', line: lineNum });
+								onclick({ fret: 'mute', line: lineNum });
 							}
 						}}
 					/>
@@ -160,9 +185,9 @@
 		<HitRegion
 			onclick={({ button }) => {
 				if (button === 0) {
-					dispatch('click', { fret: 'open', line: lineNum });
+					onclick({ fret: 'open', line: lineNum });
 				} else if (button === 2) {
-					dispatch('click', { fret: 'mute', line: lineNum });
+					onclick({ fret: 'mute', line: lineNum });
 				}
 			}}
 			render={(ctx) => {
