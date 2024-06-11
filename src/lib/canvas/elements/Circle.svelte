@@ -1,13 +1,26 @@
 <script lang="ts">
 	import Ellipse from './Ellipse.svelte';
+	import type { ForwardHitRegionProps } from './HitRegion.svelte';
 
-	export let active: boolean = false;
-	export let x: number;
-	export let y: number;
-	export let radius: number;
-	export let fillStyle: CanvasStyle = '#000';
-	export let strokeStyle: CanvasStyle = '#000';
-	export let lineWidth: number = 1;
+	interface CircleProps {
+		x: number;
+		y: number;
+		radius: number;
+		fillStyle?: CanvasStyle;
+		strokeStyle?: CanvasStyle;
+		lineWidth?: number;
+	}
+
+	const {
+		x,
+		y,
+		radius,
+		fillStyle = '#000',
+		strokeStyle = '#000',
+		lineWidth = 1,
+		active = false,
+		...rest
+	}: CircleProps & ForwardHitRegionProps = $props();
 </script>
 
 <Ellipse
@@ -19,10 +32,5 @@
 	{strokeStyle}
 	{lineWidth}
 	{active}
-	on:up
-	on:down
-	on:move
-	on:click
-	on:over
-	on:out
+	{...rest}
 />

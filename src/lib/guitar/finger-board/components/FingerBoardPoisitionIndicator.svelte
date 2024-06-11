@@ -29,11 +29,10 @@
 		const height = STRING_GAP;
 		ctx.fillRect(leftX, centerY - height / 2, width, height);
 	}}
-	on:click
-	on:out={() => {
+	onout={() => {
 		hovering = false;
 	}}
-	on:over={() => {
+	onover={() => {
 		hovering = true;
 	}}
 ></HitRegion>

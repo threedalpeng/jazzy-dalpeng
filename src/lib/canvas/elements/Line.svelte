@@ -1,12 +1,21 @@
 <script lang="ts">
 	import { onCanvasRender } from '../core/hooks';
-	import HitRegion from './HitRegion.svelte';
+	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
 
-	export let active: boolean = false;
-	export let points: { x: number; y: number }[];
-	export let strokeStyle: CanvasStyle = '#000';
-	export let lineCap: CanvasLineCap = 'butt';
-	export let lineWidth: number = 1;
+	interface LineProps {
+		points: { x: number; y: number }[];
+		strokeStyle: CanvasStyle;
+		lineCap?: CanvasLineCap;
+		lineWidth?: number;
+	}
+	const {
+		points,
+		strokeStyle = '#000',
+		lineCap = 'butt',
+		lineWidth = 1,
+		active = false,
+		...rest
+	}: LineProps & ForwardHitRegionProps = $props();
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
 		ctx.lineCap = lineCap;
@@ -26,4 +35,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>
+<HitRegion {active} {render} {...rest}></HitRegion>

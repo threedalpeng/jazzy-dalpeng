@@ -142,10 +142,10 @@
 					<FingerBoardPoisitionIndicator
 						{leftX}
 						{centerY}
-						on:click={(ev) => {
-							if (ev.detail.button === 0) {
+						onclick={({ button }) => {
+							if (button === 0) {
 								dispatch('click', { fret: fretNum, line: lineNum });
-							} else if (ev.detail.button === 2) {
+							} else if (button === 2) {
 								dispatch('click', { fret: 'mute', line: lineNum });
 							}
 						}}
@@ -158,10 +158,10 @@
 		{@const lineNum = j + 1}
 		{@const centerY = getYFromStringNumber(lineNum)}
 		<HitRegion
-			on:click={(ev) => {
-				if (ev.detail.button === 0) {
+			onclick={({ button }) => {
+				if (button === 0) {
 					dispatch('click', { fret: 'open', line: lineNum });
-				} else if (ev.detail.button === 2) {
+				} else if (button === 2) {
 					dispatch('click', { fret: 'mute', line: lineNum });
 				}
 			}}
