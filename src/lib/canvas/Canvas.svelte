@@ -4,10 +4,15 @@
 	import type { Snippet } from 'svelte';
 
 	interface CanvasProps {
-		children: Snippet
+		children: Snippet;
 	}
 
-	const { width = 100, height = 100, children, ...rest }: CanvasProps & HTMLCanvasAttributes = $props();
+	const {
+		width = 100,
+		height = 100,
+		children,
+		...rest
+	}: CanvasProps & HTMLCanvasAttributes = $props();
 
 	let canvas: HTMLCanvasElement;
 	setCanvasContext(() => canvas);
