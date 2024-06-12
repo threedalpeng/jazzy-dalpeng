@@ -9,11 +9,17 @@
 	import MetronomeProvider from '$/lib/device/metronome/MetronomeProvider.svelte';
 	import type { FingerInfo } from '$/lib/guitar/finger-board/FingerBoard.svelte';
 	import { TempoTimer } from '$/lib/timer/tick';
+	import type { Snippet } from 'svelte';
+
+	interface MetronomeLayoutProps {
+		children: Snippet;
+	}
+
+	const { children }: MetronomeLayoutProps = $props();
 
 	const timer = new TempoTimer();
-	timer.bpm = 127;
 </script>
 
 <MetronomeProvider {timer}>
-	<slot />
+	{@render children()}
 </MetronomeProvider>

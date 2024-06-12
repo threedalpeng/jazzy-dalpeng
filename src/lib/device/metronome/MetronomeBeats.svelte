@@ -20,14 +20,14 @@
 	{#each new Array(beatPerBar) as _, i}
 		{#if i === 0}
 			{#if i === currentBeat - 1}
-				<div class="h-[30px] w-[30px] rounded-full bg-indigo-500" />
+				<div class="h-[30px] w-[30px] rounded-full bg-indigo-500"></div>
 			{:else}
-				<div class="h-[30px] w-[30px] rounded-full bg-indigo-900" />
+				<div class="h-[30px] w-[30px] rounded-full bg-indigo-900"></div>
 			{/if}
 		{:else if i === currentBeat - 1}
-			<div class="h-[20px] w-[20px] rounded-full bg-indigo-500" />
+			<div class="h-[20px] w-[20px] rounded-full bg-indigo-500"></div>
 		{:else}
-			<div class="h-[20px] w-[20px] rounded-full bg-indigo-900" />
+			<div class="h-[20px] w-[20px] rounded-full bg-indigo-900"></div>
 		{/if}
 	{/each}
 </div>

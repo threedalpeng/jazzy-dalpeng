@@ -1,17 +1,28 @@
 <script lang="ts">
 	import { MinusSmall, PlusSmall } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
+	import type { HTMLAttributes, HTMLCanvasAttributes } from 'svelte/elements';
 
-	export let value: number;
-	export let step: number = 1;
-	export let max: number | null = null;
-	export let min: number | null = null;
+	interface PlusMinusBarButtonProps {
+		value: number;
+		step?: number;
+		max?: number | null;
+		min?: number | null;
+	}
+
+	let {
+		value = $bindable(),
+		step = 1,
+		max = null,
+		min = null,
+		...rest
+	}: HTMLAttributes<HTMLDivElement> & PlusMinusBarButtonProps = $props();
 </script>
 
-<div {...$$restProps} class="{$$props.class} join join-vertical">
+<div {...rest} class="{rest.class} join join-vertical">
 	<button
 		class="btn join-item h-4 min-h-4 w-4 min-w-4 p-0"
-		on:click={() => {
+		onclick={() => {
 			value += step;
 			if (max !== null) value = value > max ? max : value;
 		}}
@@ -20,7 +31,7 @@
 	</button>
 	<button
 		class="btn join-item h-4 min-h-4 w-4 min-w-4 p-0"
-		on:click={() => {
+		onclick={() => {
 			value -= step;
 			if (min !== null) value = value < min ? min : value;
 		}}
