@@ -11,14 +11,19 @@
 	import ChordRootNotation from './chord/ChordRootNotation.svelte';
 	import ChordTensionNotation from './chord/ChordTensionNotation .svelte';
 
-	export let root: ChordRoot;
-	export let quality: ChordQuality | undefined = undefined;
-	export let extension: ChordExtension | undefined | null = undefined;
-	export let tensions: number[] = [];
-	export let bass: ChordBass | undefined = undefined;
+	interface ChordNotationProps {
+		root: ChordRoot;
+		quality?: ChordQuality;
+		extension?: ChordExtension | null;
+		tensions?: number[];
+		bass?: ChordBass;
+	}
 
-	$: needsToSwitch =
-		(quality === 'sus2' || quality === 'sus4') && extension !== 'b6' && extension !== 'maj7';
+	const { root, quality, extension, tensions = [], bass }: ChordNotationProps = $props();
+
+	const needsToSwitch = $derived(
+		(quality === 'sus2' || quality === 'sus4') && extension !== 'b6' && extension !== 'maj7'
+	);
 </script>
 
 <span class="font-chord"

@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
 	import { chordTensionToFinaleJazzChordSignMap } from './chord-map';
-	export let tensions: number[] = [];
+
+	interface ChordTensionNotationProps {
+		tensions?: number[];
+	}
+	const { tensions = [] }: ChordTensionNotationProps = $props();
 </script>
 
 {#if tensions.length > 0}{#if tensions.length === 1}<span class="align-[0.20em]">add</span

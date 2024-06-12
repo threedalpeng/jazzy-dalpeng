@@ -3,7 +3,10 @@
 	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
 	import { chordRootToFinaleJazzChordSignMap } from './chord-map';
 
-	export let root: ChordRoot;
+	interface ChordRootNotationProps {
+		root: ChordRoot;
+	}
+	const { root }: ChordRootNotationProps = $props();
 </script>
 
 {stringifyFinaleJazzChordSigns(chordRootToFinaleJazzChordSignMap[root])}
