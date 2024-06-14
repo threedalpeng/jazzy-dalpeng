@@ -107,7 +107,6 @@
 			(finger) => !(typeof finger.position.fret === 'number' && finger.position.fret > 0)
 		) as NonFingerInfo[]
 	);
-	console.log('hi');
 </script>
 
 <Canvas

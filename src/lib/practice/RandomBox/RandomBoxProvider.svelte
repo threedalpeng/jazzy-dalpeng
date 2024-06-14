@@ -1,16 +1,22 @@
 <script lang="ts" generics="T">
-	import { onDestroy } from 'svelte';
+	import { type Snippet } from 'svelte';
 	import { RandomBox } from './RandomBox';
 	import { setRandomBoxContext } from './context';
 
-	export let items: T[] = [];
+	interface RandomBoxProviderProps {
+		items?: T[];
+		children: Snippet;
+	}
+	const { items = [], children }: RandomBoxProviderProps = $props();
 
 	const randomBox = setRandomBoxContext(new RandomBox<T>(items));
-	$: randomBox.items = items;
+	$effect.pre(() => {
+		randomBox.items = items;
 
-	onDestroy(() => {
-		randomBox.destroy();
+		return () => {
+			randomBox.destroy();
+		};
 	});
 </script>
 
-<slot />
+{@render children()}

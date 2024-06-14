@@ -4,47 +4,60 @@
 	import { getMetronomeContext } from '$/lib/device/metronome/context';
 	import FingerBoard, {
 		type FingerInfo,
-		type FingerPosition
+		type FingerPosition,
+		type FretRangeOption
 	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
 	import RandomBoxOptions from '$/lib/practice/RandomBox/RandomBoxOptions.svelte';
 	import { getRandomBoxContext } from '$/lib/practice/RandomBox/context';
-	import type { PracticeScore } from '$/lib/practice/types';
+	import type { PracticeBoard, PracticeScore } from '$/lib/practice/types';
 	import { getPitchFromFingerPosition, numberingPitch } from '$/utils/music/pitch';
 	import MetronomePlayButton from '$lib/device/metronome/MetronomePlayButton.svelte';
 	import { CacheStorage, Soundfont } from 'smplr';
+	import { Set } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
-	export let data: PageData;
-	$: practice = data.pages.current.practice;
+	interface PracticeSlugPageProps {
+		data: PageData;
+	}
+
+	const { data }: PracticeSlugPageProps = $props();
+	const practice = $derived(data.pages.current.practice);
 
 	const metronome = getMetronomeContext();
 	const randomBox = getRandomBoxContext<PracticeScore>();
 
 	const timer = metronome.timer;
-	$: currentScore = practice.scores[0];
-	$: fretRange = currentScore.fretRange;
-	$: currentBoard = currentScore.boards[0];
+	let currentScore = $state<PracticeScore>();
+	let currentBoard = $state<PracticeBoard>();
+	let fretRange = $derived<FretRangeOption>(
+		currentScore?.fretRange ?? { start: 0, end: 12, visibility: 'none' }
+	);
 	let currentActiveFingers = new Set<number>();
 	let nextNotes: number[] = [];
-	$: fingers = (currentBoard?.fingers ?? []).map((finger) => {
-		const order = nextNotes.findIndex((f) => f === finger);
-		return {
-			position: currentScore.positions[finger],
-			style: {
-				color: currentActiveFingers.has(finger) ? 'red' : undefined
-				// scale: currentActiveFingers.has(finger) ? 1 : order >= 0 ? (4 - order) / 4 : 0.5
-			}
-		};
-	}) as FingerInfo[];
+	const fingers = $derived.by(() => {
+		if (currentScore === undefined) return [];
+		if (currentBoard === undefined || currentBoard.fingers === undefined) {
+			return [];
+		} else
+			return (currentBoard?.fingers ?? []).map((finger) => {
+				const order = nextNotes.findIndex((f) => f === finger);
+				return {
+					position: currentScore!.positions[finger],
+					style: {
+						color: currentActiveFingers.has(finger) ? 'red' : undefined
+						// scale: currentActiveFingers.has(finger) ? 1 : order >= 0 ? (4 - order) / 4 : 0.5
+					}
+				};
+			}) as FingerInfo[];
+	});
 
 	let guitarSoundfont: Soundfont | null = null;
 
-	$: practice,
-		(() => {
-			currentScore = replaceScore();
-		})();
+	$effect.pre(replaceScore);
 	function replaceScore() {
-		let score = randomBox.open();
+		practice;
+		currentScore = randomBox.open();
+		currentBoard = currentScore.boards[0];
 		const cancel = timer.beforeStart(async () => {
 			if (!guitarSoundfont) {
 				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
@@ -57,11 +70,10 @@
 				currentScheduleIdList.forEach((id) => {
 					timer.cancelSchedule(id);
 				});
-				scheduleScore(score);
+				scheduleScore(currentScore!);
 				cancel();
 			});
 		});
-		return score;
 	}
 
 	let currentScheduleIdList: number[] = [];
@@ -96,11 +108,9 @@
 				time: note.time,
 				animation: () => {
 					currentActiveFingers.add(note.position);
-					currentActiveFingers = currentActiveFingers;
 					nextNotes = nextThreeFingers;
 					return () => {
 						currentActiveFingers.delete(note.position);
-						currentActiveFingers = currentActiveFingers;
 					};
 				},
 				audio: ({ audioCtx, time }) => {
@@ -130,7 +140,7 @@
 			</div>
 		</div>
 		<div class="relative flex h-full flex-col items-center justify-center">
-			<button on:click={replaceScore}>
+			<button onclick={replaceScore}>
 				<FingerBoard class="max-w-[100vw]" readonly {fingers} {fretRange}></FingerBoard>
 			</button>
 			<MetronomeBeats class="p-20" />

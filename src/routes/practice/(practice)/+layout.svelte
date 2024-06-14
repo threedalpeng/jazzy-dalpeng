@@ -3,11 +3,16 @@
 	import { base } from '$app/paths';
 	import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
+	import type { Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
-	export let data: LayoutData;
+	interface PracticeLayoutProps {
+		data: LayoutData;
+		children: Snippet;
+	}
+	const { data, children }: PracticeLayoutProps = $props();
 
-	let practiceListOpen: boolean = false;
+	let practiceListOpen = $state<boolean>(false);
 </script>
 
 <div class="flex h-screen w-screen flex-col">
@@ -15,7 +20,7 @@
 		<span class="ml-8 font-jazz text-2xl font-bold"> JazzyDalpeng / Jazz Guitar Practice</span>
 	</header>
 	<div class="flex basis-full flex-col items-center justify-center">
-		<slot />
+		{@render children()}
 	</div>
 	<nav class="relative h-[60px] w-screen">
 		<div class="flex h-full flex-row items-center justify-between">
@@ -58,11 +63,11 @@
 		</div>
 		<button
 			class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-			on:click={() => (practiceListOpen = !practiceListOpen)}
+			onclick={() => (practiceListOpen = !practiceListOpen)}
 		>
 			<div
 				use:clickoutside
-				on:clickoutside={() => (practiceListOpen = false)}
+				onclickoutside={() => (practiceListOpen = false)}
 				class="absolute -top-[30px] left-[50%] h-[40px] w-auto -translate-x-[50%]"
 			>
 				<Icon
