@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { MinusSmall, PlusSmall } from '@steeze-ui/heroicons';
-	import { Icon } from '@steeze-ui/svelte-icon';
-	import type { HTMLAttributes, HTMLCanvasAttributes } from 'svelte/elements';
+	import type { HTMLAttributes } from 'svelte/elements';
+	import IconMinusSmall from '~icons/heroicons/minus-small';
+	import IconPlusSmall from '~icons/heroicons/plus-small';
 
 	interface PlusMinusBarButtonProps {
 		value: number;
@@ -27,7 +27,7 @@
 			if (max !== null) value = value > max ? max : value;
 		}}
 	>
-		<Icon src={PlusSmall}></Icon>
+		<IconPlusSmall></IconPlusSmall>
 	</button>
 	<button
 		class="btn join-item h-4 min-h-4 w-4 min-w-4 p-0"
@@ -36,6 +36,6 @@
 			if (min !== null) value = value < min ? min : value;
 		}}
 	>
-		<Icon src={MinusSmall}></Icon>
+		<IconMinusSmall />
 	</button>
 </div>

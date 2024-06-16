@@ -1,9 +1,13 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import type { SVGAttributes } from 'svelte/elements';
 
-	interface $$Props extends SVGAttributes<SVGElement> {}
+	interface SvgIconProps extends SVGAttributes<SVGElement> {
+		children: Snippet;
+	}
+	const { children, ...rest }: SvgIconProps = $props();
 </script>
 
-<svg {...$$restProps}>
-	<slot />
+<svg {...rest}>
+	{@render children()}
 </svg>

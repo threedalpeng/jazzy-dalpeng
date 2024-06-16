@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { getMetronomeContext } from '$/lib/device/metronome/context';
-	import { Play, Stop } from '@steeze-ui/heroicons';
-	import { Icon } from '@steeze-ui/svelte-icon';
 	import { onDestroy } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
+	import IconPlaySolid from '~icons/heroicons/play-solid';
+	import IconStopSolid from '~icons/heroicons/stop-solid';
 
 	interface MetronomePlayButtonProps extends HTMLButtonAttributes {}
 	const { ...rest }: MetronomePlayButtonProps = $props();
@@ -32,8 +32,8 @@
 	}}
 >
 	{#if isRunning}
-		<Icon class="m-0 h-1/2 p-0 text-indigo-100" src={Stop} theme="solid" />
+		<IconStopSolid class="m-0 h-1/2 w-1/2 p-0 text-indigo-100"></IconStopSolid>
 	{:else}
-		<Icon class="m-0 h-1/2 p-0 text-indigo-100" src={Play} theme="solid" />
+		<IconPlaySolid class="m-0 h-1/2 w-1/2 p-0 text-indigo-100"></IconPlaySolid>
 	{/if}
 </button>

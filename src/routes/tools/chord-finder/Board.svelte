@@ -21,8 +21,6 @@
 		sortPitches(getPitchesFromFingerPositions(fingers.map((finger) => finger.position)))
 	);
 	const chords = $derived(identifyChordsFromPitches(pitches));
-
-	$inspect(fingers);
 </script>
 
 <div class="relative flex h-full flex-col items-center justify-center">
