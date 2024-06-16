@@ -14,8 +14,8 @@
 		...rest
 	}: CanvasProps & HTMLCanvasAttributes = $props();
 
-	let canvas: HTMLCanvasElement;
-	setCanvasContext(() => canvas);
+	let canvas = $state<HTMLCanvasElement>();
+	setCanvasContext(() => canvas!);
 </script>
 
 <canvas
@@ -25,4 +25,6 @@
 	{width}
 	{height}
 ></canvas>
-{@render children()}
+{#if canvas}
+	{@render children()}
+{/if}

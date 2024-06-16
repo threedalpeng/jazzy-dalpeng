@@ -4,7 +4,7 @@
 
 	interface LineProps {
 		points: { x: number; y: number }[];
-		strokeStyle: CanvasStyle;
+		strokeStyle?: CanvasStyle;
 		lineCap?: CanvasLineCap;
 		lineWidth?: number;
 	}

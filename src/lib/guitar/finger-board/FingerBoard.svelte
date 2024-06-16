@@ -64,7 +64,7 @@
 
 	interface FingerBoardProps {
 		readonly?: boolean;
-		fretRange: Partial<FretRangeOption>;
+		fretRange?: Partial<FretRangeOption>;
 		fingers: FingerInfo[];
 		inlayVisible?: boolean;
 		onclick?: OnFingerBoardClick;

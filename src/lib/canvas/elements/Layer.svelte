@@ -1,10 +1,16 @@
 <script lang="ts">
 	import type { Point } from '$/types/geometry';
+	import type { Snippet } from 'svelte';
 	import { getCanvasContext } from '../core/hooks';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
 
-	export const name: string = '';
-	export let offset: Partial<Point> = { x: 0, y: 0 };
+	interface LayerProps {
+		name?: string;
+		offset?: Partial<Point>;
+		children: Snippet;
+	}
+
+	const { name = '', offset = { x: 0, y: 0 }, children }: LayerProps = $props();
 
 	/* Outer Context */
 	const upperCanvasContext = getCanvasContext();
@@ -50,5 +56,5 @@
 </script>
 
 {#if offscreenCanvas}
-	<slot />
+	{@render children()}
 {/if}

@@ -16,14 +16,17 @@
 		quantizingUnit
 	} = getPianoRollContext();
 
-	export let pitchStart: number;
-	export let pitchEnd: number;
-	export let pitchHighlight: number | 'mute' | null = null;
+	interface TimelineProps {
+		pitchStart: number;
+		pitchEnd: number;
+		pitchHighlight?: number | 'mute' | null;
+		onover?: (detail: { cursorPitch: number | 'mute' }) => any;
+	}
+	let { pitchStart, pitchEnd, pitchHighlight = null, onover = () => {} }: TimelineProps = $props();
 
-	$: pitchRange = rangeInt(pitchStart, pitchEnd + 1);
-	const dispatch = createEventDispatcher<{ over: { cursorPitch: number | 'mute' } }>();
+	let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
 
-	let width = 100;
+	let width = $state(100);
 	onCanvasResize(({ width: w }) => {
 		width = w;
 	});
@@ -39,8 +42,8 @@
 			height={$noteHeight}
 			strokeStyle={i % 2 ? '#cccccc' : '#888888'}
 			fillStyle={i % 2 ? '#cccccc' : '#888888'}
-			on:over={(e) => {
-				dispatch('over', { cursorPitch: i });
+			onover={(e) => {
+				onover({ cursorPitch: i });
 			}}
 		></Rectangle>
 	{/each}
@@ -52,8 +55,8 @@
 		height={$noteHeight}
 		strokeStyle={'#666666'}
 		fillStyle={'#eeeeee'}
-		on:over={(e) => {
-			dispatch('over', { cursorPitch: 'mute' });
+		onover={(e) => {
+			onover({ cursorPitch: 'mute' });
 		}}
 	></Rectangle>
 	{#each pitchRange.filter((x) => x % 12 === 0) as i}
@@ -78,8 +81,8 @@
 			height={$noteHeight + 2}
 			strokeStyle={'#9abcde'}
 			fillStyle={'#abcdef'}
-			on:over={(e) => {
-				if (pitchHighlight !== null) dispatch('over', { cursorPitch: pitchHighlight });
+			onover={(e) => {
+				if (pitchHighlight !== null) onover({ cursorPitch: pitchHighlight });
 			}}
 		></Rectangle>
 	{/if}

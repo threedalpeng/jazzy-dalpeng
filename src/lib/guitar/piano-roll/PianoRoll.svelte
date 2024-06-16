@@ -8,27 +8,35 @@
 <script lang="ts">
 	import { Line } from '$/lib/canvas';
 	import Canvas from '$/lib/canvas/Canvas.svelte';
+	import Clip from '$/lib/canvas/elements/Clip.svelte';
 	import Layer from '$/lib/canvas/elements/Layer.svelte';
 	import Rectangle from '$/lib/canvas/elements/Rectangle.svelte';
+	import Text from '$/lib/canvas/elements/Text.svelte';
 	import type { NoteTimestamp } from '$/lib/practice/types';
 	import { rangeFloat, rangeInt } from '$/utils/basic';
-	import { createEventDispatcher } from 'svelte';
 	import Timeline from './Timeline.svelte';
-	import { getPianoRollContext, setPianoRollContext } from './context';
-	import Text from '$/lib/canvas/elements/Text.svelte';
-	import Clip from '$/lib/canvas/elements/Clip.svelte';
+	import { getPianoRollContext } from './context';
 
-	let innerWidth = window.innerWidth;
-	let innerHeight = window.innerHeight;
+	let innerWidth = $state(window.innerWidth);
+	let innerHeight = $state(window.innerHeight);
 
-	const dispatch = createEventDispatcher<{ select: PianoRollNote }>();
+	interface Props {
+		pitchStart?: number;
+		pitchEnd?: number;
+		pitchHighlight?: number | 'mute' | null;
+		notes?: PianoRollNote[];
+		onselect?: (note: PianoRollNote) => any;
+	}
+	let {
+		pitchStart = 40,
+		pitchEnd = 84,
+		pitchHighlight = null,
+		notes = [],
+		onselect = () => {}
+	}: Props = $props();
+	let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
 
-	export let pitchStart: number = 40;
-	export let pitchEnd: number = 84;
-	export let pitchHighlight: number | 'mute' | null = null;
-	$: pitchRange = rangeInt(pitchStart, pitchEnd + 1);
-
-	export let notes: PianoRollNote[] = [];
+	$inspect(notes);
 
 	const {
 		timeGridlineHeight,
@@ -41,31 +49,33 @@
 		quantizingUnit
 	} = getPianoRollContext();
 
-	let hoverPointNote = 0;
-	$: hoverPointX = (hoverPointNote - $noteFrameStart) * $noteWidth + $pianoWidth;
-	$noteWidth = innerWidth / 5;
+	let hoverPointNote = $state<number>(0);
+	let hoverPointX = $derived((hoverPointNote - $noteFrameStart) * $noteWidth + $pianoWidth);
+	$effect(() => {
+		$noteWidth = innerWidth / 5;
+	});
 	$quantizingUnit = 1 / 24;
 
-	let isDragging = false;
-	let dragButton: number = 0;
-	let cursorPitch: number | 'mute' = 0;
-	$: selectedPitch = pitchHighlight ?? cursorPitch;
-	let dragStartNote = 0;
-	let dragEndNote = 0;
+	let isDragging = $state<boolean>(false);
+	let dragButton = $state<number>(0);
+	let cursorPitch = $state<number | 'mute'>(0);
+	let selectedPitch = $derived(pitchHighlight ?? cursorPitch);
+	let dragStartNote = $state(0);
+	let dragEndNote = $state(0);
 
 	function updateNoteFrameStart(deltaX: number) {
 		const newNoteFrameStart = $noteFrameStart + deltaX * 0.05;
 		$noteFrameStart = newNoteFrameStart > 0 ? newNoteFrameStart : 0;
 	}
 
-	$: isScrollingOnX = isDragging && dragButton === 2;
-	$: isSelecting = isDragging && dragButton === 0;
+	let isScrollingOnX = $derived(isDragging && dragButton === 2);
+	let isSelecting = $derived(isDragging && dragButton === 0);
 </script>
 
 <Canvas
 	width={innerWidth}
 	height={$noteHeight * (pitchEnd - pitchStart + 3) + $timeGridlineHeight}
-	on:pointermove={(e) => {
+	onpointermove={(e) => {
 		const note = (e.offsetX - $pianoWidth) / $noteWidth + $noteFrameStart;
 		hoverPointNote = Math.max(Math.round(note / $quantizingUnit) * $quantizingUnit, 0);
 		if (isSelecting) {
@@ -76,28 +86,27 @@
 			$noteFrameStart = Math.max($noteFrameStart - e.movementX / $noteWidth, 0);
 		}
 	}}
-	on:pointerdown={(e) => {
+	onpointerdown={(e) => {
 		isDragging = true;
 		dragButton = e.button;
 		if (dragButton === 0) {
 			dragStartNote = hoverPointNote;
 		}
 	}}
-	on:pointerup={(e) => {
+	onpointerup={(e) => {
 		isDragging = false;
 		if (dragButton === 0) {
 			if (dragEndNote > dragStartNote) {
-				dispatch('select', {
+				onselect({
 					time: { start: dragStartNote, duration: dragEndNote - dragStartNote },
 					pitch: selectedPitch
 				});
 			}
-			notes = notes;
 		}
 		dragStartNote = 0;
 		dragEndNote = 0;
 	}}
-	on:wheel={(e) => {
+	onwheel={(e) => {
 		const newNoteWidth = $noteWidth + e.deltaY * -0.04;
 		$noteWidth = newNoteWidth > 16 ? newNoteWidth : 16;
 		updateNoteFrameStart(e.deltaX);
@@ -108,8 +117,8 @@
 			{pitchStart}
 			{pitchEnd}
 			{pitchHighlight}
-			on:over={(ev) => {
-				if (!isDragging) cursorPitch = ev.detail.cursorPitch;
+			onover={(detail) => {
+				if (!isDragging) cursorPitch = detail.cursorPitch;
 			}}
 		/>
 		<Layer name="Notes">
@@ -124,10 +133,11 @@
 						strokeStyle="#111111"
 						fillStyle="#ffffff"
 						rounded={$noteHeight / 2}
-						on:click={() => {
+						onclick={() => {
 							console.log(note);
 						}}
-					></Rectangle>{/if}
+					></Rectangle>
+				{/if}
 			{/each}
 			{#if isSelecting}
 				<Rectangle

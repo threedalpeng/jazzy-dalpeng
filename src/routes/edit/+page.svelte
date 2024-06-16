@@ -6,7 +6,7 @@
 		type FingerPosition
 	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
 	import PianoRoll, { type PianoRollNote } from '$/lib/guitar/piano-roll/PianoRoll.svelte';
-	import type { Practice, PracticeScore } from '$/lib/practice/types';
+	import type { Practice } from '$/lib/practice/types';
 	import {
 		TUNE,
 		getFingerPositionsFromPitch,
@@ -45,21 +45,22 @@
 		}
 	};
 
-	let fingers: FingerInfo[] = [];
 	let fingerOnSelected: boolean = false;
-	let fingerPositionsProcessing: FingerPosition[] = [];
-	let fingersRegistered: FingerInfo[] = [];
-	$: fingers = fingerPositionsProcessing.map<FingerInfo>((position) => ({
-		position,
-		style: { color: 'gray' }
-	}));
+	let fingerPositionsProcessing = $state<FingerPosition[]>([]);
+	let fingersRegistered = $state<FingerInfo[]>([]);
+	const fingers = $derived(
+		fingerPositionsProcessing.map<FingerInfo>((position) => ({
+			position,
+			style: { color: 'gray' }
+		}))
+	);
 
-	let notes: PianoRollNote[] = [];
 	let noteOnSelected: boolean = false;
-	let noteProcessing: PianoRollNote | null = null;
-	let pitchHighlight: number | 'mute' | null = null;
-	let notesRegistered: PianoRollNote[] = [];
-	$: notes = notesRegistered.concat(noteProcessing !== null ? [noteProcessing] : []);
+	let noteProcessing = $state<PianoRollNote | null>(null);
+	let pitchHighlight = $state<number | 'mute' | null>(null);
+	let notesRegistered = $state<PianoRollNote[]>([]);
+	const notes = $derived(notesRegistered.concat(noteProcessing !== null ? [noteProcessing] : []));
+	$inspect('notes in page: ', notesRegistered, noteProcessing, notes);
 
 	function initializeState() {
 		fingerPositionsProcessing = [];
@@ -69,30 +70,30 @@
 		fingerOnSelected = false;
 	}
 
-	function updateFingers(ev: CustomEvent<FingerPosition>) {
+	function updateFingers(fingerPosition: FingerPosition) {
 		const onCandidate = fingerPositionsProcessing.find(
-			(pos) => pos.fret === ev.detail.fret && pos.line === ev.detail.line
+			(pos) => pos.fret === fingerPosition.fret && pos.line === fingerPosition.line
 		);
 
 		if (noteOnSelected) {
 			if (onCandidate) {
-				fingerPositionsProcessing = [ev.detail];
+				fingerPositionsProcessing = [fingerPosition];
 				registerNote();
 				return;
 			} else {
 				initializeState();
 			}
 		}
-		fingerPositionsProcessing = [ev.detail];
+		fingerPositionsProcessing = [fingerPosition];
 
-		const pitch = getPitchFromFingerPosition(ev.detail, practice.guitar.tuning);
+		const pitch = getPitchFromFingerPosition(fingerPosition, practice.guitar.tuning);
 		const pitchNumber = pitch ? numberingPitch(pitch) : 'mute';
 		pitchHighlight = pitchNumber;
 		fingerOnSelected = true;
 	}
 
-	function updateNotes(ev: CustomEvent<PianoRollNote>) {
-		noteProcessing = ev.detail;
+	function updateNotes(note: PianoRollNote) {
+		noteProcessing = note;
 		if (fingerOnSelected) {
 			registerNote();
 			return;
@@ -109,10 +110,8 @@
 		fingersRegistered.push(
 			...fingerPositionsProcessing.map<FingerInfo>((position) => ({ position }))
 		);
-		fingersRegistered = fingersRegistered;
 
 		notesRegistered.push(noteProcessing!);
-		notesRegistered = notesRegistered;
 		initializeState();
 	}
 </script>
@@ -125,8 +124,8 @@
 			</div>
 		</div>
 		<div class="relative flex h-screen flex-col items-center justify-center">
-			<PianoRoll {notes} {pitchHighlight} on:select={updateNotes}></PianoRoll>
-			<FingerBoard class="max-w-[100vw]" {fingers} on:click={updateFingers}></FingerBoard>
+			<PianoRoll {notes} {pitchHighlight} onselect={updateNotes}></PianoRoll>
+			<FingerBoard class="max-w-[100vw]" {fingers} onclick={updateFingers}></FingerBoard>
 			<MetronomeBeats class="p-20" />
 			<MetronomePlayButton class="h-20" />
 		</div>
