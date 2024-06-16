@@ -1,15 +1,28 @@
 <script lang="ts">
 	import { onCanvasRender } from '..';
-	import HitRegion from './HitRegion.svelte';
+	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
 
-	export let active: boolean = false;
-	export let x: number;
-	export let y: number;
-	export let width: number;
-	export let height: number;
-	export let fillStyle: CanvasStyle = '#000';
-	export let strokeStyle: CanvasStyle = '#000';
-	export let lineWidth: number = 1;
+	interface RectangleProps {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+		fillStyle?: CanvasStyle;
+		strokeStyle?: CanvasStyle;
+		lineWidth?: number;
+	}
+
+	const {
+		x,
+		y,
+		width,
+		height,
+		fillStyle = '#000',
+		strokeStyle = '#000',
+		lineWidth = 1,
+		active = false,
+		...rest
+	}: RectangleProps & ForwardHitRegionProps = $props();
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
 		ctx.lineWidth = lineWidth;
@@ -26,4 +39,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>
+<HitRegion {active} {render} {...rest}></HitRegion>

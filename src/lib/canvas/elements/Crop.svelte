@@ -1,14 +1,27 @@
 <script lang="ts">
 	import type { Rect } from '$/types/geometry';
+	import type { Snippet } from 'svelte';
 	import { getCanvasContext } from '../core/hooks';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
 	import Rectangle from './Rectangle.svelte';
 
-	export let width: number;
-	export let height: number;
-	export let sourceArea: Partial<Rect> = { x: 0, y: 0 };
-	export let destArea: Partial<Rect> = { x: 0, y: 0 };
-	export let debug: boolean = false;
+	interface CropProps {
+		width: number;
+		height: number;
+		sourceArea?: Partial<Rect>;
+		destArea?: Partial<Rect>;
+		debug?: boolean;
+		children: Snippet;
+	}
+
+	const {
+		width,
+		height,
+		sourceArea = { x: 0, y: 0 },
+		destArea = { x: 0, y: 0 },
+		debug = false,
+		children
+	}: CropProps = $props();
 
 	/* Outer Context */
 	const upperCanvasContext = getCanvasContext();
@@ -47,7 +60,7 @@
 </script>
 
 {#if offscreenCanvas}
-	<slot />
+	{@render children()}
 	{#if debug}
 		<Rectangle
 			fillStyle="transparent"

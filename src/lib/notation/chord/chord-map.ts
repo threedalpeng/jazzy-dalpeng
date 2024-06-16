@@ -1,4 +1,4 @@
-import type { ChordRoot, ChordExtension, ChordQuality } from '$/utils/music/chords';
+import type { ChordExtension, ChordQuality, ChordRoot } from '$/utils/music/chords';
 import type { finaleJazzChordCharacterMap } from '$/utils/music/font';
 
 export const chordRootToFinaleJazzChordSignMap: Record<

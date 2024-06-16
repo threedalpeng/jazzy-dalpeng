@@ -1,9 +1,14 @@
 <script lang="ts">
 	import { TempoTimer } from '$/lib/timer/tick';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, type Snippet } from 'svelte';
 	import { setMetronomeContext } from './context';
 
-	export let timer: TempoTimer | undefined;
+	interface MetronomeProviderProps {
+		timer?: TempoTimer;
+		children: Snippet;
+	}
+
+	const { timer, children }: MetronomeProviderProps = $props();
 
 	const metronome = setMetronomeContext(timer);
 
@@ -12,4 +17,4 @@
 	});
 </script>
 
-<slot />
+{@render children()}

@@ -2,10 +2,16 @@
 	import type { ShuffleMode } from './RandomBox';
 	import { getRandomBoxContext } from './context';
 
-	export let shuffleMode: ShuffleMode = 'all-done';
+	interface RandomBoxOptionsProps {
+		shuffleMode?: ShuffleMode;
+	}
+
+	let { shuffleMode = $bindable('all-done') }: RandomBoxOptionsProps = $props();
 
 	const randomBox = getRandomBoxContext<T>();
-	$: randomBox.shuffleMode = shuffleMode;
+	$effect(() => {
+		randomBox.shuffleMode = shuffleMode;
+	});
 </script>
 
 <div class="flex h-full flex-col items-start justify-between">

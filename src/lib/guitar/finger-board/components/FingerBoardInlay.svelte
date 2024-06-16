@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Circle } from '$lib/canvas';
-	import { getFingerBoardContext, getXFromFretNumber, getYFromStringNumber } from '../context';
+	import { getFingerBoardContext } from '../context';
 
-	const { INLAY_RADIUS, INLAY_STROKE_STYLE, INLAY_FILL_STYLE } = getFingerBoardContext();
+	const {
+		INLAY_RADIUS,
+		INLAY_STROKE_STYLE,
+		INLAY_FILL_STYLE,
+		getXFromFretNumber,
+		getYFromStringNumber
+	} = getFingerBoardContext();
 
 	const inlaySchemes = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
 </script>

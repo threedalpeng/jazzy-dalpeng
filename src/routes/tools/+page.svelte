@@ -8,28 +8,28 @@
 	const SQUARE_SIZE_MIN = 240;
 	const GAP_SQUARE_RATIO = 6;
 	const GAP_MIN = SQUARE_SIZE_MIN / GAP_SQUARE_RATIO;
-	let windowSize = {
+	let windowSize = $state({
 		long: Math.max(window.innerWidth, window.innerHeight),
 		short: Math.min(window.innerWidth, window.innerHeight)
-	};
-	$: maxCenterSquares = Math.floor(
-		((windowSize.short * 0.8) / GAP_MIN + 1) / (GAP_SQUARE_RATIO + 1)
+	});
+	const maxCenterSquares = $derived(
+		Math.floor(((windowSize.short * 0.8) / GAP_MIN + 1) / (GAP_SQUARE_RATIO + 1))
 	);
-	$: gap = (windowSize.short * 0.8) / ((GAP_SQUARE_RATIO + 1) * maxCenterSquares - 1);
-	$: squareSize = gap * GAP_SQUARE_RATIO;
-	$: start = {
+	const gap = $derived((windowSize.short * 0.8) / ((GAP_SQUARE_RATIO + 1) * maxCenterSquares - 1));
+	const squareSize = $derived(gap * GAP_SQUARE_RATIO);
+	const start = $derived({
 		x: window.innerWidth * 0.5 - windowSize.short * 0.4,
 		y: window.innerHeight * 0.5 - windowSize.short * 0.4
-	};
+	});
 
-	$: xFillerSquares = Math.ceil(start.x / ((GAP_SQUARE_RATIO + 1) * gap));
-	$: yFillerSquares = Math.ceil(start.y / ((GAP_SQUARE_RATIO + 1) * gap));
-	$: xSquares = maxCenterSquares + xFillerSquares * 2;
-	$: ySquares = maxCenterSquares + yFillerSquares * 2;
-	$: fillerStart = {
+	const xFillerSquares = $derived(Math.ceil(start.x / ((GAP_SQUARE_RATIO + 1) * gap)));
+	const yFillerSquares = $derived(Math.ceil(start.y / ((GAP_SQUARE_RATIO + 1) * gap)));
+	const xSquares = $derived(maxCenterSquares + xFillerSquares * 2);
+	const ySquares = $derived(maxCenterSquares + yFillerSquares * 2);
+	const fillerStart = $derived({
 		x: start.x - xFillerSquares * (GAP_SQUARE_RATIO + 1) * gap,
 		y: start.y - yFillerSquares * (GAP_SQUARE_RATIO + 1) * gap
-	};
+	});
 
 	const updateOnResize: UIEventHandler<Window> = (ev) => {
 		windowSize = {
@@ -39,7 +39,7 @@
 	};
 </script>
 
-<svelte:window on:resize={updateOnResize} />
+<svelte:window onresize={updateOnResize} />
 <main class="neumorph-container relative h-full overflow-clip">
 	{#each Array(xSquares) as _, i}
 		{@const x = fillerStart.x + i * gap * (GAP_SQUARE_RATIO + 1)}

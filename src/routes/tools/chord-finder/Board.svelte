@@ -1,5 +1,8 @@
 <script lang="ts">
-	import FingerBoard, { type FingerInfo } from '$/lib/guitar/finger-board/FingerBoard.svelte';
+	import FingerBoard, {
+		type FingerInfo,
+		type OnFingerBoardClick
+	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
 	import { identifyChordsFromPitches } from '$/utils/music/chords';
 	import {
 		getPitchFromNumber,
@@ -7,10 +10,17 @@
 		sortPitches
 	} from '$/utils/music/pitch';
 	import ChordNotation from '$lib/notation/ChordNotation.svelte';
-	export let fingers: FingerInfo[] = [];
 
-	$: pitches = sortPitches(getPitchesFromFingerPositions(fingers.map((finger) => finger.position)));
-	$: chords = identifyChordsFromPitches(pitches);
+	interface BoardProps {
+		fingers: FingerInfo[];
+		onclick: OnFingerBoardClick;
+	}
+	let { fingers, onclick }: BoardProps = $props();
+
+	const pitches = $derived(
+		sortPitches(getPitchesFromFingerPositions(fingers.map((finger) => finger.position)))
+	);
+	const chords = $derived(identifyChordsFromPitches(pitches));
 </script>
 
 <div class="relative flex h-full flex-col items-center justify-center">
@@ -65,5 +75,5 @@
 	class="mb-28 w-screen lg:w-[calc(100vw-14rem)]"
 	{fingers}
 	fretRange={{ start: 0, end: 12, visibility: 'all' }}
-	on:click
+	{onclick}
 />

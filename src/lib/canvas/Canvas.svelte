@@ -1,19 +1,28 @@
 <script lang="ts">
+	import type { HTMLCanvasAttributes } from 'svelte/elements';
 	import { setCanvasContext } from './core/hooks';
+	import type { Snippet } from 'svelte';
+
+	interface CanvasProps {
+		children: Snippet;
+	}
+
+	const {
+		width = 100,
+		height = 100,
+		children,
+		...rest
+	}: CanvasProps & HTMLCanvasAttributes = $props();
 
 	let canvas: HTMLCanvasElement;
-	export let width = 100;
-	export let height = 100;
 	setCanvasContext(() => canvas);
 </script>
 
 <canvas
 	bind:this={canvas}
-	{...$$restProps}
-	class="{$$props.class} object-contain object-center"
+	{...rest}
+	class="{rest.class} object-contain object-center"
 	{width}
 	{height}
-/>
-{#if canvas}
-	<slot />
-{/if}
+></canvas>
+{@render children()}

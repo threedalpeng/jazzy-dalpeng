@@ -1,24 +1,43 @@
 <script lang="ts">
 	import { onCanvasRender } from '../core/hooks';
-	import HitRegion from './HitRegion.svelte';
+	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
 
-	export let active: boolean = false;
-	export let text: string;
-	export let fontStyle: CanvasFontStyle = 'normal';
-	export let fontVariant: CanvasFontVariant = 'normal';
-	export let fontWeight: CanvasFontWeight = 'normal';
-	export let fontStretch: CanvasFontStretch = 'normal';
-	export let fontSize: CanvasLength = '10px';
-	export let fontFamily: string = 'sans-serif';
+	interface TextProps {
+		text: string;
+		x: number;
+		y: number;
 
-	export let textAlign: CanvasTextAlign = 'start';
-	export let textBaseline: CanvasTextBaseline = 'alphabetic';
+		fontStyle?: CanvasFontStyle;
+		fontVariant?: CanvasFontVariant;
+		fontWeight?: CanvasFontWeight;
+		fontStretch?: CanvasFontStretch;
+		fontSize?: CanvasLength;
+		fontFamily?: string;
 
-	export let fillStyle: CanvasStyle = '#000';
-	export let strokeStyle: CanvasStyle = '#000';
+		textAlign?: CanvasTextAlign;
+		textBaseline?: CanvasTextBaseline;
 
-	export let x: number;
-	export let y: number;
+		fillStyle?: CanvasStyle;
+		strokeStyle?: CanvasStyle;
+	}
+
+	const {
+		text,
+		x,
+		y,
+		fontStyle = 'normal',
+		fontVariant = 'normal',
+		fontWeight = 'normal',
+		fontStretch = 'normal',
+		fontSize = '10px',
+		fontFamily = 'sans-serif',
+		textAlign = 'start',
+		textBaseline = 'alphabetic',
+		fillStyle = '#000',
+		strokeStyle = '#000',
+		active = false,
+		...rest
+	}: TextProps & ForwardHitRegionProps = $props();
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
 		const font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontStretch} ${fontSize} ${fontFamily}`;
@@ -36,4 +55,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>
+<HitRegion {active} {render} {...rest}></HitRegion>

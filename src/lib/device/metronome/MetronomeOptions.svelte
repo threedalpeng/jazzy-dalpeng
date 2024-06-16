@@ -2,9 +2,17 @@
 	import PlusMinusBarButton from '$/lib/ui/PlusMinusBarButton.svelte';
 	import { getMetronomeContext } from './context';
 
+	interface MetronomeOptionsProps {
+		bpm?: number;
+		beatPerBar?: number;
+	}
+
 	const metronome = getMetronomeContext();
-	export let bpm = metronome.timer.bpm;
-	export let beatPerBar = metronome.timer.beatPerBar;
+
+	let {
+		bpm = metronome.timer.bpm,
+		beatPerBar = metronome.timer.beatPerBar
+	}: MetronomeOptionsProps = $props();
 
 	metronome.timer.onTempoChanged((state) => {
 		bpm = state.bpm;
@@ -14,8 +22,12 @@
 	let lastTapTimestamp = -1;
 	let tapIntervalStore: number[] = [];
 
-	$: metronome.timer.bpm = bpm;
-	$: metronome.timer.beatPerBar = beatPerBar;
+	$effect(() => {
+		metronome.timer.bpm = bpm;
+	});
+	$effect(() => {
+		metronome.timer.beatPerBar = beatPerBar;
+	});
 </script>
 
 <div class="flex h-full flex-col items-start justify-between">
@@ -41,7 +53,7 @@
 		<div class="tooltip tooltip-bottom min-h-0" data-tip="Only last 5 taps will be calculated">
 			<button
 				class="btn btn-square btn-primary aspect-square h-10 min-h-0 p-0"
-				on:click={(e) => {
+				onclick={(e) => {
 					if (lastTapTimestamp !== -1) {
 						tapIntervalStore.push(e.timeStamp - lastTapTimestamp);
 					}

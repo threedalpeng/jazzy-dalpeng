@@ -1,11 +1,12 @@
 <script lang="ts">
+	import type { Rect } from '$/types/geometry';
 	import { onCanvasHit, onCanvasRender } from '../core/hooks';
 
-	export let x: number;
-	export let y: number;
-	export let width: number;
-	export let height: number;
-	export let removeHitRegion: boolean = false;
+	interface ClipProps extends Rect {
+		removeHitRegion?: boolean;
+	}
+
+	const { x, y, width, height, removeHitRegion = false }: ClipProps = $props();
 
 	onCanvasRender(({ context2d: ctx }) => {
 		ctx.clearRect(x, y, width, height);

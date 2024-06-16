@@ -1,19 +1,36 @@
 <script lang="ts">
 	import { onCanvasRender } from '..';
-	import HitRegion from './HitRegion.svelte';
+	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
 
-	export let active: boolean = false;
-	export let x: number;
-	export let y: number;
-	export let radiusX: number;
-	export let radiusY: number;
-	export let rotation: number = 0;
-	export let startAngle: number = 0;
-	export let endAngle: number = 2 * Math.PI;
-	export let counterclockwise: boolean = false;
-	export let fillStyle: CanvasStyle = '#000';
-	export let strokeStyle: CanvasStyle = '#000';
-	export let lineWidth: number = 1;
+	interface EllipseProps {
+		x: number;
+		y: number;
+		radiusX: number;
+		radiusY: number;
+		rotation?: number;
+		startAngle?: number;
+		endAngle?: number;
+		counterclockwise?: boolean;
+		fillStyle?: CanvasStyle;
+		strokeStyle?: CanvasStyle;
+		lineWidth?: number;
+	}
+
+	const {
+		x,
+		y,
+		radiusX,
+		radiusY,
+		rotation = 0,
+		startAngle = 0,
+		endAngle = 2 * Math.PI,
+		counterclockwise = false,
+		fillStyle = '#000',
+		strokeStyle = '#000',
+		lineWidth = 1,
+		active = false,
+		...rest
+	}: EllipseProps & ForwardHitRegionProps = $props();
 
 	const render = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => {
 		ctx.lineWidth = lineWidth;
@@ -30,4 +47,4 @@
 	});
 </script>
 
-<HitRegion {active} {render} on:up on:down on:move on:click on:over on:out></HitRegion>
+<HitRegion {active} {render} {...rest}></HitRegion>

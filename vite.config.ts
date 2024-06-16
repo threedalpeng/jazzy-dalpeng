@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import { sveltekit } from '@sveltejs/kit/vite';
-import { SvelteKitPWA } from '@vite-pwa/sveltekit';
+import Icons from 'unplugin-icons/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -10,7 +10,11 @@ export default defineConfig({
 		'process.env.NODE_ENV': process.env.NODE_ENV === 'production' ? '"production"' : '"development"'
 	},
 	plugins: [
-		sveltekit()
+		sveltekit(),
+		Icons({
+			compiler: 'svelte',
+			autoInstall: true
+		})
 		// SvelteKitPWA({
 		// 	strategies: 'injectManifest',
 		// 	srcDir: 'src',
