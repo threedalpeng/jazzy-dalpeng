@@ -9,7 +9,7 @@ export const setSubroutineCanvasContext = (
 		afterRender?: CanvasRenderCallback;
 	}
 ) => {
-	let subCanvasContext = new CanvasContext(canvasGetter);
+	const subCanvasContext = new CanvasContext(canvasGetter);
 	setContext('canvas', subCanvasContext);
 	upperContext.registerSubroutineContext(subCanvasContext);
 	upperContext.onRender(({ delta }) => {

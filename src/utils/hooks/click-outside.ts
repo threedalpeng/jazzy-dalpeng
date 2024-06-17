@@ -3,7 +3,7 @@ import type { Action } from 'svelte/action';
 export const clickoutside: Action<
 	Element,
 	unknown,
-	{ onclickoutside?: (event: CustomEvent<MouseEvent>) => any }
+	{ onclickoutside?: (event: CustomEvent<MouseEvent>) => unknown }
 > = (node) => {
 	const handleClick = (event: MouseEvent) => {
 		const target = event.target as HTMLElement;

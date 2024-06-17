@@ -8,7 +8,7 @@
 	}
 
 	let { quantizingUnit, children }: Props = $props();
-	const pianoRollContext = setPianoRollContext({
+	setPianoRollContext({
 		quantizingUnit
 	});
 </script>

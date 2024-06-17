@@ -2,9 +2,9 @@ import type { Size } from '$/types/geometry';
 import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './events';
 
 export type CanvasGetter = () => HTMLCanvasElement;
-export type CanvasRenderCallback = (canvasContext: CanvasContext) => any;
-export type CanvasResizeCallback = (canvasContext: Size) => any;
-export type OffscreenCanvasRenderCallback = (ctx: OffscreenCanvasRenderingContext2D) => any;
+export type CanvasRenderCallback = (canvasContext: CanvasContext) => unknown;
+export type CanvasResizeCallback = (canvasContext: Size) => unknown;
+export type OffscreenCanvasRenderCallback = (ctx: OffscreenCanvasRenderingContext2D) => unknown;
 export class CanvasContext {
 	#canvasGetter: CanvasGetter;
 	#timePassed = 0;
@@ -18,7 +18,7 @@ export class CanvasContext {
 		return this.#canvasGetter();
 	}
 	get context2d() {
-		return this.canvas.getContext('2d')!!;
+		return this.canvas.getContext('2d')!;
 	}
 	get hitContext2d() {
 		return this.#eventHandler.context2d;
@@ -74,7 +74,7 @@ export class CanvasContext {
 
 	onHitboxRender(
 		code: string,
-		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => any,
+		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => unknown,
 		onHit: OnHitCallback
 	) {
 		this.#eventHandler.onHitboxRender(code, renderFn, onHit);
@@ -113,7 +113,7 @@ export class CanvasContext {
 	#prevSize: Size = { width: -1, height: -1 };
 	render: FrameRequestCallback = async (t) => {
 		this.#timePassed = t;
-		let ctx = this.context2d;
+		const ctx = this.context2d;
 
 		if (this.width !== this.#prevSize.width || this.height !== this.#prevSize.height) {
 			this.#resizeCallbacks.forEach((cb) => {

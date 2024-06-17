@@ -1,7 +1,8 @@
+import '$lib/canvas/type';
+import 'unplugin-icons/types/svelte';
 import 'vite-plugin-pwa/info';
 import 'vite-plugin-pwa/svelte';
 import 'vite-plugin-pwa/types';
-import 'unplugin-icons/types/svelte';
 
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces

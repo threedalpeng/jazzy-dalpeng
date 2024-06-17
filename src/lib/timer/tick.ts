@@ -1,7 +1,7 @@
 import { MultiMap } from '$/utils/multimap';
 import type { WithCleanup } from '$/utils/types';
 import type { ScoreTimestamp } from '../practice/types';
-import { TickEvent, type TickEventCallbacks, type TickEventOption } from './event';
+import { TickEvent, type TickEventCallbacks } from './event';
 import TimerWorker from './timer-worker?worker';
 
 export interface TickState {
@@ -62,7 +62,7 @@ export class AudioClockTimer {
 			Promise.all([...this.#beforeStartCallbacks].map((cb) => cb())).then(() => {
 				this.#isRunning = true;
 				// delay initial lookhead
-				this.#nextTickOnSecond = this.audioCtx!!.currentTime + 0.1;
+				this.#nextTickOnSecond = this.audioCtx!.currentTime + 0.1;
 				this.lookaheadTimer.postMessage('start');
 				this.#startCallbacks.forEach((cb) => cb());
 			});
@@ -74,9 +74,9 @@ export class AudioClockTimer {
 		// schedule audio
 		// and push expected events to queues
 		// in this case, metronome ticks will be queued
-		while (this.#nextTickOnSecond < this.audioCtx!!.currentTime + SCHEDULE_AHEAD_SEC) {
+		while (this.#nextTickOnSecond < this.audioCtx!.currentTime + SCHEDULE_AHEAD_SEC) {
 			const audioState = {
-				audioCtx: this.audioCtx!!,
+				audioCtx: this.audioCtx!,
 				time: this.#nextTickOnSecond,
 				tickPassed: this.#tickPassed
 			};
@@ -156,28 +156,28 @@ export class AudioClockTimer {
 		window.requestAnimationFrame(this.#onAnimationFrame.bind(this));
 	}
 
-	#beforeStartCallbacks: Set<() => Promise<any>> = new Set();
-	beforeStart(cb: () => Promise<any>) {
+	#beforeStartCallbacks: Set<() => Promise<unknown>> = new Set();
+	beforeStart(cb: () => Promise<unknown>) {
 		this.#beforeStartCallbacks.add(cb);
 		return () => this.removeStart(cb);
 	}
-	removeBeforeStart(cb: () => Promise<any>) {
+	removeBeforeStart(cb: () => Promise<unknown>) {
 		this.#beforeStartCallbacks.delete(cb);
 	}
-	#startCallbacks: Set<() => any> = new Set();
-	onStart(cb: () => any) {
+	#startCallbacks: Set<() => unknown> = new Set();
+	onStart(cb: () => unknown) {
 		this.#startCallbacks.add(cb);
 		return () => this.removeStart(cb);
 	}
-	removeStart(cb: () => any) {
+	removeStart(cb: () => unknown) {
 		this.#startCallbacks.delete(cb);
 	}
-	#stopCallbacks: Set<() => any> = new Set();
-	onStop(cb: () => any) {
+	#stopCallbacks: Set<() => unknown> = new Set();
+	onStop(cb: () => unknown) {
 		this.#stopCallbacks.add(cb);
 		return () => this.removeStart(cb);
 	}
-	removeStop(cb: () => any) {
+	removeStop(cb: () => unknown) {
 		this.#stopCallbacks.delete(cb);
 	}
 
@@ -378,11 +378,11 @@ export class TempoTimer extends AudioClockTimer {
 		}
 	}
 
-	#tempoChangedCallbacks: Set<(state: TempoState) => any> = new Set();
-	onTempoChanged(cb: (state: TempoState) => any) {
+	#tempoChangedCallbacks: Set<(state: TempoState) => unknown> = new Set();
+	onTempoChanged(cb: (state: TempoState) => unknown) {
 		this.#tempoChangedCallbacks.add(cb);
 	}
-	removeTempoChanged(cb: (state: TempoState) => any) {
+	removeTempoChanged(cb: (state: TempoState) => unknown) {
 		this.#tempoChangedCallbacks.delete(cb);
 	}
 

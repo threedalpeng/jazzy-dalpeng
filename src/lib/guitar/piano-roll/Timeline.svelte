@@ -4,23 +4,14 @@
 	import Layer from '$/lib/canvas/elements/Layer.svelte';
 	import Rectangle from '$/lib/canvas/elements/Rectangle.svelte';
 	import { rangeFloat, rangeInt } from '$/utils/basic';
-	import { createEventDispatcher } from 'svelte';
 	import { getPianoRollContext } from './context';
-	const {
-		noteFrameStart,
-		noteWidth,
-		noteHeight,
-		pianoWidth,
-		pianoHeight,
-		beatPerBar,
-		quantizingUnit
-	} = getPianoRollContext();
+	const { noteFrameStart, noteWidth, noteHeight, pianoWidth, beatPerBar } = getPianoRollContext();
 
 	interface TimelineProps {
 		pitchStart: number;
 		pitchEnd: number;
 		pitchHighlight?: number | 'mute' | null;
-		onover?: (detail: { cursorPitch: number | 'mute' }) => any;
+		onover?: (detail: { cursorPitch: number | 'mute' }) => unknown;
 	}
 	let { pitchStart, pitchEnd, pitchHighlight = null, onover = () => {} }: TimelineProps = $props();
 
@@ -42,7 +33,7 @@
 			height={$noteHeight}
 			strokeStyle={i % 2 ? '#cccccc' : '#888888'}
 			fillStyle={i % 2 ? '#cccccc' : '#888888'}
-			onover={(e) => {
+			onover={() => {
 				onover({ cursorPitch: i });
 			}}
 		></Rectangle>
@@ -55,7 +46,7 @@
 		height={$noteHeight}
 		strokeStyle={'#666666'}
 		fillStyle={'#eeeeee'}
-		onover={(e) => {
+		onover={() => {
 			onover({ cursorPitch: 'mute' });
 		}}
 	></Rectangle>
@@ -81,7 +72,7 @@
 			height={$noteHeight + 2}
 			strokeStyle={'#9abcde'}
 			fillStyle={'#abcdef'}
-			onover={(e) => {
+			onover={() => {
 				if (pitchHighlight !== null) onover({ cursorPitch: pitchHighlight });
 			}}
 		></Rectangle>

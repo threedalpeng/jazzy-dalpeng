@@ -9,7 +9,7 @@ import {
 import { CanvasEventHandler, type OnHitCallback } from './events';
 
 export const setCanvasContext = (canvasGetter: CanvasGetter) => {
-	let context = setContext('canvas', new CanvasContext(canvasGetter));
+	const context = setContext('canvas', new CanvasContext(canvasGetter));
 	onMount(() => {
 		context.run();
 	});

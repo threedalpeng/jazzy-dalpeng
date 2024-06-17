@@ -50,7 +50,7 @@ export class MultiMap<K, V> extends Map {
 			}
 		}
 	}
-	forEach(callbackfn: (value: V, key: K, map: Map<K, V[]>) => void, thisArg?: any): void {
+	forEach(callbackfn: (value: V, key: K, map: Map<K, V[]>) => void, thisArg?: unknown): void {
 		super.forEach((k, values, map) => {
 			values.forEach((v: V) => {
 				callbackfn(v, k, map);

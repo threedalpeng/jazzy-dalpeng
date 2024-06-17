@@ -25,7 +25,7 @@
 		pitchEnd?: number;
 		pitchHighlight?: number | 'mute' | null;
 		notes?: PianoRollNote[];
-		onselect?: (note: PianoRollNote) => any;
+		onselect?: (note: PianoRollNote) => unknown;
 	}
 	let {
 		pitchStart = 40,
@@ -34,7 +34,7 @@
 		notes = [],
 		onselect = () => {}
 	}: Props = $props();
-	let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
+	// let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
 
 	$inspect(notes);
 
@@ -93,7 +93,7 @@
 			dragStartNote = hoverPointNote;
 		}
 	}}
-	onpointerup={(e) => {
+	onpointerup={() => {
 		isDragging = false;
 		if (dragButton === 0) {
 			if (dragEndNote > dragStartNote) {
@@ -164,7 +164,7 @@
 			<!--Piano -->
 			{@const offsetY = -($noteHeight * (11 - (pitchEnd % 12)))}
 			{@const numOfGroups = Math.floor(pitchEnd / 12) - Math.floor(pitchStart / 12) + 1}
-			{#each new Array(numOfGroups * 7) as _, i}
+			{#each rangeInt(0, numOfGroups * 7) as i}
 				<Rectangle
 					x={0}
 					y={i * $pianoHeight + offsetY}
@@ -175,7 +175,7 @@
 					fillStyle="white"
 				></Rectangle>
 			{/each}
-			{#each new Array(numOfGroups * 7) as _, i}
+			{#each rangeInt(0, numOfGroups * 7) as i}
 				{#if i % 7 !== 3 && i % 7 !== 6}
 					<Rectangle
 						x={0}

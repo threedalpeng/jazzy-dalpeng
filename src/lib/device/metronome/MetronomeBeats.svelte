@@ -4,7 +4,7 @@
 
 	const metronome = getMetronomeContext();
 
-	interface MetronomeBeatsProps extends HTMLAttributes<HTMLDivElement> {}
+	type MetronomeBeatsProps = HTMLAttributes<HTMLDivElement>;
 	const { ...rest }: MetronomeBeatsProps = $props();
 
 	let beatPerBar = $state(metronome.timer.tempoState.beatPerBar);

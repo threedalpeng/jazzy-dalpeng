@@ -5,7 +5,7 @@
 	import IconPlaySolid from '~icons/heroicons/play-solid';
 	import IconStopSolid from '~icons/heroicons/stop-solid';
 
-	interface MetronomePlayButtonProps extends HTMLButtonAttributes {}
+	type MetronomePlayButtonProps = HTMLButtonAttributes;
 	const { ...rest }: MetronomePlayButtonProps = $props();
 
 	const metronome = getMetronomeContext();

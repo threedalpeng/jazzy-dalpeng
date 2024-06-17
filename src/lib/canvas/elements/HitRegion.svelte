@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-	export type OnHitRegion = (detail: CanvasPointerEvent['detail']) => any;
+	export type OnHitRegion = (detail: CanvasPointerEvent['detail']) => unknown;
 	export interface ForwardHitRegionProps {
 		active?: boolean;
 		onup?: OnHitRegion;
@@ -12,11 +12,11 @@
 </script>
 
 <script lang="ts">
-	import type { CanvasPointerEvent, OnHitCallback } from '../core/events';
+	import type { CanvasPointerEvent } from '../core/events';
 	import { onCanvasHit } from '../core/hooks';
 
 	interface HitRegionProps extends ForwardHitRegionProps {
-		render: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => any;
+		render: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => unknown;
 	}
 	const {
 		active = true,

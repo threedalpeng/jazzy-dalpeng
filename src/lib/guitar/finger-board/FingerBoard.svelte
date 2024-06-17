@@ -49,6 +49,7 @@
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
 	import { setFingerBoardContext } from './context';
+	import type { CanvasStyle } from '$/lib/canvas/elements/types';
 
 	const {
 		FRET_START,

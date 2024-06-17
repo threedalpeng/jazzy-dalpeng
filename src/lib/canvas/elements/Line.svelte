@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onCanvasRender } from '../core/hooks';
 	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
+	import type { CanvasStyle } from './types';
 
 	interface LineProps {
 		points: { x: number; y: number }[];

@@ -49,7 +49,7 @@ class Metronome {
 		}
 	}
 
-	#onTick({ time, tickPassed }: TickState) {
+	#onTick({ time: _time, tickPassed }: TickState) {
 		const beatPassed = tickPassed / this.#ticksPerBeat;
 		const barPassed = beatPassed / this.#timer.beatPerBar;
 		const currentBeat = (beatPassed % this.#timer.beatPerBar) + 1;
@@ -84,7 +84,7 @@ class Metronome {
 			this.#masterGain.connect(audioCtx.destination);
 		}
 		const beatPassed = tickPassed / this.#ticksPerBeat;
-		const barPassed = beatPassed / this.#timer.beatPerBar;
+		const _barPassed = beatPassed / this.#timer.beatPerBar;
 		const currentBeat = (beatPassed % this.#timer.beatPerBar) + 1;
 
 		const osc = audioCtx.createOscillator();

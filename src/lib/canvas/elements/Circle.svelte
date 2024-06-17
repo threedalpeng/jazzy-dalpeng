@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Ellipse from './Ellipse.svelte';
 	import type { ForwardHitRegionProps } from './HitRegion.svelte';
+	import type { CanvasStyle } from './types';
 
 	interface CircleProps {
 		x: number;

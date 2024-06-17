@@ -17,6 +17,6 @@
 		(hitCtx) => {
 			hitCtx.clearRect(x, y, width, height);
 		},
-		(ev) => {}
+		(_ev) => {}
 	);
 </script>

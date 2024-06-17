@@ -40,7 +40,7 @@
 			return [];
 		} else
 			return (currentBoard?.fingers ?? []).map((finger) => {
-				const order = nextNotes.findIndex((f) => f === finger);
+				const _order = nextNotes.findIndex((f) => f === finger);
 				return {
 					position: currentScore!.positions[finger],
 					style: {
@@ -52,15 +52,15 @@
 	});
 
 	let guitarSoundfont: Soundfont | null = null;
-
 	$effect.pre(replaceScore);
 	function replaceScore() {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		practice;
 		currentScore = randomBox.open();
 		currentBoard = currentScore.boards[0];
 		const cancel = timer.beforeStart(async () => {
 			if (!guitarSoundfont) {
-				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
+				guitarSoundfont = new Soundfont(timer.audioCtx!, {
 					instrument: 'acoustic_guitar_steel',
 					storage: new CacheStorage()
 				});
@@ -113,10 +113,10 @@
 						currentActiveFingers.delete(note.position);
 					};
 				},
-				audio: ({ audioCtx, time }) => {
+				audio: ({ time }) => {
 					// play audio with pitch
 					if (note.pitch) {
-						guitarSoundfont!!.start({
+						guitarSoundfont?.start({
 							note: numberingPitch(note.pitch),
 							time: time,
 							duration: note.time.duration

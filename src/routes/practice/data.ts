@@ -8,7 +8,7 @@ export interface PracticeRoute {
 }
 
 export type PracticeRouteCategory = 'core' | 'custom';
-export interface PracticeRoutes extends Record<PracticeRouteCategory, PracticeRoute[]> {}
+export type PracticeRoutes = Record<PracticeRouteCategory, PracticeRoute[]>;
 
 export const routes: PracticeRoutes = {
 	core: [

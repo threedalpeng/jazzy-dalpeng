@@ -17,6 +17,7 @@
 
 	/* Inner Context */
 	const offscreenCanvas = document.createElement('canvas');
+	offscreenCanvas.className = `offcanvas-${name}`;
 
 	offscreenCanvas.width = upperCanvasContext.canvas.width;
 	offscreenCanvas.height = upperCanvasContext.canvas.height;

@@ -15,7 +15,7 @@
 	} from '$/utils/music/pitch';
 	import MetronomePlayButton from '$lib/device/metronome/MetronomePlayButton.svelte';
 
-	const metronome = getMetronomeContext();
+	const _metronome = getMetronomeContext();
 
 	const practice: Practice = {
 		guitar: {

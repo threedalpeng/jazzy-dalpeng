@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onCanvasRender } from '..';
 	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
+	import type { CanvasStyle } from './types';
 
 	interface EllipseProps {
 		x: number;

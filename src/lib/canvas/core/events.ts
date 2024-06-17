@@ -1,5 +1,5 @@
 type PickByValue<T, Value> = { [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P] };
-export interface PointerEventMap extends PickByValue<HTMLElementEventMap, PointerEvent> {}
+export type PointerEventMap = PickByValue<HTMLElementEventMap, PointerEvent>;
 export const pointerEventTypes: (keyof PointerEventMap)[] = [
 	'gotpointercapture',
 	'lostpointercapture',
@@ -18,11 +18,33 @@ export type CanvasPointerEventType = 'up' | 'down' | 'over' | 'out' | 'move' | '
 // type PickProperties<T> = Pick<T, { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]>;
 export interface CanvasPointerEvent {
 	type: CanvasPointerEventType;
-	detail: any;
+	detail: CanvasPointerEventDetail;
 }
 
-export type OnHitCallback = (ev: CanvasPointerEvent) => any;
+interface CanvasPointerEventDetail extends Omit<PointerInfo, 'state'> {
+	button: number | null;
+	state: [string, PointerState][];
+}
+
+export type OnHitCallback = (ev: CanvasPointerEvent) => unknown;
 type PointerState = 'down' | 'up' | 'pressed';
+interface PointerInfo {
+	id: number;
+	type: string;
+	state: Map<number, PointerState>;
+	delta: { x: number; y: number };
+	position: { x: number; y: number };
+	moved: boolean;
+	hitCode: string;
+	lastDownHitCode: string;
+}
+interface UnpolledPointerInfo {
+	buttons: Set<number>;
+	delta: { x: number; y: number };
+	position: { x: number; y: number };
+	moved: boolean;
+	hitCode: string;
+}
 
 export class CanvasEventHandler {
 	static #nextHitCode = 0;
@@ -33,7 +55,7 @@ export class CanvasEventHandler {
 	#canvas: OffscreenCanvas | null = null;
 	#context2d: OffscreenCanvasRenderingContext2D | null = null;
 	get context2d() {
-		return this.#context2d!!;
+		return this.#context2d!;
 	}
 
 	setup(width: number, height: number) {
@@ -41,15 +63,15 @@ export class CanvasEventHandler {
 		this.#context2d = this.#canvas.getContext('2d', {
 			alpha: true,
 			willReadFrequently: true
-		})!!;
+		})!;
 		this.#context2d.imageSmoothingEnabled = false;
 	}
 
-	#hitRenderMap: Map<string, (ctx: OffscreenCanvasRenderingContext2D) => any> = new Map();
+	#hitRenderMap: Map<string, (ctx: OffscreenCanvasRenderingContext2D) => unknown> = new Map();
 	#onHitMap: Map<string, OnHitCallback> = new Map();
 	onHitboxRender(
 		code: string,
-		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => any,
+		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => unknown,
 		onHit: OnHitCallback
 	) {
 		this.#hitRenderMap.set(code, renderFn);
@@ -63,29 +85,8 @@ export class CanvasEventHandler {
 		this.#onHitMap = eventHandler.#onHitMap;
 	}
 
-	#pointerInfoMap = new Map<
-		number,
-		{
-			id: number;
-			type: string;
-			state: Map<number, PointerState>;
-			delta: { x: number; y: number };
-			position: { x: number; y: number };
-			moved: boolean;
-			hitCode: string;
-			lastDownHitCode: string;
-		}
-	>();
-	#unpolledPointerInfoMap = new Map<
-		number,
-		{
-			buttons: Set<number>;
-			delta: { x: number; y: number };
-			position: { x: number; y: number };
-			moved: boolean;
-			hitCode: string;
-		}
-	>();
+	#pointerInfoMap = new Map<number, PointerInfo>();
+	#unpolledPointerInfoMap = new Map<number, UnpolledPointerInfo>();
 	static getPointerPosition(ev: PointerEvent) {
 		const canvas = ev.currentTarget as HTMLCanvasElement;
 		const bounding = canvas.getBoundingClientRect();
@@ -164,7 +165,7 @@ export class CanvasEventHandler {
 	 */
 	poll() {
 		for (const [pointerId, unpolledInfo] of this.#unpolledPointerInfoMap) {
-			const pointerInfo = this.#pointerInfoMap.get(pointerId)!!;
+			const pointerInfo = this.#pointerInfoMap.get(pointerId)!;
 			const onHit = this.#onHitMap.get(unpolledInfo.hitCode);
 			const prevTargetOnHit = this.#onHitMap.get(pointerInfo.hitCode);
 			const hitEventTypes: [CanvasPointerEventType, number | null][] = [];
@@ -218,6 +219,7 @@ export class CanvasEventHandler {
 			pointerInfo.hitCode = unpolledInfo.hitCode;
 			pointerInfo.position = unpolledInfo.position;
 
+			/** up, down, click, move, over */
 			hitEventTypes.forEach(([type, button]) => {
 				if (onHit)
 					onHit({
@@ -225,6 +227,7 @@ export class CanvasEventHandler {
 						detail: { ...pointerInfo, button, state: Object.entries(pointerInfo.state) }
 					});
 			});
+			/** out */
 			prevTargetHitEventTypes.forEach(([type, button]) => {
 				if (prevTargetOnHit)
 					prevTargetOnHit({
@@ -236,12 +239,12 @@ export class CanvasEventHandler {
 	}
 
 	async beforeRender() {
-		let hitCtx = this.context2d;
-		hitCtx.clearRect(0, 0, this.#canvas!!.width, this.#canvas!!.height);
+		const hitCtx = this.context2d;
+		hitCtx.clearRect(0, 0, this.#canvas!.width, this.#canvas!.height);
 	}
 	async render() {
-		let hitCtx = this.context2d;
-		this.#hitRenderMap.forEach(async (renderCallback, hitCode) => {
+		const hitCtx = this.context2d;
+		this.#hitRenderMap.forEach(async (renderCallback) => {
 			hitCtx.save();
 			renderCallback(hitCtx);
 			hitCtx.restore();

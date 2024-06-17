@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { onCanvasRender } from '../core/hooks';
 	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
+	import type {
+		CanvasFontStyle,
+		CanvasFontVariant,
+		CanvasFontWeight,
+		CanvasLength,
+		CanvasStyle
+	} from './types';
 
 	interface TextProps {
 		text: string;

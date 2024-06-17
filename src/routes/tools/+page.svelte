@@ -3,7 +3,7 @@
 	import MetronomeIcon from '$assets/icons/metronome-icon.svg?raw';
 	import type { UIEventHandler } from 'svelte/elements';
 
-	const tools = [{ col: 1, row: 2, logoSvg: MetronomeIcon, title: 'Metronome' }];
+	const _tools = [{ col: 1, row: 2, logoSvg: MetronomeIcon, title: 'Metronome' }];
 
 	const SQUARE_SIZE_MIN = 240;
 	const GAP_SQUARE_RATIO = 6;
@@ -31,7 +31,7 @@
 		y: start.y - yFillerSquares * (GAP_SQUARE_RATIO + 1) * gap
 	});
 
-	const updateOnResize: UIEventHandler<Window> = (ev) => {
+	const updateOnResize: UIEventHandler<Window> = () => {
 		windowSize = {
 			long: Math.max(window.innerWidth, window.innerHeight),
 			short: Math.min(window.innerWidth, window.innerHeight)
@@ -58,6 +58,7 @@
 					>
 						<div class="flex flex-col items-center gap-8">
 							<SvgIcon class="aspect-square w-1/3">
+								<!--eslint-disable-next-line svelte/no-at-html-tags-->
 								{@html MetronomeIcon}
 							</SvgIcon>
 							<h2 class="text-xl font-light">Metronome</h2>
