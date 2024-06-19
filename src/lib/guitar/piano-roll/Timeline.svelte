@@ -5,19 +5,34 @@
 	import Rectangle from '$/lib/canvas/elements/Rectangle.svelte';
 	import { rangeFloat, rangeInt } from '$/utils/basic';
 	import { getPianoRollContext } from './context';
-	const { noteFrameStart, noteWidth, noteHeight, pianoWidth, beatPerBar } = getPianoRollContext();
+	const {
+		noteFrameStart,
+		noteWidth,
+		noteHeight,
+		pianoWidth,
+		beatPerBar,
+		toCanvasOffsetX,
+		toCanvasOffsetY,
+		pitchStart,
+		pitchEnd
+	} = getPianoRollContext();
 
 	interface TimelineProps {
-		pitchStart: number;
-		pitchEnd: number;
 		pitchHighlight?: number | 'mute' | null;
 		onover?: (detail: { cursorPitch: number | 'mute' }) => unknown;
 	}
-	let { pitchStart, pitchEnd, pitchHighlight = null, onover = () => {} }: TimelineProps = $props();
+	let { pitchHighlight = null, onover = () => {} }: TimelineProps = $props();
 
-	let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
+	const COLOR_ON_CURSOR = '#19ea2f';
+	const COLOR_EVEN = '#cccccc';
+	const COLOR_ODD = '#888888';
+	const COLOR_MUTE_STROKE = '#666666';
+	const COLOR_MUTE_FILL = '#eeeeee';
 
+	let pitchRange = $derived(rangeInt($pitchStart, $pitchEnd + 1));
 	let width = $state(100);
+	let pitchOnCursor = $state<number | 'mute'>(-1);
+
 	onCanvasResize(({ width: w }) => {
 		width = w;
 	});
@@ -28,33 +43,35 @@
 		<Rectangle
 			active
 			x={$pianoWidth}
-			y={(pitchEnd - i) * $noteHeight}
+			y={($pitchEnd - i) * $noteHeight}
 			width={width - $pianoWidth}
 			height={$noteHeight}
-			strokeStyle={i % 2 ? '#cccccc' : '#888888'}
-			fillStyle={i % 2 ? '#cccccc' : '#888888'}
+			strokeStyle={pitchOnCursor === i ? COLOR_ON_CURSOR : i % 2 ? COLOR_EVEN : COLOR_ODD}
+			fillStyle={pitchOnCursor === i ? COLOR_ON_CURSOR : i % 2 ? COLOR_EVEN : COLOR_ODD}
 			onover={() => {
-				onover({ cursorPitch: i });
+				pitchOnCursor = i;
+				onover({ cursorPitch: pitchOnCursor });
 			}}
 		></Rectangle>
 	{/each}
 	<Rectangle
 		active
 		x={$pianoWidth}
-		y={(pitchEnd - pitchStart + 2) * $noteHeight}
+		y={($pitchEnd - $pitchStart + 2) * $noteHeight}
 		width={width - $pianoWidth}
 		height={$noteHeight}
-		strokeStyle={'#666666'}
-		fillStyle={'#eeeeee'}
+		strokeStyle={pitchOnCursor === 'mute' ? COLOR_ON_CURSOR : COLOR_MUTE_STROKE}
+		fillStyle={pitchOnCursor === 'mute' ? COLOR_ON_CURSOR : COLOR_MUTE_FILL}
 		onover={() => {
-			onover({ cursorPitch: 'mute' });
+			pitchOnCursor = 'mute';
+			onover({ cursorPitch: pitchOnCursor });
 		}}
 	></Rectangle>
 	{#each pitchRange.filter((x) => x % 12 === 0) as i}
 		<Line
 			points={[
-				{ x: 0, y: (pitchEnd - i + 1) * $noteHeight },
-				{ x: width, y: (pitchEnd - i + 1) * $noteHeight }
+				{ x: 0, y: ($pitchEnd - i + 1) * $noteHeight },
+				{ x: width, y: ($pitchEnd - i + 1) * $noteHeight }
 			]}
 			strokeStyle="black"
 		></Line>
@@ -66,8 +83,7 @@
 		<Rectangle
 			active
 			x={$pianoWidth}
-			y={(pitchEnd - (pitchHighlight !== 'mute' ? pitchHighlight : pitchStart - 2)) * $noteHeight -
-				1}
+			y={$toCanvasOffsetY(pitchHighlight) - 1}
 			width={width - $pianoWidth}
 			height={$noteHeight + 2}
 			strokeStyle={'#9abcde'}
@@ -83,8 +99,8 @@
 	{#each rangeFloat( $noteFrameStart, $noteFrameStart + (width - $pianoWidth) / $noteWidth, { gap: 1 / $beatPerBar, quantized: true } ) as i}
 		<Line
 			points={[
-				{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: 0 },
-				{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: 8 * $noteHeight * 12 }
+				{ x: $toCanvasOffsetX(i), y: 0 },
+				{ x: $toCanvasOffsetX(i), y: 8 * $noteHeight * 12 }
 			]}
 			strokeStyle="#1c1c1c"
 		></Line>
@@ -93,8 +109,8 @@
 	{#each rangeFloat( $noteFrameStart, $noteFrameStart + (width - $pianoWidth) / $noteWidth, { gap: 1, quantized: true } ) as i}
 		<Line
 			points={[
-				{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: 0 },
-				{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: 8 * $noteHeight * 12 }
+				{ x: $toCanvasOffsetX(i), y: 0 },
+				{ x: $toCanvasOffsetX(i), y: 8 * $noteHeight * 12 }
 			]}
 			strokeStyle="black"
 			lineWidth={2}

@@ -20,21 +20,12 @@
 	let innerWidth = $state(window.innerWidth);
 	let innerHeight = $state(window.innerHeight);
 
-	interface Props {
-		pitchStart?: number;
-		pitchEnd?: number;
+	interface PianoRollProps {
 		pitchHighlight?: number | 'mute' | null;
 		notes?: PianoRollNote[];
 		onselect?: (note: PianoRollNote) => unknown;
 	}
-	let {
-		pitchStart = 40,
-		pitchEnd = 84,
-		pitchHighlight = null,
-		notes = [],
-		onselect = () => {}
-	}: Props = $props();
-	// let pitchRange = $derived(rangeInt(pitchStart, pitchEnd + 1));
+	let { pitchHighlight = null, notes = [], onselect = () => {} }: PianoRollProps = $props();
 
 	$inspect(notes);
 
@@ -45,66 +36,82 @@
 		noteHeight,
 		pianoWidth,
 		pianoHeight,
+		pitchStart,
+		pitchEnd,
 		beatPerBar,
-		quantizingUnit
+		quantizingUnit,
+		toNote,
+		toCanvasOffsetX,
+		toCanvasOffsetY
 	} = getPianoRollContext();
 
-	let hoverPointNote = $state<number>(0);
-	let hoverPointX = $derived((hoverPointNote - $noteFrameStart) * $noteWidth + $pianoWidth);
+	let _pitchRange = $derived(rangeInt($pitchStart, $pitchEnd + 1));
 	$effect(() => {
 		$noteWidth = innerWidth / 5;
 	});
 	$quantizingUnit = 1 / 24;
 
-	let isDragging = $state<boolean>(false);
-	let dragButton = $state<number>(0);
-	let cursorPitch = $state<number | 'mute'>(0);
-	let selectedPitch = $derived(pitchHighlight ?? cursorPitch);
-	let dragStartNote = $state(0);
-	let dragEndNote = $state(0);
+	let noteOnHoverPoint = $state<number>(0);
+	let hoverPointX = $derived((noteOnHoverPoint - $noteFrameStart) * $noteWidth + $pianoWidth);
+
+	let pitchOnCursor = $state<number | 'mute'>(0);
+	let pitchSelected = $derived(pitchHighlight ?? pitchOnCursor);
+
+	let dragging = $state<boolean>(false);
+	let noteOnDragStart = $state(0);
+	let noteOnDragEnd = $state(0);
+
+	let mouseButtonOnDrag = $state<number>(0);
 
 	function updateNoteFrameStart(deltaX: number) {
 		const newNoteFrameStart = $noteFrameStart + deltaX * 0.05;
 		$noteFrameStart = newNoteFrameStart > 0 ? newNoteFrameStart : 0;
 	}
 
-	let isScrollingOnX = $derived(isDragging && dragButton === 2);
-	let isSelecting = $derived(isDragging && dragButton === 0);
+	const scrollingOnX = $derived(dragging && mouseButtonOnDrag === 2);
+	const selecting = $derived(dragging && mouseButtonOnDrag === 0);
+
+	function quantizeNote(note: number) {
+		return Math.max(Math.round(note / $quantizingUnit) * $quantizingUnit, 0);
+	}
+
+	function setNoteOnHoverPoint(e: PointerEvent) {
+		const note = $toNote(e.offsetX);
+		noteOnHoverPoint = quantizeNote(note);
+	}
 </script>
 
 <Canvas
 	width={innerWidth}
-	height={$noteHeight * (pitchEnd - pitchStart + 3) + $timeGridlineHeight}
+	height={$noteHeight * ($pitchEnd - $pitchStart + 3) + $timeGridlineHeight}
 	onpointermove={(e) => {
-		const note = (e.offsetX - $pianoWidth) / $noteWidth + $noteFrameStart;
-		hoverPointNote = Math.max(Math.round(note / $quantizingUnit) * $quantizingUnit, 0);
-		if (isSelecting) {
-			dragEndNote = hoverPointNote;
+		setNoteOnHoverPoint(e);
+		if (selecting) {
+			noteOnDragEnd = noteOnHoverPoint;
 		}
-
-		if (isScrollingOnX) {
+		if (scrollingOnX) {
 			$noteFrameStart = Math.max($noteFrameStart - e.movementX / $noteWidth, 0);
 		}
 	}}
 	onpointerdown={(e) => {
-		isDragging = true;
-		dragButton = e.button;
-		if (dragButton === 0) {
-			dragStartNote = hoverPointNote;
+		dragging = true;
+		mouseButtonOnDrag = e.button;
+		if (mouseButtonOnDrag === 0) {
+			noteOnDragStart = noteOnHoverPoint;
 		}
 	}}
 	onpointerup={() => {
-		isDragging = false;
-		if (dragButton === 0) {
-			if (dragEndNote > dragStartNote) {
+		dragging = false;
+		if (mouseButtonOnDrag === 0) {
+			if (noteOnDragEnd > noteOnDragStart) {
 				onselect({
-					time: { start: dragStartNote, duration: dragEndNote - dragStartNote },
-					pitch: selectedPitch
+					time: { start: noteOnDragStart, duration: noteOnDragEnd - noteOnDragStart },
+					pitch: pitchSelected
 				});
 			}
 		}
-		dragStartNote = 0;
-		dragEndNote = 0;
+		noteOnDragStart = 0;
+		noteOnDragEnd = 0;
 	}}
 	onwheel={(e) => {
 		const newNoteWidth = $noteWidth + e.deltaY * -0.04;
@@ -114,36 +121,35 @@
 >
 	<Layer offset={{ y: $timeGridlineHeight }}>
 		<Timeline
-			{pitchStart}
-			{pitchEnd}
 			{pitchHighlight}
 			onover={(detail) => {
-				if (!isDragging) cursorPitch = detail.cursorPitch;
+				if (!dragging) {
+					pitchOnCursor = detail.cursorPitch;
+				}
 			}}
 		/>
 		<Layer name="Notes">
 			{#each notes as note}
-				{#if note.pitch !== 'mute'}
-					<Rectangle
-						active={true}
-						x={$pianoWidth + $noteWidth * (note.time.start - $noteFrameStart)}
-						y={(pitchEnd - note.pitch) * $noteHeight}
-						width={$noteWidth * note.time.duration}
-						height={$noteHeight}
-						strokeStyle="#111111"
-						fillStyle="#ffffff"
-						rounded={$noteHeight / 2}
-						onclick={() => {
-							console.log(note);
-						}}
-					></Rectangle>
-				{/if}
-			{/each}
-			{#if isSelecting}
 				<Rectangle
-					x={$pianoWidth + $noteWidth * (dragStartNote - $noteFrameStart)}
-					y={(pitchEnd - (selectedPitch !== 'mute' ? selectedPitch : pitchStart - 2)) * $noteHeight}
-					width={$noteWidth * (dragEndNote > dragStartNote ? dragEndNote - dragStartNote : 0)}
+					active={true}
+					x={$toCanvasOffsetX(note.time.start)}
+					y={$toCanvasOffsetY(note.pitch)}
+					width={$noteWidth * note.time.duration}
+					height={$noteHeight}
+					strokeStyle="#111111"
+					fillStyle="#ffffff"
+					rounded={$noteHeight / 2}
+					onclick={() => {
+						console.log(note);
+					}}
+				></Rectangle>
+			{/each}
+			{#if selecting}
+				<Rectangle
+					x={$toCanvasOffsetX(noteOnDragStart)}
+					y={$toCanvasOffsetY(pitchSelected)}
+					width={$noteWidth *
+						(noteOnDragEnd > noteOnDragStart ? noteOnDragEnd - noteOnDragStart : 0)}
 					height={$noteHeight}
 					strokeStyle="#eeeeff"
 					fillStyle="#eeeeff"
@@ -162,8 +168,8 @@
 		</Layer>
 		<Layer name="Piano">
 			<!--Piano -->
-			{@const offsetY = -($noteHeight * (11 - (pitchEnd % 12)))}
-			{@const numOfGroups = Math.floor(pitchEnd / 12) - Math.floor(pitchStart / 12) + 1}
+			{@const offsetY = -($noteHeight * (11 - ($pitchEnd % 12)))}
+			{@const numOfGroups = Math.floor($pitchEnd / 12) - Math.floor($pitchStart / 12) + 1}
 			{#each rangeInt(0, numOfGroups * 7) as i}
 				<Rectangle
 					x={0}
@@ -189,17 +195,17 @@
 			{/each}
 			<Clip
 				x={0}
-				y={$noteHeight * (pitchEnd - pitchStart + 1)}
+				y={$noteHeight * ($pitchEnd - $pitchStart + 1)}
 				width={$pianoWidth}
 				height={$noteHeight * 2}
 			></Clip>
-			<Text x={0} y={$noteHeight * (pitchEnd - pitchStart + 3)} textBaseline="bottom" text="mute"
+			<Text x={0} y={$noteHeight * ($pitchEnd - $pitchStart + 3)} textBaseline="bottom" text="mute"
 			></Text>
 			<Rectangle
 				x={-1}
 				y={0}
 				width={innerWidth}
-				height={$noteHeight * (pitchEnd - pitchStart + 1)}
+				height={$noteHeight * ($pitchEnd - $pitchStart + 1)}
 				lineWidth={1}
 				strokeStyle="black"
 				fillStyle="transparent"
@@ -211,8 +217,8 @@
 		{#each rangeFloat( $noteFrameStart, $noteFrameStart + (innerWidth - $pianoWidth) / $noteWidth, { gap: 1 / $beatPerBar, quantized: true } ) as i}
 			<Line
 				points={[
-					{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: $timeGridlineHeight - 5 },
-					{ x: $pianoWidth + $noteWidth * (i - $noteFrameStart), y: $timeGridlineHeight }
+					{ x: $toCanvasOffsetX(i), y: $timeGridlineHeight - 5 },
+					{ x: $toCanvasOffsetX(i), y: $timeGridlineHeight }
 				]}
 				strokeStyle="#1c1c1c"
 			></Line>
@@ -229,11 +235,11 @@
 			<Line
 				points={[
 					{
-						x: $pianoWidth + $noteWidth * (i - $noteFrameStart),
+						x: $toCanvasOffsetX(i),
 						y: $timeGridlineHeight - 10
 					},
 					{
-						x: $pianoWidth + $noteWidth * (i - $noteFrameStart),
+						x: $toCanvasOffsetX(i),
 						y: $timeGridlineHeight
 					}
 				]}
