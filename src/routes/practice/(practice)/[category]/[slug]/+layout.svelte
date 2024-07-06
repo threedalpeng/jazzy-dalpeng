@@ -14,10 +14,12 @@
 	const practice = $derived(data.pages.current.practice);
 	let timer = new TempoTimer();
 
-	$effect(() => {
-		timer.bpm = practice.tempo.bpm;
-		timer.beatPerBar = practice.tempo.beatPerBar;
-		timer.signatureUnit = practice.tempo.signatureUnit;
+	$effect.pre(() => {
+		timer.updateTempo(() => {
+			timer.bpm = practice.tempo.bpm;
+			timer.beatPerBar = practice.tempo.beatPerBar;
+			timer.signatureUnit = practice.tempo.signatureUnit;
+		});
 	});
 </script>
 

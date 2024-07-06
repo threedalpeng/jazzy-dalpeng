@@ -324,12 +324,20 @@ export class TempoTimer extends AudioClockTimer {
 		};
 	}
 
+	updateTempo(updater: (timer: TempoTimer) => void) {
+		updater(this);
+		this.dispatchTempoChange();
+	}
+
 	constructor() {
 		super();
 		this.#updateTickInterval();
 	}
 	#updateTickInterval() {
 		super.tickIntervalMs = (MS_PER_MIN * this.#signatureUnit) / (this.#bpm * this.#ticksPerNote);
+	}
+
+	dispatchTempoChange() {
 		this.#tempoChangedCallbacks.forEach((cb) => cb(this.tempoState));
 	}
 
@@ -340,6 +348,8 @@ export class TempoTimer extends AudioClockTimer {
 	 * unit in {from} and {to} doesn't guarantee the same result.
 	 * */
 	convert(value: number, from: TimeUnit, to: TimeUnit) {
+		if (from == to) return value;
+
 		let ticks = 0;
 		switch (from) {
 			case 'tick':

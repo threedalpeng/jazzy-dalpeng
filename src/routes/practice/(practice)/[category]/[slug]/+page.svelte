@@ -1,7 +1,7 @@
 <script lang="ts">
 	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
 	import MetronomeOptions from '$/lib/device/metronome/MetronomeOptions.svelte';
-	import { getMetronomeContext } from '$/lib/device/metronome/context';
+	import { getMetronomeContext } from '$/lib/device/metronome/context.svelte';
 	import FingerBoard, {
 		type FingerInfo,
 		type FingerPosition,
@@ -23,7 +23,7 @@
 	const { data }: PracticeSlugPageProps = $props();
 	const practice = $derived(data.pages.current.practice);
 
-	const metronome = getMetronomeContext();
+	const { metronome } = getMetronomeContext();
 	const randomBox = getRandomBoxContext<PracticeScore>();
 
 	const timer = metronome.timer;

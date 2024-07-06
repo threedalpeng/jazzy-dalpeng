@@ -1,33 +1,11 @@
 <script lang="ts">
 	import PlusMinusBarButton from '$/lib/ui/PlusMinusBarButton.svelte';
-	import { getMetronomeContext } from './context';
+	import { getMetronomeContext } from './context.svelte';
 
-	interface MetronomeOptionsProps {
-		bpm?: number;
-		beatPerBar?: number;
-	}
+	let context = getMetronomeContext();
 
-	const metronome = getMetronomeContext();
-
-	let {
-		bpm = metronome.timer.bpm,
-		beatPerBar = metronome.timer.beatPerBar
-	}: MetronomeOptionsProps = $props();
-
-	metronome.timer.onTempoChanged((state) => {
-		bpm = state.bpm;
-		beatPerBar = state.beatPerBar;
-	});
-
-	let lastTapTimestamp = -1;
+	let lastTapTimestamp = $state(-1);
 	let tapIntervalStore: number[] = [];
-
-	$effect(() => {
-		metronome.timer.bpm = bpm;
-	});
-	$effect(() => {
-		metronome.timer.beatPerBar = beatPerBar;
-	});
 </script>
 
 <div class="flex h-full flex-col items-start justify-between">
@@ -40,11 +18,11 @@
 				type="number"
 				min="20"
 				max="500"
-				bind:value={bpm}
+				bind:value={context.bpm}
 			/>
 			<PlusMinusBarButton
 				class="absolute right-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-				bind:value={bpm}
+				bind:value={context.bpm}
 				step={5}
 				max={500}
 				min={20}
@@ -66,7 +44,7 @@
 							tapIntervalStore.reduce((p, c) => p + c, 0) / tapIntervalStore.length;
 						const resultBpm = Math.round(60000 / averageInterval);
 						if (20 <= resultBpm && resultBpm <= 500) {
-							bpm = resultBpm;
+							context.bpm = resultBpm;
 						}
 					}
 				}}>Tap</button
@@ -83,11 +61,11 @@
 			type="number"
 			min="1"
 			max="12"
-			bind:value={beatPerBar}
+			bind:value={context.beatPerBar}
 		/>
 		<PlusMinusBarButton
 			class="absolute right-0 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-			bind:value={beatPerBar}
+			bind:value={context.beatPerBar}
 			max={12}
 			min={1}
 		/>

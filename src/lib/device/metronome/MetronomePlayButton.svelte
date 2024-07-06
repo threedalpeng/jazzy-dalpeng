@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getMetronomeContext } from '$/lib/device/metronome/context';
+	import { getMetronomeContext } from '$/lib/device/metronome/context.svelte';
 	import { onDestroy } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import IconPlaySolid from '~icons/heroicons/play-solid';
@@ -8,7 +8,7 @@
 	type MetronomePlayButtonProps = HTMLButtonAttributes;
 	const { ...rest }: MetronomePlayButtonProps = $props();
 
-	const metronome = getMetronomeContext();
+	const { metronome } = getMetronomeContext();
 	metronome.schedule();
 
 	let isRunning = $state<boolean>(false);

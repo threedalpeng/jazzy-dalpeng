@@ -1,19 +1,15 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { getMetronomeContext } from './context';
+	import { getMetronomeContext } from './context.svelte';
 
-	const metronome = getMetronomeContext();
+	const context = getMetronomeContext();
 
 	type MetronomeBeatsProps = HTMLAttributes<HTMLDivElement>;
 	const { ...rest }: MetronomeBeatsProps = $props();
 
-	let beatPerBar = $state(metronome.timer.tempoState.beatPerBar);
 	let currentBeat = $state(0);
-	metronome.onBeat((state) => {
+	context.metronome.onBeat((state) => {
 		currentBeat = state.currentBeat;
-	});
-	metronome.timer.onTempoChanged((state) => {
-		beatPerBar = state.beatPerBar;
 	});
 </script>
 
@@ -21,7 +17,7 @@
 	{...rest}
 	class="{rest.class} relative flex w-screen flex-row flex-wrap items-center justify-center gap-[40px]"
 >
-	{#each new Array(beatPerBar) as _, i}
+	{#each new Array(context.beatPerBar) as _, i}
 		{#if i === 0}
 			{#if i === currentBeat - 1}
 				<div class="h-[30px] w-[30px] rounded-full bg-indigo-500"></div>
