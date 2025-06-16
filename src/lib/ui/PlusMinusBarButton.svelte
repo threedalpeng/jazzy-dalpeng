@@ -21,7 +21,7 @@
 
 <div {...rest} class="{rest.class} join join-vertical">
 	<button
-		class="btn join-item h-4 min-h-4 w-4 min-w-4 p-0"
+		class="btn h-4 min-h-4 w-4 min-w-4 p-0 join-item"
 		onclick={() => {
 			value += step;
 			if (max !== null) value = value > max ? max : value;
@@ -30,7 +30,7 @@
 		<IconPlusSmall></IconPlusSmall>
 	</button>
 	<button
-		class="btn join-item h-4 min-h-4 w-4 min-w-4 p-0"
+		class="btn h-4 min-h-4 w-4 min-w-4 p-0 join-item"
 		onclick={() => {
 			value -= step;
 			if (min !== null) value = value < min ? min : value;

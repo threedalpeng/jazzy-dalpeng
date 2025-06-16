@@ -13,7 +13,7 @@
 	import { getPitchFromFingerPosition, numberingPitch } from '$/utils/music/pitch';
 	import MetronomePlayButton from '$lib/device/metronome/MetronomePlayButton.svelte';
 	import { CacheStorage, Soundfont } from 'smplr';
-	import { Set } from 'svelte/reactivity';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
 	interface PracticeSlugPageProps {
@@ -32,7 +32,7 @@
 	let fretRange = $derived<FretRangeOption>(
 		currentScore?.fretRange ?? { start: 0, end: 12, visibility: 'none' }
 	);
-	let currentActiveFingers = new Set<number>();
+	let currentActiveFingers = new SvelteSet<number>();
 	let nextNotes: number[] = [];
 	const fingers = $derived.by(() => {
 		if (currentScore === undefined) return [];
