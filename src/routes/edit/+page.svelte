@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
-	import { getMetronomeContext } from '$/lib/device/metronome/context';
+	import { getMetronomeContext } from '$/lib/device/metronome/context.svelte';
 	import FingerBoard, {
 		type FingerInfo,
 		type FingerPosition

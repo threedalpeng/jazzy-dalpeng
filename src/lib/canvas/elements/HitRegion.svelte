@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export type OnHitRegion = (detail: CanvasPointerEvent['detail']) => unknown;
 	export interface ForwardHitRegionProps {
 		active?: boolean;

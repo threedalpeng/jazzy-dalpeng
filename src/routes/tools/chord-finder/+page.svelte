@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { FingerInfo, FingerPosition } from '$/lib/guitar/finger-board/FingerBoard.svelte';
-	import { Map } from 'svelte/reactivity';
+	import { SvelteMap } from 'svelte/reactivity';
 	import Board from './Board.svelte';
 
-	const fingers = new Map<number, FingerInfo>();
+	const fingers = new SvelteMap<number, FingerInfo>();
 	function updateFingerPosition(position: FingerPosition) {
 		if (fingers.get(position.line)?.position.fret === position.fret) {
 			fingers.delete(position.line);

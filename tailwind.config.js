@@ -1,5 +1,5 @@
 import daisyui from 'daisyui';
-import themes from 'daisyui/src/theming/themes';
+import themes from 'daisyui/theme/object.js';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -17,6 +17,7 @@ export default {
 	},
 	plugins: [daisyui],
 	daisyui: {
+		logs: false,
 		themes: [
 			{
 				dalpeng: {

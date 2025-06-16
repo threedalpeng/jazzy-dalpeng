@@ -30,7 +30,7 @@
 		</div>
 		<div class="tooltip tooltip-bottom min-h-0" data-tip="Only last 5 taps will be calculated">
 			<button
-				class="btn btn-square btn-primary aspect-square h-10 min-h-0 p-0"
+				class="btn btn-primary btn-square aspect-square h-10 min-h-0 p-0"
 				onclick={(e) => {
 					if (lastTapTimestamp !== -1) {
 						tapIntervalStore.push(e.timeStamp - lastTapTimestamp);
