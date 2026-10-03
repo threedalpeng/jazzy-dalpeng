@@ -34,6 +34,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install browser for interaction checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Check browser interactions
+        env:
+          CI: 'true'
+        run: npm run test:e2e
+
       # 프로젝트 빌드를 진행한다
       - name: build
         env:

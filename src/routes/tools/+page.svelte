@@ -1,80 +1,37 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import SvgIcon from '#src/lib/ui/SvgIcon.svelte';
 	import MetronomeIcon from '#assets/icons/metronome-icon.svg?raw';
-	import type { UIEventHandler } from 'svelte/elements';
-
-	const SQUARE_SIZE_MIN = 240;
-	const GAP_SQUARE_RATIO = 6;
-	const GAP_MIN = SQUARE_SIZE_MIN / GAP_SQUARE_RATIO;
-	let windowSize = $state({
-		long: Math.max(window.innerWidth, window.innerHeight),
-		short: Math.min(window.innerWidth, window.innerHeight)
-	});
-	const maxCenterSquares = $derived(
-		Math.floor(((windowSize.short * 0.8) / GAP_MIN + 1) / (GAP_SQUARE_RATIO + 1))
-	);
-	const gap = $derived((windowSize.short * 0.8) / ((GAP_SQUARE_RATIO + 1) * maxCenterSquares - 1));
-	const squareSize = $derived(gap * GAP_SQUARE_RATIO);
-	const start = $derived({
-		x: window.innerWidth * 0.5 - windowSize.short * 0.4,
-		y: window.innerHeight * 0.5 - windowSize.short * 0.4
-	});
-
-	const xFillerSquares = $derived(Math.ceil(start.x / ((GAP_SQUARE_RATIO + 1) * gap)));
-	const yFillerSquares = $derived(Math.ceil(start.y / ((GAP_SQUARE_RATIO + 1) * gap)));
-	const xSquares = $derived(maxCenterSquares + xFillerSquares * 2);
-	const ySquares = $derived(maxCenterSquares + yFillerSquares * 2);
-	const fillerStart = $derived({
-		x: start.x - xFillerSquares * (GAP_SQUARE_RATIO + 1) * gap,
-		y: start.y - yFillerSquares * (GAP_SQUARE_RATIO + 1) * gap
-	});
-
-	const updateOnResize: UIEventHandler<Window> = () => {
-		windowSize = {
-			long: Math.max(window.innerWidth, window.innerHeight),
-			short: Math.min(window.innerWidth, window.innerHeight)
-		};
-	};
+	import ChordNotation from '#lib/notation/ChordNotation.svelte';
 </script>
 
-<svelte:window onresize={updateOnResize} />
-<main class="neumorph-container relative h-full overflow-clip">
-	{#each Array(xSquares) as _, i (i)}
-		{@const x = fillerStart.x + i * gap * (GAP_SQUARE_RATIO + 1)}
-		{#each Array(ySquares) as _, j (j)}
-			{@const y = fillerStart.y + j * gap * (GAP_SQUARE_RATIO + 1)}
-			{@const hasContent =
-				xFillerSquares <= i &&
-				i < xFillerSquares + maxCenterSquares &&
-				yFillerSquares <= j &&
-				j < yFillerSquares + maxCenterSquares}
-			{#if hasContent}
-				<a href="./">
-					<div
-						style={`--neu-square-size:${squareSize}px; top: ${y}px; left: ${x}px`}
-						class="neumorph neumorph-active absolute grid place-items-center"
-					>
-						<div class="flex flex-col items-center gap-8">
-							<SvgIcon class="aspect-square w-1/3">
-								<!-- eslint-disable-next-line svelte/no-at-html-tags -- bundled SVG asset -->
-								{@html MetronomeIcon}
-							</SvgIcon>
-							<h2 class="text-xl font-light">Metronome</h2>
-						</div>
-					</div>
-				</a>
-			{:else}
-				<div
-					style={`--neu-square-size:${squareSize}px; top: ${y}px; left: ${x}px`}
-					class="neumorph neumorph-inset absolute grid place-items-center"
-				></div>
-			{/if}
-		{/each}
-	{/each}
+<svelte:head><title>연습 도구 · JazzyDalpeng</title></svelte:head>
+<main class="neumorph-container">
+	<div class="tool-list">
+		<a class="neumorph neumorph-active" href={resolve('/tools/metronome')}>
+			<SvgIcon>
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -- bundled SVG asset -->
+				{@html MetronomeIcon}
+			</SvgIcon>
+			<h1 class="font-jazz">Metronome</h1>
+			<p>박과 템포를 익혀요</p>
+		</a>
+		<a class="neumorph neumorph-active" href={resolve('/tools/chord-finder')}>
+			<span class="chord-symbol" aria-hidden="true"
+				><ChordNotation root="C" extension="maj7" /></span
+			>
+			<h2 class="font-jazz">Chord Finder</h2>
+			<p>지판에서 코드를 찾아요</p>
+		</a>
+	</div>
 </main>
 
-<style scoped>
+<style>
 	.neumorph-container {
+		display: grid;
+		place-items: center;
+		flex: 1;
+		min-height: 0;
 		--neu-color: theme('colors.indigo.500');
 		--neu-color-text: color-mix(in lab, var(--neu-color) 20%, black);
 		--neu-color-light: color-mix(in lab, var(--neu-color) 40%, white);
@@ -99,16 +56,6 @@
 				var(--neu-color-light);
 	}
 
-	.neumorph-inset {
-		--neu-distance-inset: calc(var(--neu-distance) / 3);
-		background: linear-gradient(145deg, var(--neu-color-light), var(--neu-color-lighter));
-		box-shadow:
-			inset var(--neu-distance-inset) var(--neu-distance-inset) calc(var(--neu-distance-inset) * 2)
-				var(--neu-color),
-			inset calc(0px - var(--neu-distance-inset)) calc(0px - var(--neu-distance-inset))
-				calc(var(--neu-distance-inset) * 2) var(--neu-color-light);
-	}
-
 	.neumorph-active:hover {
 		color: theme('colors.indigo.600');
 		fill: theme('colors.indigo.600');
@@ -129,5 +76,60 @@
 				theme('colors.indigo.300'),
 			calc(0px - var(--neu-distance)) calc(0px - var(--neu-distance)) calc(var(--neu-distance) * 2)
 				theme('colors.indigo.200');
+	}
+
+	.tool-list {
+		display: flex;
+		gap: 36px;
+		padding: 24px;
+	}
+	.tool-list .neumorph {
+		--neu-square-size: min(240px, 30vw);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 16px;
+	}
+	.tool-list :global(svg) {
+		width: 64px;
+		height: 64px;
+	}
+	.tool-list h1,
+	.tool-list h2 {
+		font-size: 28px;
+	}
+	.tool-list p {
+		font-size: 11px;
+	}
+	.chord-symbol {
+		font-size: 64px;
+		line-height: 1;
+	}
+	a:focus-visible {
+		outline: 3px solid #4338ca;
+		outline-offset: 6px;
+	}
+	@media (max-width: 760px) {
+		.tool-list {
+			flex-direction: column;
+			gap: 24px;
+			padding: 20px;
+		}
+		.tool-list .neumorph {
+			--neu-square-size: min(190px, calc((100dvh - 140px) / 2));
+			gap: 8px;
+		}
+		.tool-list h1,
+		.tool-list h2 {
+			font-size: 24px;
+		}
+		.tool-list :global(svg) {
+			width: 48px;
+			height: 48px;
+		}
+		.chord-symbol {
+			font-size: 48px;
+		}
 	}
 </style>

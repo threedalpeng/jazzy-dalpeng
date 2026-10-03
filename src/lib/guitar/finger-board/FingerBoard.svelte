@@ -17,16 +17,19 @@
 	export interface FingerStyle {
 		color: CanvasStyle;
 		scale: number;
+		background?: CanvasStyle;
 	}
 	export interface FingerInfo {
 		position: FingerPosition;
 		style?: Partial<FingerStyle>;
 		text?: string;
+		textFont?: string;
 	}
 	export interface FingerOnFretInfo {
 		position: FingerOnFretPosition;
 		style?: Partial<FingerStyle>;
 		text?: string;
+		textFont?: string;
 	}
 	export interface NonFingerInfo {
 		position: NonFingerPosition;
@@ -136,17 +139,25 @@
 					strokeStyle={finger.style?.color}
 				/>
 			{:else}
-				{@const textSize = size * 3}
-				<Clip
-					x={getXFromFretNumber(finger.position.fret - 0.5) - textSize / 2}
-					y={getYFromStringNumber(finger.position.line) - textSize / 2}
-					width={textSize}
-					height={textSize}
-				/>
+				{@const textSize = size * (finger.style?.background ? 1.65 : 3)}
+				{#if finger.style?.background}
+					<Circle
+						x={getXFromFretNumber(finger.position.fret - 0.5)}
+						y={getYFromStringNumber(finger.position.line)}
+						radius={size}
+						fillStyle={finger.style.background}
+						strokeStyle={finger.style.background}
+					/>
+				{:else}<Clip
+						x={getXFromFretNumber(finger.position.fret - 0.5) - textSize / 2}
+						y={getYFromStringNumber(finger.position.line) - textSize / 2}
+						width={textSize}
+						height={textSize}
+					/>{/if}
 				<Text
 					x={getXFromFretNumber(finger.position.fret - 0.5)}
 					y={getYFromStringNumber(finger.position.line)}
-					fontFamily="FinaleJazz"
+					fontFamily={finger.textFont ?? 'FinaleJazz'}
 					textAlign="center"
 					textBaseline="middle"
 					fontSize={`${textSize}px`}
