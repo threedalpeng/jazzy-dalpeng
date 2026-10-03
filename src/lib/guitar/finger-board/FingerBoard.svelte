@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export interface FingerPosition {
 		line: number;
 		fret: number | 'mute' | 'open';
@@ -42,9 +42,9 @@
 </script>
 
 <script lang="ts">
-	import Clip from '$/lib/canvas/elements/Clip.svelte';
-	import HitRegion from '$/lib/canvas/elements/HitRegion.svelte';
-	import { Canvas, Circle, Crop, Text } from '$lib/canvas';
+	import Clip from '#src/lib/canvas/elements/Clip.svelte';
+	import HitRegion from '#src/lib/canvas/elements/HitRegion.svelte';
+	import { Canvas, Circle, Crop, Text } from '#lib/canvas/index.ts';
 	import type { HTMLCanvasAttributes } from 'svelte/elements';
 	import FingerBoardBackground from './components/FingerBoardBackground.svelte';
 	import FingerBoardPoisitionIndicator from './components/FingerBoardPoisitionIndicator.svelte';
@@ -125,7 +125,7 @@
 		debug={false}
 	>
 		<FingerBoardBackground {inlayVisible} />
-		{#each fingersOnFret as finger}
+		{#each fingersOnFret as finger (`${finger.position.line}:${finger.position.fret}`)}
 			{@const size = FINGER_RADIUS * (finger.style?.scale ?? 1)}
 			{#if finger.text === undefined}
 				<Circle
@@ -157,10 +157,10 @@
 			{/if}
 		{/each}
 		{#if !readonly}
-			{#each Array(range.end - range.start) as _, i}
+			{#each Array(range.end - range.start) as _, i (i)}
 				{@const fretNum = i + 1 + range.start}
 				{@const leftX = getXFromFretNumber(fretNum - 1)}
-				{#each Array(6) as _, j}
+				{#each Array(6) as _, j (j)}
 					{@const lineNum = j + 1}
 					{@const centerY = getYFromStringNumber(lineNum)}
 					<FingerBoardPoisitionIndicator
@@ -178,10 +178,11 @@
 			{/each}
 		{/if}
 	</Crop>
-	{#each Array(6) as _, j}
+	{#each Array(6) as _, j (j)}
 		{@const lineNum = j + 1}
 		{@const centerY = getYFromStringNumber(lineNum)}
 		<HitRegion
+			active={!readonly}
 			onclick={({ button }) => {
 				if (button === 0) {
 					onclick({ fret: 'open', line: lineNum });
@@ -196,7 +197,7 @@
 			}}
 		></HitRegion>
 	{/each}
-	{#each nonFingers as nonFinger}
+	{#each nonFingers as nonFinger (nonFinger.position.line)}
 		<Text
 			fontSize="20px"
 			fontFamily="Spoqa Han Sans Neo"

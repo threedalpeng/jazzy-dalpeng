@@ -2,14 +2,14 @@
 	import FingerBoard, {
 		type FingerInfo,
 		type OnFingerBoardClick
-	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
-	import { identifyChordsFromPitches } from '$/utils/music/chords';
+	} from '#src/lib/guitar/finger-board/FingerBoard.svelte';
+	import { identifyChordsFromPitches } from '#src/utils/music/chords.ts';
 	import {
 		getPitchFromNumber,
 		getPitchesFromFingerPositions,
 		sortPitches
-	} from '$/utils/music/pitch';
-	import ChordNotation from '$lib/notation/ChordNotation.svelte';
+	} from '#src/utils/music/pitch.ts';
+	import ChordNotation from '#lib/notation/ChordNotation.svelte';
 
 	interface BoardProps {
 		fingers: FingerInfo[];
@@ -39,7 +39,7 @@
 				</div>
 			{/if}
 			<div class="flex flex-col">
-				{#each chords.chords.slice(1) as chord, idx}
+				{#each chords.chords.slice(1) as chord, idx (idx)}
 					{#if idx === 0}
 						<div class="inline-block h-fit select-none text-center text-[60px] leading-[1.2em]">
 							<ChordNotation

@@ -9,7 +9,7 @@
 	}
 	const { items = [], children }: RandomBoxProviderProps = $props();
 
-	const randomBox = setRandomBoxContext(new RandomBox<T>(items));
+	const randomBox = setRandomBoxContext(new RandomBox<T>([]));
 	$effect.pre(() => {
 		randomBox.items = items;
 

@@ -1,4 +1,4 @@
-import { TempoTimer } from '$/lib/timer/tick';
+import { TempoTimer } from '#src/lib/timer/tick.ts';
 import { getContext, setContext } from 'svelte';
 import Metronome from './metronome';
 

@@ -1,8 +1,9 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	export type OnHitRegion = (detail: CanvasPointerEvent['detail']) => any;
 	export interface ForwardHitRegionProps {
 		active?: boolean;
 		onup?: OnHitRegion;
+		oncancel?: OnHitRegion;
 		ondown?: OnHitRegion;
 		onover?: OnHitRegion;
 		onout?: OnHitRegion;
@@ -12,8 +13,8 @@
 </script>
 
 <script lang="ts">
-	import type { CanvasPointerEvent, OnHitCallback } from '../core/events';
-	import { onCanvasHit } from '../core/hooks';
+	import type { CanvasPointerEvent } from '../core/events';
+	import { onCanvasHit } from '../core/hooks.svelte.ts';
 
 	interface HitRegionProps extends ForwardHitRegionProps {
 		render: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => any;
@@ -22,6 +23,7 @@
 		active = true,
 		render,
 		onup = () => {},
+		oncancel = () => {},
 		ondown = () => {},
 		onover = () => {},
 		onout = () => {},
@@ -29,26 +31,33 @@
 		onclick = () => {}
 	}: HitRegionProps = $props();
 
-	onCanvasHit(active, render, (ev) => {
-		switch (ev.type) {
-			case 'up':
-				onup(ev.detail);
-				break;
-			case 'down':
-				ondown(ev.detail);
-				break;
-			case 'over':
-				onover(ev.detail);
-				break;
-			case 'out':
-				onout(ev.detail);
-				break;
-			case 'move':
-				onmove(ev.detail);
-				break;
-			case 'click':
-				onclick(ev.detail);
-				break;
+	onCanvasHit(
+		() => active,
+		(ctx) => render(ctx),
+		(ev) => {
+			switch (ev.type) {
+				case 'cancel':
+					oncancel(ev.detail);
+					break;
+				case 'up':
+					onup(ev.detail);
+					break;
+				case 'down':
+					ondown(ev.detail);
+					break;
+				case 'over':
+					onover(ev.detail);
+					break;
+				case 'out':
+					onout(ev.detail);
+					break;
+				case 'move':
+					onmove(ev.detail);
+					break;
+				case 'click':
+					onclick(ev.detail);
+					break;
+			}
 		}
-	});
+	);
 </script>

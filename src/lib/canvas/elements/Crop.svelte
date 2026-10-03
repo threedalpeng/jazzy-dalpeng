@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { Rect } from '$/types/geometry';
+	import type { Rect } from '#src/types/geometry.ts';
 	import type { Snippet } from 'svelte';
-	import { getCanvasContext } from '../core/hooks';
+	import { getCanvasContext } from '../core/hooks.svelte.ts';
 	import { setSubroutineCanvasContext } from '../core/subroutine-context';
 	import Rectangle from './Rectangle.svelte';
 
@@ -28,9 +28,11 @@
 
 	/* Inner Context */
 	const offscreenCanvas = document.createElement('canvas');
-	offscreenCanvas.width = width;
-	offscreenCanvas.height = height;
 	setSubroutineCanvasContext(upperCanvasContext, () => offscreenCanvas, {
+		beforeRender: ({ canvas }) => {
+			if (canvas.width !== width) canvas.width = width;
+			if (canvas.height !== height) canvas.height = height;
+		},
 		afterRender: ({ canvas, hitContext2d }) => {
 			const hitCanvas = hitContext2d.canvas;
 			upperCanvasContext.context2d.drawImage(

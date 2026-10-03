@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { type ChordExtension } from '$/utils/music/chords';
-	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
+	import { type ChordExtension } from '#src/utils/music/chords.ts';
+	import { stringifyFinaleJazzChordSigns } from '#src/utils/music/font.ts';
 	import { chordExtensionToFinaleJazzChordSignMap } from './chord-map';
 	interface ChordExtensionNotationProps {
 		extension?: ChordExtension | null;

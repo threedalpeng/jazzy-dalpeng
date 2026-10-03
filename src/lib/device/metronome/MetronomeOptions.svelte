@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PlusMinusBarButton from '$/lib/ui/PlusMinusBarButton.svelte';
+	import PlusMinusBarButton from '#src/lib/ui/PlusMinusBarButton.svelte';
 	import { getMetronomeContext } from './context';
 
 	interface MetronomeOptionsProps {

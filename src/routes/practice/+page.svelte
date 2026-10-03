@@ -1,5 +1,5 @@
 <script>
-	import { base } from '$app/paths';
+	import { resolve } from '$app/paths';
 </script>
 
-<a href={`${base}/practice`}>????</a>
+<a href={resolve(`/practice`)}>????</a>

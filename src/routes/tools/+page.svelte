@@ -1,9 +1,7 @@
 <script lang="ts">
-	import SvgIcon from '$/lib/ui/SvgIcon.svelte';
-	import MetronomeIcon from '$assets/icons/metronome-icon.svg?raw';
+	import SvgIcon from '#src/lib/ui/SvgIcon.svelte';
+	import MetronomeIcon from '#assets/icons/metronome-icon.svg?raw';
 	import type { UIEventHandler } from 'svelte/elements';
-
-	const tools = [{ col: 1, row: 2, logoSvg: MetronomeIcon, title: 'Metronome' }];
 
 	const SQUARE_SIZE_MIN = 240;
 	const GAP_SQUARE_RATIO = 6;
@@ -31,7 +29,7 @@
 		y: start.y - yFillerSquares * (GAP_SQUARE_RATIO + 1) * gap
 	});
 
-	const updateOnResize: UIEventHandler<Window> = (ev) => {
+	const updateOnResize: UIEventHandler<Window> = () => {
 		windowSize = {
 			long: Math.max(window.innerWidth, window.innerHeight),
 			short: Math.min(window.innerWidth, window.innerHeight)
@@ -41,9 +39,9 @@
 
 <svelte:window onresize={updateOnResize} />
 <main class="neumorph-container relative h-full overflow-clip">
-	{#each Array(xSquares) as _, i}
+	{#each Array(xSquares) as _, i (i)}
 		{@const x = fillerStart.x + i * gap * (GAP_SQUARE_RATIO + 1)}
-		{#each Array(ySquares) as _, j}
+		{#each Array(ySquares) as _, j (j)}
 			{@const y = fillerStart.y + j * gap * (GAP_SQUARE_RATIO + 1)}
 			{@const hasContent =
 				xFillerSquares <= i &&
@@ -58,6 +56,7 @@
 					>
 						<div class="flex flex-col items-center gap-8">
 							<SvgIcon class="aspect-square w-1/3">
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -- bundled SVG asset -->
 								{@html MetronomeIcon}
 							</SvgIcon>
 							<h2 class="text-xl font-light">Metronome</h2>

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
-	import MetronomeOptions from '$/lib/device/metronome/MetronomeOptions.svelte';
-	import MetronomePlayButton from '$/lib/device/metronome/MetronomePlayButton.svelte';
+	import MetronomeBeats from '#src/lib/device/metronome/MetronomeBeats.svelte';
+	import MetronomeOptions from '#src/lib/device/metronome/MetronomeOptions.svelte';
+	import MetronomePlayButton from '#src/lib/device/metronome/MetronomePlayButton.svelte';
 </script>
 
 <div class="h-full w-screen">

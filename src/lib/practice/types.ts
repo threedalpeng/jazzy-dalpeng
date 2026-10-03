@@ -1,5 +1,8 @@
-import type { FingerPosition, FretRangeOption } from '$/lib/guitar/finger-board/FingerBoard.svelte';
-import { type TuneInfo } from '$/utils/music/pitch';
+import type {
+	FingerPosition,
+	FretRangeOption
+} from '#src/lib/guitar/finger-board/FingerBoard.svelte';
+import { type TuneInfo } from '#src/utils/music/pitch.ts';
 
 export interface Tempo {
 	bpm: number;

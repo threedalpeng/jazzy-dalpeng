@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Rect } from '$/types/geometry';
-	import { onCanvasHit, onCanvasRender } from '../core/hooks';
+	import type { Rect } from '#src/types/geometry.ts';
+	import { onCanvasHit, onCanvasRender } from '../core/hooks.svelte.ts';
 
 	interface ClipProps extends Rect {
 		removeHitRegion?: boolean;
@@ -13,10 +13,10 @@
 	});
 
 	onCanvasHit(
-		removeHitRegion,
+		() => removeHitRegion,
 		(hitCtx) => {
 			hitCtx.clearRect(x, y, width, height);
 		},
-		(ev) => {}
+		() => {}
 	);
 </script>

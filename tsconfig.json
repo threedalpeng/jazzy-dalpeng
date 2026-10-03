@@ -1,5 +1,5 @@
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
 		"resolveJsonModule": true,
 		"allowJs": true,
@@ -8,6 +8,8 @@
 		"sourceMap": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true
-	}
+		"skipLibCheck": true,
+		"types": ["node", "svelte", "vite/client", "$app/types"]
+	},
+	"include": ["src", "test", "*"]
 }

@@ -1,7 +1,7 @@
-import { MultiMap } from '$/utils/multimap';
-import type { WithCleanup } from '$/utils/types';
+import { MultiMap } from '#src/utils/multimap.ts';
+import type { WithCleanup } from '#src/utils/types.ts';
 import type { ScoreTimestamp } from '../practice/types';
-import { TickEvent, type TickEventCallbacks, type TickEventOption } from './event';
+import { TickEvent, type TickEventCallbacks } from './event';
 import TimerWorker from './timer-worker?worker';
 
 export interface TickState {
@@ -14,7 +14,7 @@ export type AudioTickState = { audioCtx: AudioContext } & TickState;
 export type TickCallback = (state: TickState) => unknown;
 export type AudioTickCallback = (state: AudioTickState) => unknown;
 
-const LOOKAHEAD_INTERVAL_MS = 100;
+const LOOKAHEAD_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SEC = 0.1;
 const MS_PER_MIN = 60000;
 export class AudioClockTimer {
@@ -36,10 +36,14 @@ export class AudioClockTimer {
 				this.#onLookahead();
 			}
 		});
-		window.requestAnimationFrame(this.#onAnimationFrame.bind(this));
+		this.#frameId = window.requestAnimationFrame(this.#onAnimationFrame);
 	}
 
 	#isRunning = false;
+	#starting = false;
+	#startVersion = 0;
+	#frameId = 0;
+	#destroyed = false;
 	#nextTickOnSecond: number = 0;
 	#tickPassed: number = 0;
 	#tickIntervalMs = 10;
@@ -52,31 +56,37 @@ export class AudioClockTimer {
 	get isRunning() {
 		return this.#isRunning;
 	}
-	start() {
-		if (!this.audioCtx) {
-			this.audioCtx = new AudioContext();
-			this.audioCtx.resume();
-			this.#tickPassed = 0;
-		}
-		if (!this.#isRunning && this.audioCtx.state === 'running') {
-			Promise.all([...this.#beforeStartCallbacks].map((cb) => cb())).then(() => {
-				this.#isRunning = true;
-				// delay initial lookhead
-				this.#nextTickOnSecond = this.audioCtx!!.currentTime + 0.1;
-				this.lookaheadTimer.postMessage('start');
-				this.#startCallbacks.forEach((cb) => cb());
-			});
+	async start() {
+		if (this.#destroyed || this.#isRunning || this.#starting) return;
+		this.#starting = true;
+		const version = ++this.#startVersion;
+		try {
+			if (!this.audioCtx) {
+				this.audioCtx = new AudioContext();
+				this.#tickPassed = 0;
+			}
+			await this.audioCtx.resume();
+			await Promise.all([...this.#beforeStartCallbacks].map((cb) => cb()));
+			if (this.#destroyed || version !== this.#startVersion || this.audioCtx.state !== 'running')
+				return;
+			this.#isRunning = true;
+			this.#nextTickOnSecond = this.audioCtx.currentTime + 0.1;
+			this.lookaheadTimer.postMessage('start');
+			this.#startCallbacks.forEach((cb) => cb());
+		} finally {
+			if (version === this.#startVersion) this.#starting = false;
 		}
 	}
 
 	#tickQueue: TickState[] = [];
 	#onLookahead() {
+		if (!this.#isRunning) return;
 		// schedule audio
 		// and push expected events to queues
 		// in this case, metronome ticks will be queued
-		while (this.#nextTickOnSecond < this.audioCtx!!.currentTime + SCHEDULE_AHEAD_SEC) {
+		while (this.#nextTickOnSecond < this.audioCtx!.currentTime + SCHEDULE_AHEAD_SEC) {
 			const audioState = {
-				audioCtx: this.audioCtx!!,
+				audioCtx: this.audioCtx!,
 				time: this.#nextTickOnSecond,
 				tickPassed: this.#tickPassed
 			};
@@ -110,7 +120,8 @@ export class AudioClockTimer {
 			this.#nextTickOnSecond += 0.001 * this.#tickIntervalMs;
 		}
 	}
-	#onAnimationFrame() {
+	#onAnimationFrame = () => {
+		if (this.#destroyed) return;
 		if (this.audioCtx) {
 			const currentTime = this.audioCtx.currentTime;
 			let tickState = this.#tickQueue[0];
@@ -153,13 +164,13 @@ export class AudioClockTimer {
 				tickState = this.#tickQueue[0];
 			}
 		}
-		window.requestAnimationFrame(this.#onAnimationFrame.bind(this));
-	}
+		this.#frameId = window.requestAnimationFrame(this.#onAnimationFrame);
+	};
 
 	#beforeStartCallbacks: Set<() => Promise<any>> = new Set();
 	beforeStart(cb: () => Promise<any>) {
 		this.#beforeStartCallbacks.add(cb);
-		return () => this.removeStart(cb);
+		return () => this.removeBeforeStart(cb);
 	}
 	removeBeforeStart(cb: () => Promise<any>) {
 		this.#beforeStartCallbacks.delete(cb);
@@ -175,7 +186,7 @@ export class AudioClockTimer {
 	#stopCallbacks: Set<() => any> = new Set();
 	onStop(cb: () => any) {
 		this.#stopCallbacks.add(cb);
-		return () => this.removeStart(cb);
+		return () => this.removeStop(cb);
 	}
 	removeStop(cb: () => any) {
 		this.#stopCallbacks.delete(cb);
@@ -204,6 +215,7 @@ export class AudioClockTimer {
 		const event = this.#events.get(eventId);
 		if (event) {
 			this.#events.delete(eventId);
+			this.#loopSchedules.delete(eventId);
 			const schedulesOnTick = this.#schedules.getAll(event.start);
 			if (schedulesOnTick) {
 				const idx = schedulesOnTick.indexOf(eventId);
@@ -221,6 +233,8 @@ export class AudioClockTimer {
 	}
 
 	stop() {
+		this.#startVersion++;
+		this.#starting = false;
 		if (this.#isRunning) {
 			this.lookaheadTimer.postMessage('stop');
 			this.#isRunning = false;
@@ -246,6 +260,13 @@ export class AudioClockTimer {
 
 	destroy() {
 		this.stop();
+		this.#destroyed = true;
+		cancelAnimationFrame(this.#frameId);
+		this.lookaheadTimer.terminate();
+		void this.audioCtx?.close();
+		this.#beforeStartCallbacks.clear();
+		this.#startCallbacks.clear();
+		this.#stopCallbacks.clear();
 	}
 }
 
@@ -368,9 +389,9 @@ export class TempoTimer extends AudioClockTimer {
 			case 'note':
 				return ticks / this.#ticksPerNote;
 			case 'beat':
-				return (value * this.#signatureUnit) / this.#ticksPerNote;
+				return (ticks * this.#signatureUnit) / this.#ticksPerNote;
 			case 'bar':
-				return (value * this.#signatureUnit) / (this.#ticksPerNote * this.#beatPerBar);
+				return (ticks * this.#signatureUnit) / (this.#ticksPerNote * this.#beatPerBar);
 			case 'second':
 				return (ticks * this.tickIntervalMs) / 1000;
 			case 'millisecond':

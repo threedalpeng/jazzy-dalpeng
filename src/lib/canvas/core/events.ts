@@ -1,254 +1,211 @@
-type PickByValue<T, Value> = { [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P] };
-export interface PointerEventMap extends PickByValue<HTMLElementEventMap, PointerEvent> {}
-export const pointerEventTypes: (keyof PointerEventMap)[] = [
-	'gotpointercapture',
-	'lostpointercapture',
-	'pointercancel',
+export const pointerEventTypes = [
 	'pointerdown',
-	'pointerenter',
-	'pointerleave',
+	'pointerup',
 	'pointermove',
-	'pointerout',
-	'pointerover',
-	'pointerup'
-];
-
-export type CanvasPointerEventType = 'up' | 'down' | 'over' | 'out' | 'move' | 'click';
-
-// type PickProperties<T> = Pick<T, { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]>;
+	'pointerleave',
+	'pointercancel',
+	'lostpointercapture'
+] as const;
+export type CanvasPointerEventType = 'up' | 'down' | 'over' | 'out' | 'move' | 'click' | 'cancel';
+export interface CanvasPointerDetail {
+	id: number;
+	type: string;
+	button: number | null;
+	position: { x: number; y: number };
+	delta: { x: number; y: number };
+	state: Record<number, 'pressed'>;
+}
 export interface CanvasPointerEvent {
 	type: CanvasPointerEventType;
-	detail: any;
+	detail: CanvasPointerDetail;
 }
-
-export type OnHitCallback = (ev: CanvasPointerEvent) => any;
-type PointerState = 'down' | 'up' | 'pressed';
+export type OnHitCallback = (ev: CanvasPointerEvent) => void;
+type PendingPointer = CanvasPointerDetail & { eventType: string; hitCode: string };
 
 export class CanvasEventHandler {
 	static #nextHitCode = 0;
 	static get nextHitCode() {
+		if (this.#nextHitCode >= 0xffffff) throw new RangeError('Canvas hit codes exhausted');
 		return `#${(++this.#nextHitCode).toString(16).padStart(6, '0')}`;
 	}
-
-	#canvas: OffscreenCanvas | null = null;
-	#context2d: OffscreenCanvasRenderingContext2D | null = null;
+	#canvas: OffscreenCanvas | HTMLCanvasElement | null = null;
+	#context2d: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
 	get context2d() {
-		return this.#context2d!!;
+		if (!this.#context2d) throw new Error('Canvas event handler is not initialized');
+		return this.#context2d;
 	}
-
 	setup(width: number, height: number) {
-		this.#canvas = new OffscreenCanvas(width, height);
-		this.#context2d = this.#canvas.getContext('2d', {
-			alpha: false,
-			willReadFrequently: true
-		})!!;
-		this.#context2d.imageSmoothingEnabled = false;
+		this.#canvas =
+			typeof OffscreenCanvas === 'undefined'
+				? document.createElement('canvas')
+				: new OffscreenCanvas(width, height);
+		this.#context2d = this.#canvas.getContext('2d', { willReadFrequently: true }) as
+			OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null;
+		this.resize(width, height);
 	}
-
-	#hitRenderMap: Map<string, (ctx: OffscreenCanvasRenderingContext2D) => any> = new Map();
-	#onHitMap: Map<string, OnHitCallback> = new Map();
+	resize(width: number, height: number) {
+		if (!this.#canvas) return;
+		if (this.#canvas.width !== width) this.#canvas.width = width;
+		if (this.#canvas.height !== height) this.#canvas.height = height;
+		this.context2d.imageSmoothingEnabled = false;
+	}
+	#hitRenderMap = new Map<
+		string,
+		(ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) => void
+	>();
+	#onHitMap = new Map<string, OnHitCallback>();
 	onHitboxRender(
 		code: string,
-		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => any,
+		render: (ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) => void,
 		onHit: OnHitCallback
 	) {
-		this.#hitRenderMap.set(code, renderFn);
+		this.#hitRenderMap.set(code, render);
 		this.#onHitMap.set(code, onHit);
 	}
 	removeHitboxRender(code: string) {
 		this.#hitRenderMap.delete(code);
 		this.#onHitMap.delete(code);
 	}
-	registerOnHitMap(eventHandler: CanvasEventHandler) {
-		this.#onHitMap = eventHandler.#onHitMap;
+	registerOnHitMap(handler: CanvasEventHandler) {
+		this.#onHitMap = handler.#onHitMap;
 	}
-
-	#pointerInfoMap = new Map<
+	#pending: PendingPointer[] = [];
+	#pointers = new Map<
 		number,
 		{
-			id: number;
-			type: string;
-			state: Map<number, PointerState>;
-			delta: { x: number; y: number };
 			position: { x: number; y: number };
-			moved: boolean;
 			hitCode: string;
-			lastDownHitCode: string;
-		}
-	>();
-	#unpolledPointerInfoMap = new Map<
-		number,
-		{
-			buttons: Set<number>;
-			delta: { x: number; y: number };
-			position: { x: number; y: number };
-			moved: boolean;
-			hitCode: string;
+			buttons: Map<
+				number,
+				{ hitCode: string; position: { x: number; y: number }; dragged: boolean }
+			>;
 		}
 	>();
 	static getPointerPosition(ev: PointerEvent) {
 		const canvas = ev.currentTarget as HTMLCanvasElement;
-		const bounding = canvas.getBoundingClientRect();
+		const bounds = canvas.getBoundingClientRect();
 		return [
-			((ev.clientX - bounding.left) * canvas.width) / bounding.width,
-			((ev.clientY - bounding.top) * canvas.height) / bounding.height
+			bounds.width ? ((ev.clientX - bounds.left) * canvas.width) / bounds.width : -1,
+			bounds.height ? ((ev.clientY - bounds.top) * canvas.height) / bounds.height : -1
 		];
 	}
 	handleEvent(ev: PointerEvent) {
-		ev.preventDefault();
-
+		if (ev.type === 'pointerdown' && ev.cancelable) ev.preventDefault();
+		const canvas = ev.currentTarget as HTMLCanvasElement;
 		const [x, y] = CanvasEventHandler.getPointerPosition(ev);
-		const [r, g, b] = this.context2d.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
-
-		const hitCode = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-
-		let currentPointerInfo = this.#pointerInfoMap.get(ev.pointerId);
-		if (currentPointerInfo === undefined) {
-			currentPointerInfo = {
-				id: ev.pointerId,
-				type: ev.pointerType,
-				state: new Map<number, 'down' | 'up' | 'pressed'>(),
-				delta: { x: 0, y: 0 },
-				position: { x: 0, y: 0 },
-				moved: false,
-				hitCode,
-				lastDownHitCode: ''
-			};
-			this.#pointerInfoMap.set(ev.pointerId, currentPointerInfo);
+		let hitCode = '';
+		if (
+			this.#context2d &&
+			x >= 0 &&
+			y >= 0 &&
+			x < this.context2d.canvas.width &&
+			y < this.context2d.canvas.height &&
+			ev.type !== 'pointerleave'
+		) {
+			const [r, g, b, alpha] = this.context2d.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+			if (alpha === 255)
+				hitCode = `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 		}
-		let unpolledPointerInfo = this.#unpolledPointerInfoMap.get(ev.pointerId);
-		if (unpolledPointerInfo === undefined) {
-			unpolledPointerInfo = {
-				buttons: new Set<number>(),
-				delta: { x: 0, y: 0 },
-				position: { x: 0, y: 0 },
-				moved: false,
-				hitCode
-			};
-			this.#unpolledPointerInfoMap.set(ev.pointerId, unpolledPointerInfo);
-		}
-
-		unpolledPointerInfo.hitCode = hitCode;
-		switch (ev.type as keyof PointerEventMap) {
-			case 'pointerdown':
-				unpolledPointerInfo.buttons.add(ev.button);
-				break;
-			case 'pointerup':
-				unpolledPointerInfo.buttons.delete(ev.button);
-				break;
-			case 'pointermove':
-				unpolledPointerInfo.position = { x, y };
-				unpolledPointerInfo.moved = true;
-				unpolledPointerInfo.delta = {
-					x: x - currentPointerInfo.position.x,
-					y: y - currentPointerInfo.position.y
-				};
-				break;
-			case 'pointerout':
-			case 'pointerleave':
-				unpolledPointerInfo.moved = true;
-				unpolledPointerInfo.delta = {
-					x: 0,
-					y: 0
-				};
-				break;
-		}
-	}
-
-	/**
-	 * For each pointerId, checking these events:
-	 * - "up" and "down"
-	 * - "click"
-	 * - "over" and "out"
-	 * - "move"
-	 */
-	poll() {
-		for (const [pointerId, unpolledInfo] of this.#unpolledPointerInfoMap) {
-			const pointerInfo = this.#pointerInfoMap.get(pointerId)!!;
-			const onHit = this.#onHitMap.get(unpolledInfo.hitCode);
-			const prevTargetOnHit = this.#onHitMap.get(pointerInfo.hitCode);
-			const hitEventTypes: [CanvasPointerEventType, number | null][] = [];
-			const prevTargetHitEventTypes: [CanvasPointerEventType, number | null][] = [];
-
-			const hitRegionChanged = unpolledInfo.hitCode != pointerInfo.hitCode;
-
-			for (const [button, state] of [...pointerInfo.state] /** Copy state map */) {
-				if (state === 'up') {
-					if (unpolledInfo.buttons.has(button)) {
-						pointerInfo.state.set(button, 'down');
-						pointerInfo.lastDownHitCode = unpolledInfo.hitCode;
-						hitEventTypes.push(['down', button]);
-					} else {
-						pointerInfo.state.delete(button);
-					}
-				} else {
-					if (unpolledInfo.buttons.has(button)) {
-						pointerInfo.state.set(button, 'pressed');
-					} else {
-						pointerInfo.state.set(button, 'up');
-						hitEventTypes.push(['up', button]);
-						if (unpolledInfo.hitCode === pointerInfo.lastDownHitCode) {
-							hitEventTypes.push(['click', button]);
-						}
-					}
-				}
-			}
-			for (const button of unpolledInfo.buttons) {
-				if (!pointerInfo.state.has(button)) {
-					pointerInfo.state.set(button, 'down');
-					pointerInfo.lastDownHitCode = unpolledInfo.hitCode;
-					hitEventTypes.push(['down', button]);
-				}
-			}
-
-			if (unpolledInfo.moved) {
-				pointerInfo.delta = structuredClone(unpolledInfo.delta);
-				unpolledInfo.delta.x = 0;
-				unpolledInfo.delta.y = 0;
-				unpolledInfo.moved = false;
-
-				hitEventTypes.push(['move', null]);
-			}
-
-			if (hitRegionChanged) {
-				hitEventTypes.push(['over', null]);
-				prevTargetHitEventTypes.push(['out', null]);
-			}
-
-			pointerInfo.hitCode = unpolledInfo.hitCode;
-			pointerInfo.position = unpolledInfo.position;
-
-			hitEventTypes.forEach(([type, button]) => {
-				if (onHit)
-					onHit({
-						type,
-						detail: { ...pointerInfo, button, state: Object.entries(pointerInfo.state) }
-					});
-			});
-			prevTargetHitEventTypes.forEach(([type, button]) => {
-				if (prevTargetOnHit)
-					prevTargetOnHit({
-						type,
-						detail: { ...pointerInfo, button, state: Object.entries(pointerInfo.state) }
-					});
-			});
-		}
-	}
-
-	async beforeRender() {
-		let hitCtx = this.context2d;
-		hitCtx.clearRect(0, 0, this.#canvas!!.width, this.#canvas!!.height);
-	}
-	async render() {
-		let hitCtx = this.context2d;
-		this.#hitRenderMap.forEach(async (renderCallback, hitCode) => {
-			hitCtx.save();
-			renderCallback(hitCtx);
-			hitCtx.restore();
+		this.#pending.push({
+			eventType: ev.type,
+			hitCode,
+			id: ev.pointerId,
+			type: ev.pointerType,
+			button: ev.button,
+			position: { x, y },
+			delta: { x: 0, y: 0 },
+			state: {}
 		});
+		if (ev.type === 'pointerdown') canvas.setPointerCapture?.(ev.pointerId);
+	}
+	poll() {
+		const pending = this.#pending;
+		this.#pending = [];
+		for (const ev of pending) {
+			const pointer = this.#pointers.get(ev.id) ?? {
+				position: ev.position,
+				hitCode: '',
+				buttons: new Map()
+			};
+			this.#pointers.set(ev.id, pointer);
+			const detail: CanvasPointerDetail = {
+				id: ev.id,
+				type: ev.type,
+				button: ev.button,
+				position: ev.position,
+				delta: { x: ev.position.x - pointer.position.x, y: ev.position.y - pointer.position.y },
+				state: {}
+			};
+			const emit = (code: string, type: CanvasPointerEventType) => {
+				this.#onHitMap.get(code)?.({
+					type,
+					detail: {
+						...detail,
+						state: Object.fromEntries([...pointer.buttons.keys()].map((b) => [b, 'pressed']))
+					}
+				});
+			};
+			if (ev.eventType === 'pointercancel' || ev.eventType === 'lostpointercapture') {
+				for (const [button, down] of pointer.buttons) {
+					detail.button = button;
+					emit(down.hitCode, 'cancel');
+				}
+				emit(pointer.hitCode, 'out');
+				this.#pointers.delete(ev.id);
+				continue;
+			}
+			if (ev.hitCode !== pointer.hitCode) {
+				emit(pointer.hitCode, 'out');
+				emit(ev.hitCode, 'over');
+			}
+			if (ev.eventType === 'pointerdown') {
+				pointer.buttons.set(ev.button!, {
+					hitCode: ev.hitCode,
+					position: ev.position,
+					dragged: false
+				});
+				emit(ev.hitCode, 'down');
+			} else if (ev.eventType === 'pointerup') {
+				const down = pointer.buttons.get(ev.button!);
+				pointer.buttons.delete(ev.button!);
+				emit(down?.hitCode ?? ev.hitCode, 'up');
+				if (down && down.hitCode === ev.hitCode && !down.dragged) emit(ev.hitCode, 'click');
+			} else if (ev.eventType === 'pointermove') {
+				for (const down of pointer.buttons.values()) {
+					if (Math.hypot(ev.position.x - down.position.x, ev.position.y - down.position.y) > 5)
+						down.dragged = true;
+				}
+				emit(ev.hitCode, 'move');
+			}
+			pointer.hitCode = ev.hitCode;
+			pointer.position = ev.position;
+			if (
+				!pointer.buttons.size &&
+				(ev.eventType === 'pointerleave' || (ev.eventType === 'pointerup' && ev.type !== 'mouse'))
+			) {
+				emit(pointer.hitCode, 'out');
+				this.#pointers.delete(ev.id);
+			}
+		}
+	}
+	beforeRender() {
+		this.context2d.clearRect(0, 0, this.context2d.canvas.width, this.context2d.canvas.height);
+	}
+	render() {
+		for (const render of this.#hitRenderMap.values()) {
+			const ctx = this.context2d;
+			ctx.save();
+			try {
+				render(ctx);
+			} finally {
+				ctx.restore();
+			}
+		}
 	}
 	clear() {
+		for (const code of this.#hitRenderMap.keys()) this.#onHitMap.delete(code);
 		this.#hitRenderMap.clear();
-		this.#onHitMap.clear();
+		this.#pending = [];
+		this.#pointers.clear();
 	}
 }

@@ -1,37 +1,45 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
+	import { onDestroy } from 'svelte';
+	import { Canvas, Circle } from '#lib/canvas/index.ts';
 	import { getMetronomeContext } from './context';
+	import type { MetronomeState } from './metronome';
+	import type { TempoState } from '../../timer/tick';
 
 	const metronome = getMetronomeContext();
-
-	interface MetronomeBeatsProps extends HTMLAttributes<HTMLDivElement> {}
-	const { ...rest }: MetronomeBeatsProps = $props();
-
-	let beatPerBar = $state(metronome.timer.tempoState.beatPerBar);
+	const { ...rest }: HTMLAttributes<HTMLDivElement> = $props();
+	let beatPerBar = $state(metronome.timer.beatPerBar);
 	let currentBeat = $state(0);
-	metronome.onBeat((state) => {
+	const onBeat = (state: MetronomeState) => {
 		currentBeat = state.currentBeat;
-	});
-	metronome.timer.onTempoChanged((state) => {
+	};
+	const onTempo = (state: TempoState) => {
 		beatPerBar = state.beatPerBar;
+	};
+	metronome.onBeat(onBeat);
+	metronome.timer.onTempoChanged(onTempo);
+	onDestroy(() => {
+		metronome.removeBeat(onBeat);
+		metronome.timer.removeTempoChanged(onTempo);
 	});
 </script>
 
-<div
-	{...rest}
-	class="{rest.class} relative flex w-screen flex-row flex-wrap items-center justify-center gap-[40px]"
->
-	{#each new Array(beatPerBar) as _, i}
-		{#if i === 0}
-			{#if i === currentBeat - 1}
-				<div class="h-[30px] w-[30px] rounded-full bg-indigo-500"></div>
-			{:else}
-				<div class="h-[30px] w-[30px] rounded-full bg-indigo-900"></div>
-			{/if}
-		{:else if i === currentBeat - 1}
-			<div class="h-[20px] w-[20px] rounded-full bg-indigo-500"></div>
-		{:else}
-			<div class="h-[20px] w-[20px] rounded-full bg-indigo-900"></div>
-		{/if}
-	{/each}
+<div {...rest} class="{rest.class} flex w-screen items-center justify-center">
+	<Canvas
+		width={Math.max(1, beatPerBar) * 70}
+		height={34}
+		class="max-w-full"
+		role="img"
+		aria-label={`Beat ${currentBeat} of ${beatPerBar}`}
+	>
+		{#each Array(beatPerBar) as _, i (i)}
+			<Circle
+				x={35 + i * 70}
+				y={17}
+				radius={i === 0 ? 15 : 10}
+				fillStyle={i === currentBeat - 1 ? '#6366f1' : '#312e81'}
+				strokeStyle={i === currentBeat - 1 ? '#6366f1' : '#312e81'}
+			/>
+		{/each}
+	</Canvas>
 </div>

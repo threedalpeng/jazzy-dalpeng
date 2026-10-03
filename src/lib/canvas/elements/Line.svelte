@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onCanvasRender } from '../core/hooks';
+	import { onCanvasRender } from '../core/hooks.svelte.ts';
 	import HitRegion, { type ForwardHitRegionProps } from './HitRegion.svelte';
 
 	interface LineProps {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { TempoTimer } from '$/lib/timer/tick';
-	import { onDestroy, type Snippet } from 'svelte';
+	import { TempoTimer } from '#src/lib/timer/tick.ts';
+	import { onDestroy, untrack, type Snippet } from 'svelte';
 	import { setMetronomeContext } from './context';
 
 	interface MetronomeProviderProps {
@@ -10,7 +10,7 @@
 
 	const { timer, children }: MetronomeProviderProps = $props();
 
-	const metronome = setMetronomeContext(timer);
+	const metronome = setMetronomeContext(untrack(() => timer));
 
 	onDestroy(() => {
 		metronome.destroy();

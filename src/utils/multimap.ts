@@ -1,60 +1,43 @@
-export class MultiMap<K, V> extends Map {
-	clear(): void {
-		super.clear();
+/** A key can contain several values; iteration returns individual key/value pairs. */
+export class MultiMap<K, V> {
+	#map = new Map<K, V[]>();
+	get size() {
+		return this.#map.size;
 	}
-	delete(key: K): boolean {
-		return super.delete(key);
+	clear() {
+		this.#map.clear();
 	}
-	getAll(key: K): V[] | undefined {
-		return super.get(key);
+	delete(key: K) {
+		return this.#map.delete(key);
 	}
-	getFirst(key: K): V | undefined {
-		const values = super.get(key);
-		return values ? values[0] : undefined;
+	getAll(key: K) {
+		return this.#map.get(key);
 	}
-	has(key: K): boolean {
-		return super.has(key);
+	getFirst(key: K) {
+		return this.#map.get(key)?.[0];
+	}
+	has(key: K) {
+		return this.#map.has(key);
 	}
 	set(key: K, value: V): this {
-		let values = super.get(key);
-		if (values === undefined) {
-			values = [];
-			super.set(key, values);
-		}
-		values.push(value);
+		const values = this.#map.get(key);
+		if (values) values.push(value);
+		else this.#map.set(key, [value]);
 		return this;
 	}
 	*[Symbol.iterator](): IterableIterator<[K, V]> {
-		for (const [k, values] of super[Symbol.iterator]()) {
-			for (const v of values) {
-				yield [k, v];
-			}
-		}
+		yield* this.entries();
 	}
-	*keys(): IterableIterator<K> {
-		for (const k of super.keys()) {
-			yield k;
-		}
+	keys() {
+		return this.#map.keys();
 	}
 	*values(): IterableIterator<V> {
-		for (const values of super.values()) {
-			for (const v of values) {
-				yield v;
-			}
-		}
+		for (const values of this.#map.values()) yield* values;
 	}
-	*entries(): IterableIterator<[K, V[]]> {
-		for (const [k, values] of super[Symbol.iterator]()) {
-			for (const v of values) {
-				yield [k, v];
-			}
-		}
+	*entries(): IterableIterator<[K, V]> {
+		for (const [key, values] of this.#map) for (const value of values) yield [key, value];
 	}
-	forEach(callbackfn: (value: V, key: K, map: Map<K, V[]>) => void, thisArg?: any): void {
-		super.forEach((k, values, map) => {
-			values.forEach((v: V) => {
-				callbackfn(v, k, map);
-			});
-		}, thisArg);
+	forEach(callback: (value: V, key: K, map: MultiMap<K, V>) => void, thisArg?: unknown) {
+		for (const [key, value] of this) callback.call(thisArg, value, key, this);
 	}
 }

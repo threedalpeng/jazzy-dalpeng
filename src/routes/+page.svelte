@@ -1,5 +1,5 @@
 <script>
-	import { base } from '$app/paths';
+	import { resolve } from '$app/paths';
 </script>
 
 <p>
@@ -8,5 +8,8 @@
 </p>
 <a
 	class="text-indigo cursor-pointer underline hover:text-indigo-600"
-	href="{base}/practice/render-sample">Here's Sample</a
+	href={resolve('/practice/(practice)/[category]/[slug]', {
+		category: 'core',
+		slug: 'major-scale'
+	})}>Here's Sample</a
 >

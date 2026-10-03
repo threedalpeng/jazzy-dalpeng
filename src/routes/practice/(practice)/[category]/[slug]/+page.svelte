@@ -1,19 +1,20 @@
 <script lang="ts">
-	import MetronomeBeats from '$/lib/device/metronome/MetronomeBeats.svelte';
-	import MetronomeOptions from '$/lib/device/metronome/MetronomeOptions.svelte';
-	import { getMetronomeContext } from '$/lib/device/metronome/context';
+	import MetronomeBeats from '#src/lib/device/metronome/MetronomeBeats.svelte';
+	import MetronomeOptions from '#src/lib/device/metronome/MetronomeOptions.svelte';
+	import { getMetronomeContext } from '#src/lib/device/metronome/context.ts';
 	import FingerBoard, {
 		type FingerInfo,
 		type FingerPosition,
 		type FretRangeOption
-	} from '$/lib/guitar/finger-board/FingerBoard.svelte';
-	import RandomBoxOptions from '$/lib/practice/RandomBox/RandomBoxOptions.svelte';
-	import { getRandomBoxContext } from '$/lib/practice/RandomBox/context';
-	import type { PracticeBoard, PracticeScore } from '$/lib/practice/types';
-	import { getPitchFromFingerPosition, numberingPitch } from '$/utils/music/pitch';
-	import MetronomePlayButton from '$lib/device/metronome/MetronomePlayButton.svelte';
+	} from '#src/lib/guitar/finger-board/FingerBoard.svelte';
+	import RandomBoxOptions from '#src/lib/practice/RandomBox/RandomBoxOptions.svelte';
+	import { getRandomBoxContext } from '#src/lib/practice/RandomBox/context.ts';
+	import type { PracticeBoard, PracticeScore } from '#src/lib/practice/types.ts';
+	import { getPitchFromFingerPosition, numberingPitch } from '#src/utils/music/pitch.ts';
+	import MetronomePlayButton from '#lib/device/metronome/MetronomePlayButton.svelte';
 	import { CacheStorage, Soundfont } from 'smplr';
-	import { Set } from 'svelte/reactivity';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { onDestroy, untrack } from 'svelte';
 	import type { PageData } from './$types';
 
 	interface PracticeSlugPageProps {
@@ -32,7 +33,7 @@
 	let fretRange = $derived<FretRangeOption>(
 		currentScore?.fretRange ?? { start: 0, end: 12, visibility: 'none' }
 	);
-	let currentActiveFingers = new Set<number>();
+	let currentActiveFingers = new SvelteSet<number>();
 	let nextNotes: number[] = [];
 	const fingers = $derived.by(() => {
 		if (currentScore === undefined) return [];
@@ -40,7 +41,7 @@
 			return [];
 		} else
 			return (currentBoard?.fingers ?? []).map((finger) => {
-				const order = nextNotes.findIndex((f) => f === finger);
+				const _order = nextNotes.findIndex((f) => f === finger);
 				return {
 					position: currentScore!.positions[finger],
 					style: {
@@ -52,28 +53,36 @@
 	});
 
 	let guitarSoundfont: Soundfont | null = null;
+	let cancelPrepare: (() => void) | undefined;
+	let disposed = false;
+	onDestroy(() => {
+		disposed = true;
+		cancelPrepare?.();
+		currentScheduleIdList.forEach((id) => timer.cancelSchedule(id));
+	});
 
-	$effect.pre(replaceScore);
+	$effect.pre(() => {
+		if (practice) untrack(replaceScore);
+	});
 	function replaceScore() {
-		practice;
 		currentScore = randomBox.open();
 		currentBoard = currentScore.boards[0];
+		cancelPrepare?.();
 		const cancel = timer.beforeStart(async () => {
 			if (!guitarSoundfont) {
-				guitarSoundfont = new Soundfont(timer.audioCtx!!, {
+				guitarSoundfont = new Soundfont(timer.audioCtx!, {
 					instrument: 'acoustic_guitar_steel',
 					storage: new CacheStorage()
 				});
 			}
-			// preload soundfont
-			guitarSoundfont.load.then(() => {
-				currentScheduleIdList.forEach((id) => {
-					timer.cancelSchedule(id);
-				});
-				scheduleScore(currentScore!);
-				cancel();
-			});
+			await guitarSoundfont.load;
+			if (disposed) return;
+			currentScheduleIdList.forEach((id) => timer.cancelSchedule(id));
+			currentScheduleIdList = [];
+			scheduleScore(currentScore!);
+			cancel();
 		});
+		cancelPrepare = cancel;
 	}
 
 	let currentScheduleIdList: number[] = [];
@@ -113,10 +122,10 @@
 						currentActiveFingers.delete(note.position);
 					};
 				},
-				audio: ({ audioCtx, time }) => {
+				audio: ({ time }) => {
 					// play audio with pitch
 					if (note.pitch) {
-						guitarSoundfont!!.start({
+						guitarSoundfont!.start({
 							note: numberingPitch(note.pitch) + 12,
 							time: time,
 							duration: note.time.duration

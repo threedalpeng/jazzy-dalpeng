@@ -1,58 +1,19 @@
-/// <reference types="vitest" />
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import Icons from 'unplugin-icons/vite';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	define: {
-		__DATE__: `'${new Date().toISOString()}'`,
-		__RELOAD_SW__: false,
-		'process.env.NODE_ENV': process.env.NODE_ENV === 'production' ? '"production"' : '"development"'
-	},
 	plugins: [
-		sveltekit(),
-		Icons({
-			compiler: 'svelte',
-			autoInstall: true
-		})
-		// SvelteKitPWA({
-		// 	strategies: 'injectManifest',
-		// 	srcDir: 'src',
-		// 	// scope: '/jazz/',
-		// 	filename: 'service-worker.ts',
-		// 	manifest: {
-		// 		name: 'JazzyDalpeng',
-		// 		short_name: 'JazzyDalpeng',
-		// 		// scope: '/jazz/',
-		// 		// start_url: '/jazz/',
-		// 		description: 'Jazz Practice Application',
-		// 		theme_color: '#ffffff',
-		// 		icons: [
-		// 			{
-		// 				src: 'pwa-192x192.png',
-		// 				sizes: '192x192',
-		// 				type: 'image/png'
-		// 			},
-		// 			{
-		// 				src: 'pwa-512x512.png',
-		// 				sizes: '512x512',
-		// 				type: 'image/png'
-		// 			}
-		// 		]
-		// 	},
-		// 	workbox: {
-		// 		navigateFallbackAllowlist: [/^\/$/], // This regex will only match the "/" route
-		// 		navigateFallbackDenylist: [/^(?!\/$).*/] // This regex will match all routes except "/"
-		// 	},
-		// 	devOptions: {
-		// 		enabled: true,
-		// 		type: 'module'
-		// 	}
-		// })
+		sveltekit({
+			adapter: adapter({ fallback: '404.html' }),
+			preprocess: vitePreprocess(),
+			compilerOptions: { runes: true },
+			paths: { base: '/jazzy-dalpeng' }
+		}),
+		Icons({ compiler: 'svelte' })
 	],
-	test: {},
-	server: {
-		host: true,
-		port: 1357
-	}
+	test: { include: ['test/**/*.test.ts'] },
+	server: { host: true, port: 1357 }
 });

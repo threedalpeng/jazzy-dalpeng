@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Circle } from '$lib/canvas';
+	import { Circle } from '#lib/canvas/index.ts';
 	import { getFingerBoardContext } from '../context';
 
 	const {
@@ -13,7 +13,7 @@
 	const inlaySchemes = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
 </script>
 
-{#each inlaySchemes as inlay}
+{#each inlaySchemes as inlay (inlay)}
 	{#if inlay % 12 === 0}
 		<Circle
 			x={getXFromFretNumber(inlay - 0.5)}

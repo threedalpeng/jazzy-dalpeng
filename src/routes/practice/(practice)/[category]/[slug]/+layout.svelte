@@ -1,8 +1,8 @@
 <script lang="ts">
-	import MetronomeProvider from '$/lib/device/metronome/MetronomeProvider.svelte';
-	import RandomBoxProvider from '$/lib/practice/RandomBox/RandomBoxProvider.svelte';
-	import { TempoTimer } from '$/lib/timer/tick';
-	import type { Snippet } from 'svelte';
+	import MetronomeProvider from '#src/lib/device/metronome/MetronomeProvider.svelte';
+	import RandomBoxProvider from '#src/lib/practice/RandomBox/RandomBoxProvider.svelte';
+	import { TempoTimer } from '#src/lib/timer/tick.ts';
+	import { onDestroy, type Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
 	interface PracticeSlugLayoutProps {
@@ -12,7 +12,8 @@
 	const { data, children }: PracticeSlugLayoutProps = $props();
 
 	const practice = $derived(data.pages.current.practice);
-	let timer = new TempoTimer();
+	const timer = new TempoTimer();
+	onDestroy(() => timer.destroy());
 
 	$effect(() => {
 		timer.bpm = practice.tempo.bpm;

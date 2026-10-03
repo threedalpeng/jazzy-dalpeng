@@ -8,7 +8,7 @@ import {
 import { CanvasEventHandler, type OnHitCallback } from './events';
 
 export const setCanvasContext = (canvasGetter: CanvasGetter) => {
-	let context = setContext('canvas', new CanvasContext(canvasGetter));
+	const context = setContext('canvas', new CanvasContext(canvasGetter));
 	onMount(() => {
 		context.run();
 	});
@@ -45,26 +45,23 @@ export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
 };
 
 export const onCanvasHit = (
-	active: boolean,
+	active: boolean | (() => boolean),
 	hitboxRenderFn: OffscreenCanvasRenderCallback,
 	onHit: OnHitCallback
 ) => {
 	const canvasContext = getCanvasContext();
 	const nextHitCode = CanvasEventHandler.nextHitCode;
-	function render(ctx: OffscreenCanvasRenderingContext2D) {
+	function render(ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) {
 		ctx.fillStyle = nextHitCode;
 		ctx.strokeStyle = nextHitCode;
 		hitboxRenderFn(ctx);
 	}
-	onMount(() => {
-		if (active) {
+
+	$effect(() => {
+		if (typeof active === 'function' ? active() : active) {
 			canvasContext.onHitboxRender(nextHitCode, render, onHit);
 		}
-	});
-	onDestroy(() => {
-		if (active) {
-			canvasContext.removeHitboxRender(nextHitCode);
-		}
+		return () => canvasContext.removeHitboxRender(nextHitCode);
 	});
 };
 

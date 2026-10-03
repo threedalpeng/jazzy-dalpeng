@@ -30,3 +30,5 @@ lerna-debug.log*
 # dev custom
 public/soundfonts/
 temp/
+/playwright-report/
+/test-results/

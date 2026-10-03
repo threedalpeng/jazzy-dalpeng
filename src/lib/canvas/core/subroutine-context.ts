@@ -1,4 +1,4 @@
-import { setContext } from 'svelte';
+import { onDestroy, setContext } from 'svelte';
 import { CanvasContext, type CanvasGetter, type CanvasRenderCallback } from './context';
 
 export const setSubroutineCanvasContext = (
@@ -9,17 +9,22 @@ export const setSubroutineCanvasContext = (
 		afterRender?: CanvasRenderCallback;
 	}
 ) => {
-	let subCanvasContext = new CanvasContext(canvasGetter);
+	const subCanvasContext = new CanvasContext(canvasGetter);
 	setContext('canvas', subCanvasContext);
 	upperContext.registerSubroutineContext(subCanvasContext);
-	upperContext.onRender(({ delta }) => {
+	const render: CanvasRenderCallback = () => {
 		if (options?.beforeRender) {
 			options.beforeRender(subCanvasContext);
 		}
-		subCanvasContext.render(delta);
+		subCanvasContext.render(performance.now());
 		if (options?.afterRender) {
 			options.afterRender(subCanvasContext);
 		}
+	};
+	upperContext.onRender(render);
+	onDestroy(() => {
+		upperContext.removeRender(render);
+		subCanvasContext.quit();
 	});
 	return subCanvasContext;
 };

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { HTMLCanvasAttributes } from 'svelte/elements';
-	import { setCanvasContext } from './core/hooks';
+	import { setCanvasContext } from './core/hooks.svelte.ts';
 	import type { Snippet } from 'svelte';
 
 	interface CanvasProps {
@@ -21,7 +21,7 @@
 <canvas
 	bind:this={canvas}
 	{...rest}
-	class="{rest.class} object-contain object-center"
+	class="{rest.class} touch-none object-contain object-center"
 	{width}
 	{height}
 ></canvas>

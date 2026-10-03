@@ -34,7 +34,7 @@ class Metronome {
 	schedule() {
 		if (!this.#isScheduled) {
 			this.#isScheduled = true;
-			this.#timer.scheduleLoopOnTempo({
+			this.#scheduleId = this.#timer.scheduleLoopOnTempo({
 				time: { start: 0, interval: this.#notesPerBeat },
 				animation: this.#onTick.bind(this),
 				audio: this.#scheduleAudio.bind(this)
@@ -49,7 +49,7 @@ class Metronome {
 		}
 	}
 
-	#onTick({ time, tickPassed }: TickState) {
+	#onTick({ tickPassed }: TickState) {
 		const beatPassed = tickPassed / this.#ticksPerBeat;
 		const barPassed = beatPassed / this.#timer.beatPerBar;
 		const currentBeat = (beatPassed % this.#timer.beatPerBar) + 1;
@@ -84,7 +84,6 @@ class Metronome {
 			this.#masterGain.connect(audioCtx.destination);
 		}
 		const beatPassed = tickPassed / this.#ticksPerBeat;
-		const barPassed = beatPassed / this.#timer.beatPerBar;
 		const currentBeat = (beatPassed % this.#timer.beatPerBar) + 1;
 
 		const osc = audioCtx.createOscillator();

@@ -1,11 +1,17 @@
 import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './events';
 
 export type CanvasGetter = () => HTMLCanvasElement;
-export type CanvasRenderCallback = (canvasContext: CanvasContext) => any;
-export type OffscreenCanvasRenderCallback = (ctx: OffscreenCanvasRenderingContext2D) => any;
+export type CanvasRenderCallback = (canvasContext: CanvasContext) => void;
+export type OffscreenCanvasRenderCallback = (
+	ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D
+) => void;
 export class CanvasContext {
 	#canvasGetter: CanvasGetter;
 	#timePassed = 0;
+	#lastTime: number | null = null;
+	#running = false;
+	#setup = false;
+	#preventContextMenu = (ev: Event) => ev.preventDefault();
 	#frameId = 0;
 	#eventHandler = new CanvasEventHandler();
 	constructor(canvasGetter: CanvasGetter) {
@@ -16,7 +22,7 @@ export class CanvasContext {
 		return this.#canvasGetter();
 	}
 	get context2d() {
-		return this.canvas.getContext('2d')!!;
+		return this.canvas.getContext('2d')!;
 	}
 	get hitContext2d() {
 		return this.#eventHandler.context2d;
@@ -64,7 +70,7 @@ export class CanvasContext {
 
 	onHitboxRender(
 		code: string,
-		renderFn: (ctx: OffscreenCanvasRenderingContext2D) => any,
+		renderFn: (ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) => void,
 		onHit: OnHitCallback
 	) {
 		this.#eventHandler.onHitboxRender(code, renderFn, onHit);
@@ -74,66 +80,75 @@ export class CanvasContext {
 	}
 
 	registerSubroutineContext(subContext: CanvasContext) {
-		subContext.setup();
 		subContext.#eventHandler.registerOnHitMap(this.#eventHandler);
 	}
 
-	testCanvas: HTMLCanvasElement | undefined;
 	setup() {
+		if (this.#setup) return;
+		this.#setup = true;
 		const canvas = this.canvas;
 		this.#eventHandler.setup(this.canvas.width, this.canvas.height);
 
-		// this.testCanvas = document.createElement('canvas');
-		// this.testCanvas.width = canvas.width;
-		// this.testCanvas.height = canvas.height;
-		// document.body.appendChild(this.testCanvas);
-
-		canvas.addEventListener('contextmenu', (ev) => {
-			ev.preventDefault();
-		});
+		canvas.addEventListener('contextmenu', this.#preventContextMenu);
 		pointerEventTypes.forEach((evtype) => canvas.addEventListener(evtype, this.#eventHandler));
-		this.#setupCallbacks.forEach(async (setupCallback) => {
+		this.#setupCallbacks.forEach((setupCallback) => {
 			setupCallback(this);
 		});
 	}
 
-	render: FrameRequestCallback = async (t) => {
-		this.#timePassed = t;
-		let ctx = this.context2d;
+	render: FrameRequestCallback = (t) => {
+		this.setup();
+		this.#timePassed = this.#lastTime === null ? 0 : Math.max(0, t - this.#lastTime);
+		this.#lastTime = t;
+		this.#eventHandler.resize(this.width, this.height);
+		const ctx = this.context2d;
 
 		ctx.clearRect(0, 0, this.width, this.height);
 		this.#eventHandler.beforeRender();
 
-		this.#renderCallbacks.forEach(async (renderCallback) => {
+		this.#renderCallbacks.forEach((renderCallback) => {
 			ctx.save();
-			renderCallback(this);
-			ctx.restore();
+			try {
+				renderCallback(this);
+			} finally {
+				ctx.restore();
+			}
 		});
-		await this.#eventHandler.render();
-		this.#afterRenderCallbacks.forEach(async (afterRenderCallback) => {
+		this.#eventHandler.render();
+		this.#afterRenderCallbacks.forEach((afterRenderCallback) => {
 			ctx.save();
-			afterRenderCallback(this);
-			ctx.restore();
+			try {
+				afterRenderCallback(this);
+			} finally {
+				ctx.restore();
+			}
 		});
 	};
 
 	run() {
+		if (this.#running) return;
 		this.setup();
-		const loop: FrameRequestCallback = async (t) => {
+		this.#running = true;
+		const loop: FrameRequestCallback = (t) => {
+			if (!this.#running) return;
 			this.#eventHandler.poll();
-			await this.render(t);
-
-			// this.testCanvas
-			// 	?.getContext('bitmaprenderer')
-			// 	?.transferFromImageBitmap(this.#eventHandler.context2d.canvas!.transferToImageBitmap());
-
-			this.#frameId = requestAnimationFrame(loop);
+			this.render(t);
+			if (this.#running) this.#frameId = requestAnimationFrame(loop);
 		};
 		this.#frameId = requestAnimationFrame(loop);
 	}
 
 	quit() {
-		window.cancelAnimationFrame(this.#frameId);
+		this.#running = false;
+		cancelAnimationFrame(this.#frameId);
+		if (this.#setup) {
+			const canvas = this.canvas;
+			canvas.removeEventListener('contextmenu', this.#preventContextMenu);
+			for (const type of pointerEventTypes) canvas.removeEventListener(type, this.#eventHandler);
+		}
+		this.#setup = false;
+		this.#lastTime = null;
+		this.#setupCallbacks.clear();
 		this.#renderCallbacks.clear();
 		this.#afterRenderCallbacks.clear();
 		this.#eventHandler.clear();

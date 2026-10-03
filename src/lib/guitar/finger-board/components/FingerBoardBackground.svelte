@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Line } from '$lib/canvas';
+	import { Line } from '#lib/canvas/index.ts';
 	import { getFingerBoardContext } from '../context';
 	import FingerBoardInlay from './FingerBoardInlay.svelte';
 
@@ -27,10 +27,10 @@
 	}
 </script>
 
-{#each fretLines.slice(1) as points}
+{#each fretLines.slice(1) as points (points)}
 	<Line {points} lineCap="round" lineWidth={FRET_WIDTH} strokeStyle="#333" />
 {/each}
-{#each stringLines as points}
+{#each stringLines as points (points)}
 	<Line {points} lineCap="round" lineWidth={STRING_WIDTH + 1} strokeStyle="#000" />
 {/each}
 <Line

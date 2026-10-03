@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getMetronomeContext } from '$/lib/device/metronome/context';
+	import { getMetronomeContext } from '#src/lib/device/metronome/context.ts';
 	import { onDestroy } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import IconPlaySolid from '~icons/heroicons/play-solid';
@@ -26,6 +26,7 @@
 
 <button
 	{...rest}
+	aria-label={isRunning ? 'Stop metronome' : 'Start metronome'}
 	class="{rest.class} flex aspect-square items-center justify-center rounded-full bg-indigo-900 p-0 focus:outline-none"
 	onclick={() => {
 		metronome.timer.toggle();

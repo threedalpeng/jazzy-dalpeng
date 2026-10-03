@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Circle } from '$/lib/canvas';
-	import HitRegion, { type OnHitRegion } from '$/lib/canvas/elements/HitRegion.svelte';
+	import { Circle } from '#src/lib/canvas/index.ts';
+	import HitRegion, { type OnHitRegion } from '#src/lib/canvas/elements/HitRegion.svelte';
 	import { tweened } from 'svelte/motion';
 	import { getFingerBoardContext } from '../context';
 

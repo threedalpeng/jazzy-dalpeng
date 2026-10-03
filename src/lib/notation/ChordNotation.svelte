@@ -4,8 +4,8 @@
 		type ChordExtension,
 		type ChordQuality,
 		type ChordRoot
-	} from '$/utils/music/chords';
-	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
+	} from '#src/utils/music/chords.ts';
+	import { stringifyFinaleJazzChordSigns } from '#src/utils/music/font.ts';
 	import ChordExtentionNotation from './chord/ChordExtensionNotation.svelte';
 	import ChordQualityNotation from './chord/ChordQualityNotation.svelte';
 	import ChordRootNotation from './chord/ChordRootNotation.svelte';

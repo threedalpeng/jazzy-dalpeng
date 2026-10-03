@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { type ChordQuality } from '$/utils/music/chords';
-	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
+	import { type ChordQuality } from '#src/utils/music/chords.ts';
+	import { stringifyFinaleJazzChordSigns } from '#src/utils/music/font.ts';
 	import { chordQualityToFinaleJazzChordSignMap } from './chord-map';
 
 	interface ChordQualityNotationProps {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { clickoutside } from '$/utils/hooks/click-outside';
-	import { base } from '$app/paths';
+	import { clickoutside } from '#src/utils/hooks/click-outside.ts';
+	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import ChevronDown from '~icons/heroicons/chevron-down-16-solid';
 	import ChevronLeft from '~icons/heroicons/chevron-left-solid';
@@ -28,7 +28,10 @@
 		<div class="flex h-full flex-row items-center justify-between">
 			{#if data.pages.previous}
 				<a
-					href={`${base}/practice/${data.category}/${data.pages.previous.slug}`}
+					href={resolve('/practice/(practice)/[category]/[slug]', {
+						category: data.category,
+						slug: data.pages.previous.slug
+					})}
 					class="mr-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 text-indigo-400 transition duration-200 hover:text-indigo-600 active:text-indigo-800"
 				>
 					<ChevronLeft class="h-[30px] w-auto" />
@@ -46,7 +49,10 @@
 			{/if}
 			{#if data.pages.next}
 				<a
-					href={`${base}/practice/${data.category}/${data.pages.next.slug}`}
+					href={resolve('/practice/(practice)/[category]/[slug]', {
+						category: data.category,
+						slug: data.pages.next.slug
+					})}
 					class="ml-8 flex h-full cursor-pointer select-none flex-row items-center gap-4 text-indigo-400 transition duration-200 hover:text-indigo-600 active:text-indigo-800"
 				>
 					<span
@@ -85,9 +91,14 @@
 					<div
 						class="absolute bottom-full left-1/2 max-h-80 w-80 -translate-x-1/2 -translate-y-[1rem] rounded bg-gray-500 p-4"
 					>
-						{#each data.routes[data.category] as route}
+						{#each data.routes[data.category] as route (route.slug)}
 							<div class="text-start">
-								<a href={`${base}/practice/${data.category}/${route.slug}`}>
+								<a
+									href={resolve('/practice/(practice)/[category]/[slug]', {
+										category: data.category,
+										slug: route.slug
+									})}
+								>
 									{route.title}
 								</a>
 							</div>

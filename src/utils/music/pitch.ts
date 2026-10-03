@@ -1,4 +1,4 @@
-import type { FingerPosition } from '$/lib/guitar/finger-board/FingerBoard.svelte';
+import type { FingerPosition } from '#src/lib/guitar/finger-board/FingerBoard.svelte';
 
 export type NoteSignName = 'sharp' | 'flat' | 'natural';
 export type PitchNote =

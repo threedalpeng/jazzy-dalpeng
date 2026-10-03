@@ -1,5 +1,5 @@
-import type { Practice } from '$/lib/practice/types';
-import { TUNE } from '$/utils/music/pitch';
+import type { Practice } from '#src/lib/practice/types.ts';
+import { TUNE } from '#src/utils/music/pitch.ts';
 
 export interface PracticeRoute {
 	title: string;

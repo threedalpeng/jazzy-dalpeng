@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { type ChordRoot } from '$/utils/music/chords';
-	import { stringifyFinaleJazzChordSigns } from '$/utils/music/font';
+	import { type ChordRoot } from '#src/utils/music/chords.ts';
+	import { stringifyFinaleJazzChordSigns } from '#src/utils/music/font.ts';
 	import { chordRootToFinaleJazzChordSignMap } from './chord-map';
 
 	interface ChordRootNotationProps {
