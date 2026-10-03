@@ -132,6 +132,9 @@
 				keyIndex = record.key;
 				range = record.range;
 				bpm = record.bpm;
+				direction = record.direction ?? 'both';
+				repeat = record.repeat ?? true;
+				countIn = record.countIn ?? true;
 				stage = record.stage;
 				answers = record.answers;
 				assisted = record.assisted;
@@ -160,6 +163,9 @@
 			key: keyIndex,
 			range,
 			bpm,
+			direction,
+			repeat,
+			countIn,
 			stage,
 			answers: [...answers],
 			assisted,
@@ -448,7 +454,9 @@
 								? `준비 · ${count}박`
 								: feedback ||
 									(stage === 1
-										? `${target}도를 찾아보세요. 도수 안내는 꺼져 있어요.`
+										? answers.length === 3
+											? '2·3·5도를 찾았어요. 다음 단계에서 직접 연주해 보세요.'
+											: `${target}도를 찾아보세요.${markers ? ' 안내를 참고해도 괜찮아요.' : ' 도수 안내는 꺼져 있어요.'}`
 										: stage === 2
 											? '기타를 잡고 편한 속도로 연주해 보세요.'
 											: stage === 3
@@ -563,6 +571,7 @@
 			class="secondary"
 			onclick={() => {
 				markers = true;
+				labelMode = 'degrees';
 				assisted ||= stage === 1;
 				guideDialog?.close();
 			}}>지판에 도수 안내 켜기</button

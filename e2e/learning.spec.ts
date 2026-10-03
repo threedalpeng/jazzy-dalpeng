@@ -90,3 +90,22 @@ test('root changes update the scale and cancel audio; practice starts and stops'
 	await page.getByRole('button', { name: '재생 정지', exact: false }).click();
 	await expect(page.getByRole('button', { name: '연습 시작', exact: false })).toBeVisible();
 });
+
+test('practice settings persist and reloading never resumes sound automatically', async ({
+	page
+}) => {
+	await page.goto('/jazzy-dalpeng/learn/major-scale/');
+	await page.getByRole('button', { name: '설정 · 진도' }).click();
+	await page.getByRole('combobox', { name: '연주 방향' }).selectOption('down');
+	await page.getByRole('checkbox', { name: '반복 연주' }).uncheck();
+	await page.getByRole('checkbox', { name: '시작 전 4박 준비' }).uncheck();
+	await page.getByRole('button', { name: '닫기 ✕', exact: true }).click();
+	await page.getByRole('button', { name: '스케일 듣기', exact: false }).click();
+	await expect(page.getByRole('button', { name: '재생 정지', exact: false })).toBeVisible();
+	await page.reload();
+	await expect(page.getByRole('button', { name: '스케일 듣기', exact: false })).toBeVisible();
+	await page.getByRole('button', { name: '설정 · 진도' }).click();
+	await expect(page.getByRole('combobox', { name: '연주 방향' })).toHaveValue('down');
+	await expect(page.getByRole('checkbox', { name: '반복 연주' })).not.toBeChecked();
+	await expect(page.getByRole('checkbox', { name: '시작 전 4박 준비' })).not.toBeChecked();
+});

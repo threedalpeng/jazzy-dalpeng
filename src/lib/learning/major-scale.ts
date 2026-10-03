@@ -75,6 +75,9 @@ export interface LearningRecord {
 	triad: number[];
 	complete: boolean;
 	updated: string;
+	direction?: 'up' | 'down' | 'both';
+	repeat?: boolean;
+	countIn?: boolean;
 }
 export function parseRecord(raw: string | null): LearningRecord | null {
 	try {
@@ -92,6 +95,9 @@ export function parseRecord(raw: string | null): LearningRecord | null {
 			!Number.isInteger(r.stage) ||
 			r.stage < 0 ||
 			r.stage > 3 ||
+			(r.direction !== undefined && !['up', 'down', 'both'].includes(r.direction)) ||
+			(r.repeat !== undefined && typeof r.repeat !== 'boolean') ||
+			(r.countIn !== undefined && typeof r.countIn !== 'boolean') ||
 			!Array.isArray(r.answers) ||
 			r.answers.some((v: unknown) => typeof v !== 'number' || ![2, 3, 5].includes(v)) ||
 			!Array.isArray(r.triad) ||
