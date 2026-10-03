@@ -22,7 +22,7 @@ Changing the root starts the course again in the new key. Later courses shown on
 home page are planned curriculum, not implemented lessons.
 
 The `dalpeng` theme, FinaleJazz/FinaleJazzChord notation, and cropped fretboard hitmap
-are reused. The main learning controls fit small portrait screens; explanations and
+are reused. The main learning controls fit small portrait screens; concept explanations, guides, alternative note selection, and
 settings open in dialogs, and enlarged text can use normal document scrolling.
 
 ## Development

@@ -9,7 +9,6 @@
 	import { stringifyFinaleJazzChordSigns } from '#src/utils/music/font.ts';
 	import {
 		KEYS,
-		MAJOR_INTERVALS,
 		RECORD_KEY,
 		midiAt,
 		scalePositions,
@@ -54,14 +53,12 @@
 	let feedback = $state('');
 	let player: LearningPlayer | undefined;
 	let guideDialog = $state<HTMLDialogElement>();
+	let selectionDialog = $state<HTMLDialogElement>();
 	let settingsDialog = $state<HTMLDialogElement>();
 	const key = $derived(KEYS[keyIndex]);
 	const positions = $derived(scalePositions(keyIndex, range, range + 5));
 	const sequence = $derived(scaleSequence(positions, direction));
 	const target = $derived(targets[answers.length] ?? 5);
-	const selectedInfo = $derived(
-		positions.find((p) => selected?.line === p.position.line && selected?.fret === p.position.fret)
-	);
 	const canAdvance = $derived(
 		stage === 0 ||
 			(stage === 1 && answers.length === 3) ||
@@ -75,12 +72,10 @@
 		'메이저 스케일에서 1·3·5도를 골라 화음을 만드세요.'
 	];
 	const headings = $derived([
-		`${key.name} 메이저를 지판에서 살펴보세요`,
-		answers.length === 3
-			? '2·3·5도를 모두 찾았어요'
-			: `${key.name} 메이저의 ${target}도를 찾아보세요`,
-		'기타로 한 옥타브를 연주해 보세요',
-		`${key.name} 메이저 트라이어드를 만들어보세요`
+		'지판 탐색',
+		answers.length === 3 ? '도수 찾기 완료' : `${target}도 찾기`,
+		'한 옥타브 연주',
+		'1·3·5도 구성'
 	]);
 	const glyph = (note: string) =>
 		stringifyFinaleJazzChordSigns([
@@ -200,7 +195,7 @@
 		answers = [];
 		triad = [];
 		assessment = '';
-		feedback = '키를 바꾸었어요. 새 키에서 탐색부터 다시 시작해요.';
+		feedback = '';
 		assisted = false;
 	}
 	function changeRange(value: number) {
@@ -209,7 +204,7 @@
 		assessment = '';
 		selected = null;
 		accessiblePosition = '';
-		feedback = '새 범위에서도 같은 음의 역할을 찾아보세요.';
+		feedback = '';
 	}
 	async function playNotes(notes: ScalePosition[], loop = false, intro = false, chord = false) {
 		audioError = '';
@@ -230,7 +225,7 @@
 	function choose(position: FingerPosition) {
 		if (position.fret === 'mute') return;
 		if (position.fret === 'open' || position.fret === 0) {
-			feedback = '이 과제에서는 표시된 프렛의 음을 선택해 주세요.';
+			feedback = '표시 범위 밖';
 			player?.stop();
 			return;
 		}
@@ -240,29 +235,25 @@
 			(p) => p.position.line === position.line && p.position.fret === position.fret
 		);
 		if (!info) {
-			feedback = '이 음은 현재 메이저 스케일의 구성음이 아니에요. 표시된 음을 살펴보세요.';
+			feedback = '스케일 밖의 음';
 			player?.stop();
 			return;
 		}
 		accessiblePosition = info.id;
 		if (stage === 1) {
-			if (answers.length === 3)
-				feedback = `${info.note}는 ${info.degree}도예요. 다음 단계에서 연주해 보세요.`;
+			if (answers.length === 3) feedback = `${info.note} · ${info.degree}도`;
 			else if (info.degree === target) {
 				answers = [...answers, target];
-				feedback = `맞아요. ${info.note}는 ${info.degree}도예요.${answers.length < 3 ? ` 이제 ${targets[answers.length]}도를 찾아보세요.` : ' 다른 위치에서도 같은 관계를 확인해 보세요.'}`;
-			} else
-				feedback = `${info.note}는 ${info.degree}도예요. ${target}도는 근음에서 ${MAJOR_INTERVALS[target - 1]}반음 위에 있어요.`;
+				feedback = `✓ ${info.note} · ${info.degree}도`;
+			} else feedback = `${info.note} · ${info.degree}도`;
 		} else if (stage === 3) {
 			if ([1, 3, 5].includes(info.degree)) {
 				triad = triad.includes(info.degree)
 					? triad.filter((d) => d !== info.degree)
 					: [...triad, info.degree].sort();
-				feedback = `${info.degree}도 ${info.note}를 ${triad.includes(info.degree) ? '추가' : '제외'}했어요.`;
-			} else
-				feedback = `${info.degree}도 ${info.note}는 기본 트라이어드의 1·3·5도에 포함되지 않아요.`;
-		} else
-			feedback = `${info.note} · ${info.degree}도 · ${position.line}번 줄 ${position.fret}프렛`;
+				feedback = `${info.note} · ${info.degree}도 ${triad.includes(info.degree) ? '추가' : '제외'}`;
+			} else feedback = `${info.note} · ${info.degree}도`;
+		} else feedback = `${info.note} · ${info.degree}도`;
 		if (pitch !== null) void playNotes([info]);
 	}
 	function chordNotes() {
@@ -318,7 +309,6 @@
 	<main>
 		<div class="title-row">
 			<div>
-				<p class="eyebrow">첫 번째 과정</p>
 				<h1>스케일에서 코드로</h1>
 			</div>
 			<span class="key font-jazz">{key.name} major</span>
@@ -335,11 +325,11 @@
 		{#if complete}
 			<section class="summary">
 				<p class="eyebrow">학습을 마쳤어요</p>
-				<h2>스케일의 음이 코드가 되었어요.</h2>
+				<h2>완료</h2>
 				<div class="chord-result" aria-label={`${key.name} 메이저 코드`}>
 					<ChordNotation root={key.name} />
 				</div>
-				<p>{key.notes[0]} · {key.notes[2]} · {key.notes[4]}는 {key.name} 메이저의 1·3·5도입니다.</p>
+				<p>{key.notes[0]} · {key.notes[2]} · {key.notes[4]}</p>
 				<dl>
 					<div>
 						<dt>이해 과제</dt>
@@ -350,9 +340,6 @@
 						<dd>{assessment} · {bpm} BPM · {range + 1}–{range + 5}프렛</dd>
 					</div>
 				</dl>
-				<p class="muted">
-					다른 키와 위치에서도 연습해 보세요. 다음 과정의 주제는 전위와 가까운 코드 연결입니다.
-				</p>
 				<div class="summary-actions">
 					<button class="primary" onclick={restart}>다시 연습하기</button><a
 						class="secondary"
@@ -364,9 +351,9 @@
 			<section class="exercise" aria-labelledby="task-title">
 				<div class="task">
 					<h2 id="task-title">{headings[stage]}</h2>
-					<button class="text-button" onclick={showHelp}>설명 · 힌트</button>
+					<button class="text-button" onclick={showHelp}>가이드</button>
 				</div>
-				<p class="instruction">{descriptions[stage]}</p>
+
 				<div class="board-toolbar">
 					<label
 						>근음 <select
@@ -416,25 +403,8 @@
 					/>
 				</div>
 				<div class="selection-row">
-					<span class="board-legend"
-						>위: 1번 줄 · 아래: 6번 줄 · <span class="root-dot">R</span> 근음</span
-					><label class="accessible"
-						>음 선택 <select aria-label="지판 음 선택" bind:value={accessiblePosition}
-							><option value="">줄과 프렛 선택</option>{#each positions as p (p.id)}<option
-									value={p.id}
-									>{p.position.line}번 줄 {p.position.fret}프렛 · {labelMode === 'notes'
-										? p.note
-										: '스케일 음'}</option
-								>{/each}</select
-						></label
-					><button
-						class="secondary compact"
-						disabled={!accessiblePosition}
-						onclick={() => {
-							const p = positions.find((p) => p.id === accessiblePosition);
-							if (p) choose(p.position);
-						}}>선택 확인</button
-					>
+					<button class="text-button" onclick={() => selectionDialog?.showModal()}>음 선택</button
+					><span class="selection-result" role="status">{feedback}</span>
 				</div>
 				{#if stage === 3}<div class="chord-strip" aria-label="트라이어드 구성">
 						{#each [1, 3, 5] as degree (degree)}<span class:filled={triad.includes(degree)}
@@ -448,28 +418,9 @@
 							onclick={() => void playNotes(chordNotes(), false, false, true)}>화음 듣기</button
 						>
 					</div>{/if}
-				{#if stage < 2}<div class="feedback" aria-live="polite">
-						<p>
-							{count !== null
-								? `준비 · ${count}박`
-								: feedback ||
-									(stage === 1
-										? answers.length === 3
-											? '2·3·5도를 찾았어요. 다음 단계에서 직접 연주해 보세요.'
-											: `${target}도를 찾아보세요.${markers ? ' 안내를 참고해도 괜찮아요.' : ' 도수 안내는 꺼져 있어요.'}`
-										: stage === 2
-											? '기타를 잡고 편한 속도로 연주해 보세요.'
-											: stage === 3
-												? '지판에서 코드톤을 선택해 추가하거나 제외할 수 있어요.'
-												: '근음을 바꾸면 음 이름이 달라져도 도수 관계는 유지돼요.')}
-						</p>
-						{#if selectedInfo && stage !== 1}<span class="selection-info"
-								><span class="font-chord">{glyph(selectedInfo.note)}</span> · {selectedInfo.degree}도</span
-							>{/if}
-					</div>
-				{/if}
+
 				{#if stage === 2}<fieldset>
-						<legend>직접 연주해 보니 어떤가요?</legend
+						<legend>연주 평가</legend
 						>{#each ['아직 어려움', '천천히 가능', '편하게 가능'] as option (option)}<label
 								><input
 									type="radio"
@@ -477,7 +428,7 @@
 									value={option}
 									bind:group={assessment}
 								/>{option}</label
-							>{/each}<span class="muted">연주 결과는 자기 평가입니다.</span>
+							>{/each}
 					</fieldset>{/if}
 				<div class="transport">
 					<button
@@ -511,15 +462,14 @@
 						/><span>{bpm} BPM</span></label
 					>
 				</div>
-				<p class="status" role="status">
-					{(count !== null ? `준비 · ${count}박` : '') ||
-						audioError ||
-						storageError ||
-						(stage === 3 ? feedback : '') ||
-						(!sequence.length
-							? '현재 범위에는 한 옥타브가 부족해요. 다른 프렛 범위를 선택해 주세요.'
-							: '음높이 확인용 기준음 · 진도는 이 기기에 저장됩니다.')}
-				</p>
+				{#if count !== null || audioError || storageError || !sequence.length}<p
+						class="status"
+						role="status"
+					>
+						{count !== null
+							? `준비 · ${count}박`
+							: audioError || storageError || '프렛 범위를 변경해 주세요.'}
+					</p>{/if}
 			</section>
 			<footer>
 				<button
@@ -538,8 +488,8 @@
 						: stage === 3
 							? `${triad.length} / 3 구성`
 							: stage === 2
-								? '연주 느낌을 선택해 주세요'
-								: '지판을 탐색한 뒤 계속하세요'}</span
+								? assessment
+								: ''}</span
 				><button class="primary" disabled={!canAdvance} onclick={advance}
 					>{stage === 3
 						? '학습 마치기'
@@ -552,14 +502,52 @@
 			</footer>
 		{/if}
 	</main>
-	<dialog class="panel" bind:this={guideDialog}>
+	<dialog class="panel" bind:this={selectionDialog} aria-label="지판 음 선택">
+		<button class="close" onclick={() => selectionDialog?.close()}>닫기 ✕</button>
+		<h2>음 선택</h2>
+		<div class="selection-row">
+			<span class="board-legend"
+				>위: 1번 줄 · 아래: 6번 줄 · <span class="root-dot">R</span> 근음</span
+			><label class="accessible"
+				>음 선택 <select aria-label="지판 음 선택" bind:value={accessiblePosition}
+					><option value="">줄과 프렛 선택</option>{#each positions as p (p.id)}<option value={p.id}
+							>{p.position.line}번 줄 {p.position.fret}프렛 · {labelMode === 'notes'
+								? p.note
+								: '스케일 음'}</option
+						>{/each}</select
+				></label
+			><button
+				class="secondary compact"
+				disabled={!accessiblePosition}
+				onclick={() => {
+					const p = positions.find((p) => p.id === accessiblePosition);
+					if (p) choose(p.position);
+					selectionDialog?.close();
+				}}>선택 확인</button
+			>
+		</div>
+	</dialog>
+	<dialog class="panel" bind:this={guideDialog} aria-label="학습 가이드">
 		<button class="close" onclick={() => guideDialog?.close()}>닫기 ✕</button>
-		<p class="eyebrow">지판에서 이해하기</p>
-		<h2>{stage === 3 ? '스케일의 1·3·5도가 트라이어드예요' : '도수는 근음에서의 역할이에요'}</h2>
+		<p class="eyebrow">학습 가이드 · {stages[stage]}</p>
+		<p>{descriptions[stage]}</p>
 		<p>
+			지판의 위는 1번 줄, 아래는 6번 줄입니다. R은 근음이고 숫자는 도수입니다. 음을 눌러 듣거나 음
+			선택 목록을 이용하세요.
+		</p>
+		<h2>
 			{stage === 3
-				? `${key.name} 메이저에서 ${key.notes[0]}, ${key.notes[2]}, ${key.notes[4]}를 선택해요. 한 도수를 고르면 지판의 같은 역할을 가진 음들이 함께 표시됩니다. 화음 듣기는 낮은 위치의 세 코드톤을 사용합니다.`
-				: `${key.name} 메이저의 근음은 ${key.notes[0]}예요. 2도는 2반음, 3도는 4반음, 5도는 7반음 위에 있습니다. 줄과 위치가 달라도 같은 도수의 관계는 유지돼요.`}
+				? '스케일의 1·3·5도가 트라이어드예요'
+				: stage === 2
+					? '반복 연주와 자기 평가'
+					: '도수는 근음에서의 역할이에요'}
+		</h2>
+		<p>
+			{stage === 2
+				? '연습 시작을 누르면 현재 범위의 한 옥타브를 재생합니다. 설정에서 연주 방향, 반복, 시작 전 4박 준비를 선택할 수 있어요. 기타로 따라 연주한 뒤 자신의 연주 느낌을 선택하면 다음 단계로 이동합니다. 템포나 범위를 바꾸면 재생이 멈추고 평가를 다시 선택하게 됩니다.'
+				: stage === 3
+					? `${key.name} 메이저에서 ${key.notes[0]}, ${key.notes[2]}, ${key.notes[4]}를 선택해요. 한 도수를 고르면 지판의 같은 역할을 가진 음들이 함께 표시됩니다. 화음 듣기는 낮은 위치의 세 코드톤을 사용합니다.`
+					: `${key.name} 메이저의 근음은 ${key.notes[0]}예요. 2도는 2반음, 3도는 4반음, 5도는 7반음 위에 있습니다. 줄과 위치가 달라도 같은 도수의 관계는 유지돼요.`}
 		</p>
 		<div class="relationships">
 			{#each [1, 2, 3, 5] as degree (degree)}<span
@@ -576,6 +564,7 @@
 				guideDialog?.close();
 			}}>지판에 도수 안내 켜기</button
 		>
+		<p class="muted">기준음은 음높이 확인용이며 기타 연주는 스스로 평가합니다.</p>
 		<p class="muted">
 			안내를 보며 이해한 뒤, 표시를 숨기고 다른 키에서도 확인해 보세요. 학습 기록에는 도움 사용
 			여부가 남습니다.
@@ -710,12 +699,6 @@
 		font-weight: 700;
 		line-height: 1.4;
 	}
-	.instruction {
-		font-size: 12px;
-		line-height: 1.6;
-		color: #4b5563;
-		margin: 4px 0 10px;
-	}
 	.text-button {
 		color: oklch(var(--p));
 		padding: 8px 4px;
@@ -766,7 +749,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		height: 230px;
+		height: 210px;
 		margin: 8px 0;
 	}
 	.fretboard :global(canvas) {
@@ -781,18 +764,6 @@
 		align-items: center;
 		gap: 10px;
 		font-size: 11px;
-	}
-	.board-legend {
-		color: #6b7280;
-		margin-right: auto;
-		font-size: 10px;
-	}
-	.root-dot {
-		background: #4338ca;
-		color: white;
-		border-radius: 50%;
-		padding: 1px 4px;
-		font-family: FinaleJazz;
 	}
 	.accessible select {
 		max-width: 210px;
@@ -825,25 +796,6 @@
 		background: oklch(var(--b2));
 		color: #9ca3af;
 		cursor: not-allowed;
-	}
-	.feedback {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 10px;
-		min-height: 48px;
-		padding: 8px 12px;
-		margin: 10px 0;
-		background: oklch(var(--primary-light) / 0.2);
-		border-radius: 7px;
-		font-size: 12px;
-		line-height: 1.5;
-	}
-	.selection-info {
-		white-space: nowrap;
-	}
-	.selection-info .font-chord {
-		font-size: 20px;
 	}
 	.transport {
 		display: flex;
@@ -1084,9 +1036,6 @@
 			flex-wrap: wrap;
 			gap: 6px;
 		}
-		.board-legend {
-			width: 100%;
-		}
 		.accessible {
 			flex: 1;
 			min-width: 0;
@@ -1095,11 +1044,6 @@
 		.accessible select {
 			min-width: 0;
 			max-width: 175px;
-			font-size: 11px;
-		}
-		.feedback {
-			min-height: 48px;
-			margin: 8px 0;
 			font-size: 11px;
 		}
 		.transport {
@@ -1126,10 +1070,6 @@
 			font-size: 11px;
 			min-height: 32px;
 		}
-		fieldset .muted {
-			width: 100%;
-			margin: 0;
-		}
 		footer {
 			margin-top: 8px;
 			gap: 5px;
@@ -1149,17 +1089,11 @@
 		.status {
 			font-size: 9px;
 		}
-		.selection-info {
-			display: none;
-		}
 	}
 	@media (max-height: 800px) {
 		main {
 			padding-top: 8px;
 			padding-bottom: 8px;
-		}
-		.title-row .eyebrow {
-			display: none;
 		}
 		.steps {
 			margin: 8px 0;
@@ -1171,15 +1105,8 @@
 			padding-top: 10px;
 			padding-bottom: 10px;
 		}
-		.feedback {
-			margin: 6px 0;
-			min-height: 40px;
-		}
 		.status {
 			margin-top: 3px;
-		}
-		.instruction {
-			margin-bottom: 6px;
 		}
 		footer {
 			margin-top: 6px;
@@ -1207,14 +1134,8 @@
 		.board-toolbar select {
 			font-size: 10px;
 		}
-		.instruction {
-			font-size: 11px;
-		}
 		fieldset legend {
 			font-size: 11px;
-		}
-		fieldset .muted {
-			display: none;
 		}
 		.steps {
 			gap: 10px;
@@ -1227,9 +1148,6 @@
 	footer > .primary {
 		white-space: nowrap;
 		flex-shrink: 0;
-	}
-	.board-legend {
-		line-height: 16px;
 	}
 	@media (max-width: 760px) {
 		.compact {
@@ -1244,6 +1162,52 @@
 		.exercise {
 			padding-left: 10px;
 			padding-right: 10px;
+		}
+	}
+
+	.selection-result {
+		margin-left: auto;
+		font-size: 12px;
+		color: oklch(var(--p));
+		text-align: right;
+	}
+	.panel .selection-row {
+		margin-top: 20px;
+		flex-wrap: wrap;
+	}
+	.panel .accessible {
+		width: 100%;
+		flex: none;
+	}
+	.panel .accessible select {
+		max-width: none;
+		flex: 1;
+	}
+	.panel .compact {
+		margin-left: auto;
+	}
+	.board-toolbar {
+		margin-top: 14px;
+	}
+	.fretboard {
+		height: 280px;
+	}
+	@media (max-width: 760px) {
+		.fretboard {
+			height: 240px;
+		}
+		.selection-result {
+			font-size: 11px;
+		}
+	}
+	@media (max-height: 800px) {
+		.fretboard {
+			height: 210px;
+		}
+	}
+	@media (max-width: 760px) and (max-height: 740px) {
+		.fretboard {
+			height: 200px;
 		}
 	}
 </style>

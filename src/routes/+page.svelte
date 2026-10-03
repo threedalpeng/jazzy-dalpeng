@@ -27,13 +27,12 @@
 	</header>
 	<main>
 		<p class="eyebrow">오늘의 연습</p>
-		<h1>이해한 음악을,<br class="mobile" /> 지판에서 익혀요.</h1>
-		<p class="intro">스케일의 관계를 찾고, 연주하고, 코드로 연결해 보세요.</p>
+		<h1>학습과 연습</h1>
 		<section class="lesson">
 			<div>
 				<span class="course-name font-jazz">Major Scale → Triad</span>
 				<h2>메이저 스케일에서 트라이어드까지</h2>
-				<p>6현 지판 탐색 · 도수 찾기 · 반복 연주 · 코드 구성</p>
+
 				{#if record}<p class="saved">
 						{KEYS[record.key].name} 메이저 · {stages[record.stage]}{record.complete ? ' 완료' : ''} ·
 						{record.bpm} BPM
@@ -49,19 +48,19 @@
 				<ol>
 					<li class="available">
 						<span>01</span>
-						<div>지판과 메이저 스케일<small>현재 과정에서 시작</small></div>
+						<div>지판과 메이저 스케일<small>학습 가능</small></div>
 					</li>
 					<li class="available">
 						<span>02</span>
-						<div>트라이어드 구성<small>스케일의 1·3·5도로 연결</small></div>
+						<div>트라이어드 구성<small>현재 과정에 포함</small></div>
 					</li>
 					<li>
 						<span>03</span>
-						<div>전위와 코드 연결<small>후속 학습 계획</small></div>
+						<div>전위와 코드 연결<small>예정</small></div>
 					</li>
 					<li>
 						<span>04</span>
-						<div>블록코드와 모드<small>후속 학습 계획</small></div>
+						<div>블록코드와 모드<small>예정</small></div>
 					</li>
 				</ol>
 			</section>
@@ -83,9 +82,6 @@
 				>
 			</section>
 		</div>
-		<p class="privacy">
-			학습 진도는 현재 브라우저에 저장됩니다. 기타 연주 결과는 스스로 평가합니다.
-		</p>
 	</main>
 </div>
 
@@ -126,14 +122,6 @@
 		font-size: 32px;
 		line-height: 1.4;
 		font-weight: 700;
-	}
-	.intro {
-		font-size: 13px;
-		color: #6b7280;
-		margin-top: 10px;
-	}
-	.mobile {
-		display: none;
 	}
 	.lesson {
 		display: flex;
@@ -215,11 +203,6 @@
 		font-size: 11px;
 		color: oklch(var(--p));
 	}
-	.privacy {
-		font-size: 10px;
-		color: #6b7280;
-		margin-top: 24px;
-	}
 	a:focus-visible {
 		outline: 3px solid oklch(var(--p));
 		outline-offset: 3px;
@@ -236,9 +219,6 @@
 		}
 		h1 {
 			font-size: 25px;
-		}
-		.intro {
-			font-size: 12px;
 		}
 		.lesson {
 			padding: 16px;
@@ -280,10 +260,6 @@
 		.tools small {
 			font-size: 10px;
 		}
-		.privacy {
-			margin-top: 16px;
-			font-size: 9px;
-		}
 	}
 	@media (max-height: 740px) {
 		main {
@@ -294,17 +270,11 @@
 			margin: 12px 0;
 			padding: 12px;
 		}
-		.intro {
-			margin-top: 4px;
-		}
 		.roadmap ol {
 			gap: 8px;
 		}
 		.tools > a {
 			padding: 8px 0;
-		}
-		.privacy {
-			margin-top: 12px;
 		}
 	}
 </style>
