@@ -57,8 +57,8 @@ test('cropped canvas hit regions work after viewport scaling', async ({ page }) 
 	// C at 6th string, 8th fret in the existing FingerBoard coordinate system.
 	const bounds = await canvas.boundingBox();
 	const size = await canvas.evaluate((el) => ({
-		width: (el as HTMLCanvasElement).width,
-		height: (el as HTMLCanvasElement).height
+		width: Number((el as HTMLCanvasElement).dataset.logicalWidth),
+		height: Number((el as HTMLCanvasElement).dataset.logicalHeight)
 	}));
 	await page.mouse.click(
 		bounds!.x + (220 / size.width) * bounds!.width,
@@ -111,4 +111,46 @@ test('practice settings persist and reloading never resumes sound automatically'
 	await expect(page.getByRole('combobox', { name: '연주 방향' })).toHaveValue('down');
 	await expect(page.getByRole('checkbox', { name: '반복 연주' })).not.toBeChecked();
 	await expect(page.getByRole('checkbox', { name: '시작 전 4박 준비' })).not.toBeChecked();
+});
+
+test('retina fretboards render at display resolution and retain cropped hit regions', async ({
+	browser
+}) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		deviceScaleFactor: 3,
+		baseURL: 'http://127.0.0.1:1357'
+	});
+	const page = await context.newPage();
+	await page.goto('/jazzy-dalpeng/learn/major-scale/');
+	const canvas = page.locator('canvas');
+	await expect
+		.poll(() =>
+			canvas.evaluate((el) => {
+				const c = el as HTMLCanvasElement;
+				const bounds = c.getBoundingClientRect();
+				return (
+					c.width >= Math.floor(bounds.width * devicePixelRatio) &&
+					c.height >= Math.floor(bounds.height * devicePixelRatio)
+				);
+			})
+		)
+		.toBe(true);
+	const bounds = await canvas.boundingBox();
+	await page.mouse.click(
+		bounds!.x + (220 / 340) * bounds!.width,
+		bounds!.y + (180 / 210) * bounds!.height
+	);
+	await expect(page.getByText('C · 1도', { exact: true })).toBeVisible();
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await expect
+		.poll(() =>
+			canvas.evaluate(
+				(el) =>
+					(el as HTMLCanvasElement).height >=
+					Math.floor(el.getBoundingClientRect().height * devicePixelRatio)
+			)
+		)
+		.toBe(true);
+	await context.close();
 });

@@ -58,3 +58,24 @@ it('restores the drawing state even when a renderer throws', () => {
 	expect(ctx.restore).toHaveBeenCalledTimes(1);
 	context.quit();
 });
+
+it('renders dense pixels while retaining logical drawing and hit coordinates', () => {
+	ctx.setTransform = vi.fn();
+	let scale = 2;
+	const context = new CanvasContext(
+		() => canvas,
+		() => ({ width: 100, height: 50, scale })
+	);
+	context.render(0);
+	expect([canvas.width, canvas.height]).toEqual([200, 100]);
+	expect([context.width, context.height]).toEqual([100, 50]);
+	expect([context.hitContext2d.canvas.width, context.hitContext2d.canvas.height]).toEqual([
+		100, 50
+	]);
+	expect(ctx.setTransform).toHaveBeenLastCalledWith(2, 0, 0, 2, 0, 0);
+	scale = 3;
+	context.render(16);
+	expect([canvas.width, canvas.height]).toEqual([300, 150]);
+	expect(ctx.setTransform).toHaveBeenLastCalledWith(3, 0, 0, 3, 0, 0);
+	context.quit();
+});

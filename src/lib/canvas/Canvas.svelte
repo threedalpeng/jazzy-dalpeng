@@ -15,7 +15,21 @@
 	}: CanvasProps & HTMLCanvasAttributes = $props();
 
 	let canvas: HTMLCanvasElement;
-	setCanvasContext(() => canvas);
+	setCanvasContext(
+		() => canvas,
+		() => ({
+			width: Number(width),
+			height: Number(height),
+			scale: Math.max(
+				1,
+				(window.devicePixelRatio || 1) *
+					Math.max(
+						(canvas?.getBoundingClientRect().width || Number(width)) / Number(width),
+						(canvas?.getBoundingClientRect().height || Number(height)) / Number(height)
+					)
+			)
+		})
+	);
 </script>
 
 <canvas
@@ -24,5 +38,15 @@
 	class="{rest.class} touch-none object-contain object-center"
 	{width}
 	{height}
+	data-logical-width={width}
+	data-logical-height={height}
+	style={`--canvas-width: ${width}px; --canvas-height: ${height}px; ${rest.style ?? ''}`}
 ></canvas>
 {@render children()}
+
+<style>
+	:where(canvas) {
+		width: var(--canvas-width);
+		height: auto;
+	}
+</style>

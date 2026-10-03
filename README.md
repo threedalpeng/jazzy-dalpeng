@@ -89,5 +89,10 @@ The library is in `src/lib/canvas` and is shared by the fretboard and metronome.
 - Unmounting unregisters callbacks and listeners. Subcanvas disposal removes only its
   own hit registrations, preserving sibling regions.
 
-Future extensions can add DPR-aware logical coordinates, shared transforms/clipping,
+Canvas dimensions are logical coordinates. The visible backing surface follows the
+rendered CSS size and device pixel ratio, including cropped child surfaces. Hitmaps
+and pointer events retain logical coordinates; use `data-logical-width` and
+`data-logical-height` when inspecting canvas pixels or converting coordinates.
+
+Future extensions can add shared transforms/clipping,
 static layer caching, and redraw-on-change before adding more visual practice tools.

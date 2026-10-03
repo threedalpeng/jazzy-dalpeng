@@ -85,8 +85,14 @@ export class CanvasEventHandler {
 		const canvas = ev.currentTarget as HTMLCanvasElement;
 		const bounds = canvas.getBoundingClientRect();
 		return [
-			bounds.width ? ((ev.clientX - bounds.left) * canvas.width) / bounds.width : -1,
-			bounds.height ? ((ev.clientY - bounds.top) * canvas.height) / bounds.height : -1
+			bounds.width
+				? ((ev.clientX - bounds.left) * Number(canvas.dataset?.logicalWidth ?? canvas.width)) /
+					bounds.width
+				: -1,
+			bounds.height
+				? ((ev.clientY - bounds.top) * Number(canvas.dataset?.logicalHeight ?? canvas.height)) /
+					bounds.height
+				: -1
 		];
 	}
 	handleEvent(ev: PointerEvent) {

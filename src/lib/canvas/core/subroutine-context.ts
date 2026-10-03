@@ -9,7 +9,11 @@ export const setSubroutineCanvasContext = (
 		afterRender?: CanvasRenderCallback;
 	}
 ) => {
-	const subCanvasContext = new CanvasContext(canvasGetter);
+	const subCanvasContext = new CanvasContext(canvasGetter, () => ({
+		width: Number(canvasGetter().dataset.logicalWidth ?? canvasGetter().width),
+		height: Number(canvasGetter().dataset.logicalHeight ?? canvasGetter().height),
+		scale: upperContext.pixelScale
+	}));
 	setContext('canvas', subCanvasContext);
 	upperContext.registerSubroutineContext(subCanvasContext);
 	const render: CanvasRenderCallback = () => {

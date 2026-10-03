@@ -14,7 +14,10 @@ export class CanvasContext {
 	#preventContextMenu = (ev: Event) => ev.preventDefault();
 	#frameId = 0;
 	#eventHandler = new CanvasEventHandler();
-	constructor(canvasGetter: CanvasGetter) {
+	constructor(
+		canvasGetter: CanvasGetter,
+		private dimensions?: () => { width: number; height: number; scale: number }
+	) {
 		this.#canvasGetter = canvasGetter;
 	}
 
@@ -27,18 +30,21 @@ export class CanvasContext {
 	get hitContext2d() {
 		return this.#eventHandler.context2d;
 	}
+	get pixelScale() {
+		return this.dimensions?.().scale ?? 1;
+	}
 	get delta() {
 		return this.#timePassed;
 	}
 
 	get width() {
-		return this.canvas.width;
+		return this.dimensions?.().width ?? this.canvas.width;
 	}
 	set width(w) {
 		this.canvas.width = w;
 	}
 	get height() {
-		return this.canvas.height;
+		return this.dimensions?.().height ?? this.canvas.height;
 	}
 	set height(h) {
 		this.canvas.height = h;
@@ -100,9 +106,17 @@ export class CanvasContext {
 		this.setup();
 		this.#timePassed = this.#lastTime === null ? 0 : Math.max(0, t - this.#lastTime);
 		this.#lastTime = t;
+		const scale = this.pixelScale;
+		const width = Math.round(this.width * scale);
+		const height = Math.round(this.height * scale);
+		if (this.dimensions) {
+			if (this.canvas.width !== width) this.canvas.width = width;
+			if (this.canvas.height !== height) this.canvas.height = height;
+		}
 		this.#eventHandler.resize(this.width, this.height);
 		const ctx = this.context2d;
 
+		if (this.dimensions) ctx.setTransform(scale, 0, 0, scale, 0, 0);
 		ctx.clearRect(0, 0, this.width, this.height);
 		this.#eventHandler.beforeRender();
 

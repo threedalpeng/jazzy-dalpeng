@@ -7,8 +7,11 @@ import {
 } from './context';
 import { CanvasEventHandler, type OnHitCallback } from './events';
 
-export const setCanvasContext = (canvasGetter: CanvasGetter) => {
-	const context = setContext('canvas', new CanvasContext(canvasGetter));
+export const setCanvasContext = (
+	canvasGetter: CanvasGetter,
+	dimensions?: () => { width: number; height: number; scale: number }
+) => {
+	const context = setContext('canvas', new CanvasContext(canvasGetter, dimensions));
 	onMount(() => {
 		context.run();
 	});

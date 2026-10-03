@@ -10,15 +10,22 @@ test('chord finder renders the cropped hitmap and responds to a click', async ({
 		.poll(() =>
 			canvas.evaluate((element) => {
 				const ctx = (element as HTMLCanvasElement).getContext('2d')!;
-				return ctx.getImageData(55, 30, 1, 1).data[3];
+				return ctx.getImageData(
+					(55 * (element as HTMLCanvasElement).width) /
+						Number((element as HTMLCanvasElement).dataset.logicalWidth),
+					(30 * (element as HTMLCanvasElement).height) /
+						Number((element as HTMLCanvasElement).dataset.logicalHeight),
+					1,
+					1
+				).data[3];
 			})
 		)
-		.toBe(255);
+		.toBeGreaterThan(0);
 	const before = await canvas.evaluate((element) => (element as HTMLCanvasElement).toDataURL());
 	const bounds = await canvas.boundingBox();
 	const dimensions = await canvas.evaluate((element) => ({
-		width: (element as HTMLCanvasElement).width,
-		height: (element as HTMLCanvasElement).height
+		width: Number((element as HTMLCanvasElement).dataset.logicalWidth),
+		height: Number((element as HTMLCanvasElement).dataset.logicalHeight)
 	}));
 	await page.mouse.click(
 		bounds!.x + (55 / dimensions.width) * bounds!.width,
@@ -31,7 +38,16 @@ test('chord finder renders the cropped hitmap and responds to a click', async ({
 		.poll(() =>
 			canvas.evaluate((element) => {
 				return Array.from(
-					(element as HTMLCanvasElement).getContext('2d')!.getImageData(63, 33, 1, 1).data
+					(element as HTMLCanvasElement)
+						.getContext('2d')!
+						.getImageData(
+							(63 * (element as HTMLCanvasElement).width) /
+								Number((element as HTMLCanvasElement).dataset.logicalWidth),
+							(33 * (element as HTMLCanvasElement).height) /
+								Number((element as HTMLCanvasElement).dataset.logicalHeight),
+							1,
+							1
+						).data
 				);
 			})
 		)

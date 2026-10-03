@@ -30,21 +30,21 @@
 	const offscreenCanvas = document.createElement('canvas');
 	setSubroutineCanvasContext(upperCanvasContext, () => offscreenCanvas, {
 		beforeRender: ({ canvas }) => {
-			if (canvas.width !== width) canvas.width = width;
-			if (canvas.height !== height) canvas.height = height;
+			canvas.dataset.logicalWidth = String(width);
+			canvas.dataset.logicalHeight = String(height);
 		},
-		afterRender: ({ canvas, hitContext2d }) => {
+		afterRender: ({ canvas, hitContext2d, pixelScale }) => {
 			const hitCanvas = hitContext2d.canvas;
 			upperCanvasContext.context2d.drawImage(
 				canvas,
-				sourceArea.x ?? 0,
-				sourceArea.y ?? 0,
-				sourceArea.width ?? canvas.width,
-				sourceArea.height ?? canvas.height,
+				(sourceArea.x ?? 0) * pixelScale,
+				(sourceArea.y ?? 0) * pixelScale,
+				(sourceArea.width ?? width) * pixelScale,
+				(sourceArea.height ?? height) * pixelScale,
 				destArea.x ?? 0,
 				destArea.y ?? 0,
-				destArea.width ?? sourceArea.width ?? canvas.width,
-				destArea.height ?? sourceArea.height ?? canvas.height
+				destArea.width ?? sourceArea.width ?? width,
+				destArea.height ?? sourceArea.height ?? height
 			);
 			upperCanvasContext.hitContext2d.drawImage(
 				hitCanvas,

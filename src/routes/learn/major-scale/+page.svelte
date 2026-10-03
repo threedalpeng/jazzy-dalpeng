@@ -1210,4 +1210,19 @@
 			height: 200px;
 		}
 	}
+
+	.exercise {
+		border-color: oklch(var(--primary-light) / 0.55);
+		box-shadow: 0 8px 28px oklch(var(--p) / 0.035);
+	}
+	.label-options button {
+		transition: background-color 0.15s ease;
+	}
+	.text-button:hover {
+		background: oklch(var(--primary-light) / 0.18);
+		border-radius: 6px;
+	}
+	.primary {
+		box-shadow: 0 3px 10px oklch(var(--p) / 0.12);
+	}
 </style>

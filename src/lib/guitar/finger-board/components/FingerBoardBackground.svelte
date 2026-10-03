@@ -28,10 +28,10 @@
 </script>
 
 {#each fretLines.slice(1) as points (points)}
-	<Line {points} lineCap="round" lineWidth={FRET_WIDTH} strokeStyle="#333" />
+	<Line {points} lineCap="round" lineWidth={FRET_WIDTH / 2} strokeStyle="#475569" />
 {/each}
 {#each stringLines as points (points)}
-	<Line {points} lineCap="round" lineWidth={STRING_WIDTH + 1} strokeStyle="#000" />
+	<Line {points} lineCap="round" lineWidth={STRING_WIDTH} strokeStyle="#64748b" />
 {/each}
 <Line
 	points={fretLines[0].map((line) => {
