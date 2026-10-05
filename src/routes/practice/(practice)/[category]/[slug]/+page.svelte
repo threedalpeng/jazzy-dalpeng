@@ -55,16 +55,26 @@
 	let guitarSoundfont: Soundfont | null = null;
 	let cancelPrepare: (() => void) | undefined;
 	let disposed = false;
+	let preparationVersion = 0;
+	const removeStop = timer.onStop(() => {
+		guitarSoundfont?.stop();
+		currentActiveFingers.clear();
+	});
 	onDestroy(() => {
 		disposed = true;
+		preparationVersion++;
+		removeStop();
 		cancelPrepare?.();
 		currentScheduleIdList.forEach((id) => timer.cancelSchedule(id));
+		guitarSoundfont?.dispose();
 	});
 
 	$effect.pre(() => {
 		if (practice) untrack(replaceScore);
 	});
 	function replaceScore() {
+		timer.stop();
+		const version = ++preparationVersion;
 		currentScore = randomBox.open();
 		currentBoard = currentScore.boards[0];
 		cancelPrepare?.();
@@ -76,7 +86,7 @@
 				});
 			}
 			await guitarSoundfont.load;
-			if (disposed) return;
+			if (disposed || version !== preparationVersion) return;
 			currentScheduleIdList.forEach((id) => timer.cancelSchedule(id));
 			currentScheduleIdList = [];
 			scheduleScore(currentScore!);
@@ -122,16 +132,21 @@
 						currentActiveFingers.delete(note.position);
 					};
 				},
-				audio: ({ time }) => {
+				audio: ({ time, signal }) => {
 					// play audio with pitch
 					if (note.pitch) {
-						guitarSoundfont!.start({
+						let stop: (() => void) | undefined;
+						const abort = () => stop?.();
+						stop = guitarSoundfont!.start({
+							ampRelease: 0.005,
+							onEnded: () => signal.removeEventListener('abort', abort),
 							note: numberingPitch(note.pitch) + 12,
 							time: time,
 							duration: note.time.duration
 								? timer.convert(note.time.duration, 'note', 'second')
 								: note.time.duration
 						});
+						signal.addEventListener('abort', abort, { once: true });
 					}
 				}
 			});

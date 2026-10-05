@@ -1,272 +1,291 @@
-import { MultiMap } from '#src/utils/multimap.ts';
+import { onFrame } from '#lib/animation/frame.ts';
+import { audibleTime } from '#lib/audio/output-time.ts';
 import type { WithCleanup } from '#src/utils/types.ts';
 import type { ScoreTimestamp } from '../practice/types';
 import { TickEvent, type TickEventCallbacks } from './event';
 import TimerWorker from './timer-worker?worker';
 
 export interface TickState {
-	/** shows the order of current tick after startup */
 	tickPassed: number;
-	/** scheduled tick time, in seconds */
+	/** Scheduled audio-context time in seconds. */
 	time: number;
 }
-export type AudioTickState = { audioCtx: AudioContext } & TickState;
+export type AudioTickState = { audioCtx: AudioContext; signal: AbortSignal } & TickState;
 export type TickCallback = (state: TickState) => unknown;
 export type AudioTickCallback = (state: AudioTickState) => unknown;
 
 const LOOKAHEAD_INTERVAL_MS = 25;
-const SCHEDULE_AHEAD_SEC = 0.1;
+const SCHEDULE_AHEAD_SEC = 0.15;
+const AUDIO_LEAD_SEC = 0.005;
 const MS_PER_MIN = 60000;
+type Occurrence = { event: TickEvent; tick: number };
+type Cleanup = { end: number; callback: TickCallback };
+
 export class AudioClockTimer {
 	audioCtx: AudioContext | null = null;
 	lookaheadTimer = new TimerWorker();
-
-	get currentTime() {
-		if (!this.audioCtx) {
-			throw new TypeError("Timer hasn't yet started.");
-		}
-		return this.audioCtx.currentTime;
-	}
-
-	constructor(tickIntervalMs: number = 10) {
-		this.#tickIntervalMs = tickIntervalMs;
-		this.lookaheadTimer.postMessage({ interval: LOOKAHEAD_INTERVAL_MS });
-		this.lookaheadTimer.addEventListener('message', (e) => {
-			if (e.data === 'tick') {
-				this.#onLookahead();
-			}
-		});
-		this.#frameId = window.requestAnimationFrame(this.#onAnimationFrame);
-	}
-
 	#isRunning = false;
 	#starting = false;
 	#startVersion = 0;
-	#frameId = 0;
 	#destroyed = false;
-	#nextTickOnSecond: number = 0;
-	#tickPassed: number = 0;
-	#tickIntervalMs = 10;
+	#epoch = 0;
+	#scheduledTick = -1;
+	#visualTick = -1;
+	#tickIntervalMs: number;
+	#removeFrame: (() => void) | undefined;
+	#events = new Map<number, TickEvent>();
+	#audioControllers = new Map<number, AbortController>();
+	#loops = new Set<number>();
+	#cleanups = new Map<number, Cleanup>();
+	#beforeStartCallbacks = new Set<() => Promise<any>>();
+	#startCallbacks = new Set<() => any>();
+	#stopCallbacks = new Set<() => any>();
+	#errorCallbacks = new Set<(error: unknown) => void>();
+	#visibility = () => {
+		if (document.hidden) this.stop();
+	};
+	#audioState = () => {
+		if (this.#isRunning && this.audioCtx?.state !== 'running') this.stop();
+	};
+
+	constructor(tickIntervalMs = 10) {
+		if (!Number.isFinite(tickIntervalMs) || tickIntervalMs <= 0)
+			throw new RangeError('Tick interval must be positive');
+		this.#tickIntervalMs = tickIntervalMs;
+		this.lookaheadTimer.postMessage({ interval: LOOKAHEAD_INTERVAL_MS });
+		this.lookaheadTimer.addEventListener('message', (event) => {
+			if (event.data === 'tick') {
+				try {
+					this.#onLookahead();
+				} catch (error) {
+					this.stop();
+					this.#errorCallbacks.forEach((callback) => callback(error));
+				}
+			}
+		});
+	}
+	get currentTime() {
+		if (!this.audioCtx) throw new TypeError("Timer hasn't yet started.");
+		return this.audioCtx.currentTime;
+	}
+	get position() {
+		const time = this.audioCtx ? audibleTime(this.audioCtx) : 0;
+		return {
+			time,
+			tickPassed: this.#isRunning ? Math.max(-1, this.#tickAt(time)) : -1,
+			running: this.#isRunning
+		};
+	}
 	get tickIntervalMs() {
 		return this.#tickIntervalMs;
 	}
 	set tickIntervalMs(value: number) {
+		if (!Number.isFinite(value) || value <= 0)
+			throw new RangeError('Tick interval must be positive');
+		if (value === this.#tickIntervalMs) return;
+		const restart = this.#isRunning;
+		if (restart) this.stop();
 		this.#tickIntervalMs = value;
+		if (restart) this.#startInBackground();
 	}
 	get isRunning() {
 		return this.#isRunning;
 	}
+	#tickAt(time: number) {
+		return Math.floor((time - this.#epoch) / (this.#tickIntervalMs / 1000) + 1e-7);
+	}
+	#state(tick: number): TickState {
+		return { tickPassed: tick, time: this.#epoch + (tick * this.#tickIntervalMs) / 1000 };
+	}
 	async start() {
 		if (this.#destroyed || this.#isRunning || this.#starting) return;
 		this.#starting = true;
+		if (typeof document !== 'undefined')
+			document.addEventListener('visibilitychange', this.#visibility);
 		const version = ++this.#startVersion;
 		try {
 			if (!this.audioCtx) {
 				this.audioCtx = new AudioContext();
-				this.#tickPassed = 0;
+				this.audioCtx.addEventListener?.('statechange', this.#audioState);
 			}
 			await this.audioCtx.resume();
-			await Promise.all([...this.#beforeStartCallbacks].map((cb) => cb()));
-			if (this.#destroyed || version !== this.#startVersion || this.audioCtx.state !== 'running')
+			if (version !== this.#startVersion || this.#destroyed) return;
+			await Promise.all([...this.#beforeStartCallbacks].map((callback) => callback()));
+			if (version !== this.#startVersion || this.#destroyed) return;
+			if (this.audioCtx.state !== 'running') throw new Error('Audio unavailable');
+			if (typeof document !== 'undefined' && document.hidden) {
+				this.stop();
 				return;
+			}
+			this.#epoch = this.audioCtx.currentTime + 0.1;
+			this.#scheduledTick = this.#visualTick = -1;
 			this.#isRunning = true;
-			this.#nextTickOnSecond = this.audioCtx.currentTime + 0.1;
+			this.#startCallbacks.forEach((callback) => callback());
+			if (!this.#isRunning) return;
+			this.#onLookahead();
+			if (!this.#isRunning) return;
 			this.lookaheadTimer.postMessage('start');
-			this.#startCallbacks.forEach((cb) => cb());
+			this.#removeFrame = onFrame(this.#updateView);
+		} catch (error) {
+			if (version !== this.#startVersion || this.#destroyed) return;
+			this.stop();
+			throw error;
 		} finally {
 			if (version === this.#startVersion) this.#starting = false;
 		}
 	}
-
-	#tickQueue: TickState[] = [];
+	#occurrences(from: number, to: number, latestOnly = false): Occurrence[] {
+		const occurrences: Occurrence[] = [];
+		for (const event of this.#events.values()) {
+			if (!this.#loops.has(event.id)) {
+				if (event.start > from && event.start <= to) occurrences.push({ event, tick: event.start });
+			} else {
+				const interval = event.interval!;
+				const first = Math.max(0, Math.floor((from - event.start) / interval) + 1);
+				const last = Math.floor((to - event.start) / interval);
+				for (let index = latestOnly ? Math.max(first, last) : first; index <= last; index++) {
+					occurrences.push({ event, tick: event.start + index * interval });
+				}
+			}
+		}
+		return occurrences.sort((a, b) => a.tick - b.tick || a.event.id - b.event.id);
+	}
 	#onLookahead() {
-		if (!this.#isRunning) return;
-		// schedule audio
-		// and push expected events to queues
-		// in this case, metronome ticks will be queued
-		while (this.#nextTickOnSecond < this.audioCtx!.currentTime + SCHEDULE_AHEAD_SEC) {
-			const audioState = {
-				audioCtx: this.audioCtx!,
-				time: this.#nextTickOnSecond,
-				tickPassed: this.#tickPassed
-			};
-
-			const scheduleIdList = this.#schedules.getAll(this.#tickPassed);
-			if (scheduleIdList) {
-				scheduleIdList.forEach((id) => {
-					const event = this.#events.get(id);
-					if (event && event.audio) {
-						event.audio(audioState);
+		if (!this.#isRunning || !this.audioCtx) return;
+		const ctx = this.audioCtx;
+		const to = this.#tickAt(ctx.currentTime + SCHEDULE_AHEAD_SEC);
+		// Jump over missed audio instead of bursting past notes after a blocked thread.
+		const from = Math.max(this.#scheduledTick, this.#tickAt(ctx.currentTime + AUDIO_LEAD_SEC));
+		this.#scheduledTick = to;
+		for (const { event, tick } of this.#occurrences(from, to)) {
+			if (!this.#isRunning) break;
+			if (
+				this.#events.has(event.id) &&
+				this.#state(tick).time >= ctx.currentTime + AUDIO_LEAD_SEC
+			) {
+				if (event.audio) {
+					let controller = this.#audioControllers.get(event.id);
+					if (!controller) {
+						controller = new AbortController();
+						this.#audioControllers.set(event.id, controller);
 					}
-				});
-			}
-
-			this.#loopSchedules.forEach((id) => {
-				const event = this.#events.get(id);
-				if (event && event.interval) {
-					if (
-						event.start <= this.#tickPassed &&
-						(this.#tickPassed - event.start) % event.interval === 0
-					) {
-						if (event.audio) {
-							event.audio(audioState);
-						}
-					}
+					event.audio({ audioCtx: ctx, signal: controller.signal, ...this.#state(tick) });
 				}
-			});
-
-			this.#tickQueue.push({ time: this.#nextTickOnSecond, tickPassed: this.#tickPassed });
-			this.#tickPassed += 1;
-			this.#nextTickOnSecond += 0.001 * this.#tickIntervalMs;
+			}
 		}
 	}
-	#onAnimationFrame = () => {
-		if (this.#destroyed) return;
-		if (this.audioCtx) {
-			const currentTime = this.audioCtx.currentTime;
-			let tickState = this.#tickQueue[0];
-			while (tickState !== undefined && tickState.time <= currentTime) {
-				this.#tickQueue.shift();
-
-				const cleanupIdList = this.#cleanupSchedules.getAll(tickState.tickPassed);
-				if (cleanupIdList) {
-					cleanupIdList.forEach((id) => {
-						const event = this.#events.get(id);
-						if (event && event.cleanup) {
-							event.cleanup(tickState);
-						}
-					});
-				}
-
-				const scheduleIdList = this.#schedules.getAll(tickState.tickPassed);
-				if (scheduleIdList !== undefined) {
-					scheduleIdList.forEach((id) => {
-						const event = this.#events.get(id);
-						if (event && event.animation) {
-							event.animation(tickState);
-						}
-					});
-				}
-
-				this.#loopSchedules.forEach((id) => {
-					const event = this.#events.get(id);
-					if (event && event.interval) {
-						if (
-							event.start <= tickState.tickPassed &&
-							(tickState.tickPassed - event.start) % event.interval === 0
-						) {
-							if (event.animation) {
-								event.animation(tickState);
-							}
-						}
-					}
-				});
-				tickState = this.#tickQueue[0];
-			}
+	#cleanup(id: number, tick: number) {
+		const cleanup = this.#cleanups.get(id);
+		this.#cleanups.delete(id);
+		cleanup?.callback(this.#state(tick));
+	}
+	#updateView = () => {
+		if (!this.#isRunning || !this.audioCtx) return;
+		const to = Math.max(this.#visualTick, this.#tickAt(audibleTime(this.audioCtx)));
+		if (to < 0 || to === this.#visualTick) return;
+		const occurrences = this.#occurrences(this.#visualTick, to, true);
+		this.#visualTick = to;
+		for (const { event, tick } of occurrences) {
+			if (!this.#isRunning) break;
+			for (const [id, cleanup] of this.#cleanups)
+				if (cleanup.end <= tick) this.#cleanup(id, cleanup.end);
+			if (!this.#events.has(event.id)) continue;
+			// Expired finite highlights are not replayed when the display catches up.
+			if (event.duration && tick + event.duration <= to) continue;
+			this.#cleanup(event.id, tick);
+			const result = event.animation?.(this.#state(tick));
+			const callback = typeof result === 'function' ? (result as TickCallback) : event.cleanup;
+			if (callback && this.#isRunning)
+				this.#cleanups.set(event.id, { end: tick + (event.duration ?? Infinity), callback });
 		}
-		this.#frameId = window.requestAnimationFrame(this.#onAnimationFrame);
+		for (const [id, cleanup] of this.#cleanups)
+			if (cleanup.end <= to) this.#cleanup(id, cleanup.end);
 	};
-
-	#beforeStartCallbacks: Set<() => Promise<any>> = new Set();
-	beforeStart(cb: () => Promise<any>) {
-		this.#beforeStartCallbacks.add(cb);
-		return () => this.removeBeforeStart(cb);
+	beforeStart(callback: () => Promise<any>) {
+		this.#beforeStartCallbacks.add(callback);
+		return () => this.removeBeforeStart(callback);
 	}
-	removeBeforeStart(cb: () => Promise<any>) {
-		this.#beforeStartCallbacks.delete(cb);
+	removeBeforeStart(callback: () => Promise<any>) {
+		this.#beforeStartCallbacks.delete(callback);
 	}
-	#startCallbacks: Set<() => any> = new Set();
-	onStart(cb: () => any) {
-		this.#startCallbacks.add(cb);
-		return () => this.removeStart(cb);
+	onStart(callback: () => any) {
+		this.#startCallbacks.add(callback);
+		return () => this.removeStart(callback);
 	}
-	removeStart(cb: () => any) {
-		this.#startCallbacks.delete(cb);
+	removeStart(callback: () => any) {
+		this.#startCallbacks.delete(callback);
 	}
-	#stopCallbacks: Set<() => any> = new Set();
-	onStop(cb: () => any) {
-		this.#stopCallbacks.add(cb);
-		return () => this.removeStop(cb);
+	onError(callback: (error: unknown) => void) {
+		this.#errorCallbacks.add(callback);
+		return () => this.#errorCallbacks.delete(callback);
 	}
-	removeStop(cb: () => any) {
-		this.#stopCallbacks.delete(cb);
+	#startInBackground() {
+		void this.start().catch((error) => this.#errorCallbacks.forEach((callback) => callback(error)));
 	}
-
-	#schedules: MultiMap<number, number> = new MultiMap();
-	#cleanupSchedules: MultiMap<number, number> = new MultiMap();
-	#events: Map<number, TickEvent> = new Map();
+	onStop(callback: () => any) {
+		this.#stopCallbacks.add(callback);
+		return () => this.removeStop(callback);
+	}
+	removeStop(callback: () => any) {
+		this.#stopCallbacks.delete(callback);
+	}
 	schedule(event: TickEvent) {
 		this.#events.set(event.id, event);
-		this.#schedules.set(event.start, event.id);
-		if (event.duration) {
-			this.#cleanupSchedules.set(event.start + event.duration, event.id);
-		}
 		return event.id;
 	}
-
-	#loopSchedules: Set<number> = new Set();
 	scheduleLoop(event: TickEvent) {
+		if (!Number.isInteger(event.interval) || event.interval! <= 0)
+			throw new RangeError('Loop interval must be a positive tick count');
 		this.#events.set(event.id, event);
-		this.#loopSchedules.add(event.id);
+		this.#loops.add(event.id);
 		return event.id;
 	}
-
-	cancelSchedule(eventId: number) {
-		const event = this.#events.get(eventId);
-		if (event) {
-			this.#events.delete(eventId);
-			this.#loopSchedules.delete(eventId);
-			const schedulesOnTick = this.#schedules.getAll(event.start);
-			if (schedulesOnTick) {
-				const idx = schedulesOnTick.indexOf(eventId);
-				if (idx >= 0) schedulesOnTick.splice(idx, 1);
-			}
-
-			if (event.duration) {
-				const cleanupSchedulesOnTick = this.#cleanupSchedules.getAll(event.start + event.duration);
-				if (cleanupSchedulesOnTick) {
-					const idx = cleanupSchedulesOnTick.indexOf(eventId);
-					if (idx >= 0) cleanupSchedulesOnTick.splice(idx, 1);
-				}
-			}
-		}
+	cancelSchedule(id: number) {
+		this.#audioControllers.get(id)?.abort();
+		this.#audioControllers.delete(id);
+		this.#cleanup(id, Math.max(0, this.#visualTick));
+		this.#events.delete(id);
+		this.#loops.delete(id);
 	}
-
 	stop() {
 		this.#startVersion++;
+		const active = this.#isRunning || this.#starting;
 		this.#starting = false;
-		if (this.#isRunning) {
-			this.lookaheadTimer.postMessage('stop');
-			this.#isRunning = false;
-			this.#tickPassed = 0;
-			this.#tickQueue = [];
-			this.#stopCallbacks.forEach((cb) => cb());
-		}
+		this.#isRunning = false;
+		this.#removeFrame?.();
+		this.#removeFrame = undefined;
+		if (typeof document !== 'undefined')
+			document.removeEventListener('visibilitychange', this.#visibility);
+		this.lookaheadTimer.postMessage('stop');
+		for (const controller of this.#audioControllers.values()) controller.abort();
+		this.#audioControllers.clear();
+		for (const id of [...this.#cleanups.keys()]) this.#cleanup(id, Math.max(0, this.#visualTick));
+		this.#scheduledTick = this.#visualTick = -1;
+		if (active) this.#stopCallbacks.forEach((callback) => callback());
 	}
-
 	toggle() {
-		if (this.#isRunning) {
-			this.stop();
-		} else {
-			this.start();
-		}
+		if (this.#isRunning) this.stop();
+		else this.#startInBackground();
 	}
 	restart() {
 		if (this.#isRunning) {
 			this.stop();
-			this.start();
+			this.#startInBackground();
 		}
 	}
-
 	destroy() {
+		if (this.#destroyed) return;
 		this.stop();
 		this.#destroyed = true;
-		cancelAnimationFrame(this.#frameId);
 		this.lookaheadTimer.terminate();
+		this.audioCtx?.removeEventListener?.('statechange', this.#audioState);
 		void this.audioCtx?.close();
+		this.#events.clear();
+		this.#loops.clear();
 		this.#beforeStartCallbacks.clear();
 		this.#startCallbacks.clear();
 		this.#stopCallbacks.clear();
+		this.#errorCallbacks.clear();
 	}
 }
 
@@ -289,6 +308,7 @@ export class TempoTimer extends AudioClockTimer {
 		return this.#bpm;
 	}
 	set bpm(value: number) {
+		if (!Number.isFinite(value) || value <= 0) throw new RangeError('Invalid bpm');
 		this.#bpm = value;
 		this.#updateTickInterval();
 	}
@@ -298,6 +318,8 @@ export class TempoTimer extends AudioClockTimer {
 		return this.#ticksPerNote;
 	}
 	set ticksPerNote(value: number) {
+		if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value))
+			throw new RangeError('Invalid ticksPerNote');
 		this.#ticksPerNote = value;
 		this.#updateTickInterval();
 	}
@@ -306,6 +328,8 @@ export class TempoTimer extends AudioClockTimer {
 		return this.#beatPerBar;
 	}
 	set beatPerBar(value: number) {
+		if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value))
+			throw new RangeError('Invalid beatPerBar');
 		this.#beatPerBar = value;
 		this.#updateTickInterval();
 	}
@@ -315,6 +339,8 @@ export class TempoTimer extends AudioClockTimer {
 		return this.#signatureUnit;
 	}
 	set signatureUnit(value: number) {
+		if (!Number.isFinite(value) || value <= 0 || !Number.isInteger(value))
+			throw new RangeError('Invalid signatureUnit');
 		this.#signatureUnit = value;
 		this.#updateTickInterval();
 	}

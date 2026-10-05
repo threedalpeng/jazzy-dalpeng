@@ -74,6 +74,9 @@ The library is in `src/lib/canvas` and is shared by the fretboard and metronome.
 </Canvas>
 ```
 
+- Root canvases and audio transports share one RAF scheduler: update input and
+  audible timeline position, flush Svelte state, then draw every canvas. Child
+  canvases still render as part of their parent's composition.
 - Render callbacks are synchronous. `context.delta` is the frame interval in milliseconds
   (zero for the first frame). `context.frameTime` is the shared RAF timestamp;
   nested contexts receive the same timestamp.
@@ -117,3 +120,30 @@ anchor for declaration order; hooks without an anchor retain registration order.
 The root RAF remains active for pointer queues, tweened hover effects, and animated
 beats. Full redraw-on-change and a general transform/clipping stack are future work;
 static caching is explicit rather than assuming arbitrary callbacks are pure.
+
+## Audio timing
+
+`AudioClockTimer`/`TempoTimer` share an epoch and tick timeline for both audio and
+visual events. Audio events are reserved immediately at startup, then a worker
+checks every 25 ms with a 150 ms lookahead. The UI derives its current position
+from the timeline rather than consuming a queue of every historical tick.
+
+When supported and initialized, `getOutputTimestamp()` maps audio-device position
+to performance time. The fallback subtracts reported output latency (or base
+latency when output latency is unavailable); that is an estimate, not a physical
+speaker/display calibration. Timing is limited by browser frame cadence and the
+accuracy of the device's latency reports.
+
+If the main thread misses the reservation window, past audio events are skipped,
+not played in a burst. Loop visuals select their latest occurrence; expired finite
+highlights are skipped and their cleanup functions are run. Audio cannot be
+retroactively repaired after a long UI stall. Changing the tick interval restarts
+the transport at a fresh bar; hiding the page stops playback, with no automatic
+resume. Idle transports do not own a RAF subscription.
+
+Audio callbacks receive an `AbortSignal`. Schedule cancellation and transport stop
+abort it, including voices reserved for future starts. Synth voices fade over 5 ms
+and disconnect on completion. The legacy guitar soundfont also connects each note's
+stop function to the signal and disposes the instrument on navigation. The first
+learning course retains its synthetic reference tones; legacy practice retains its
+guitar samples. No microphone input or performance grading is added.

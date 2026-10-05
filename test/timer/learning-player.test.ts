@@ -1,3 +1,10 @@
+vi.mock('../../src/lib/audio/voices', () => ({
+	default: undefined,
+	SynthVoices: class {
+		tone = vi.fn();
+		stop = vi.fn();
+	}
+}));
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 vi.mock('../../src/lib/timer/timer-worker?worker', () => ({
 	default: class {
@@ -11,7 +18,10 @@ let player: LearningPlayer;
 const note = vi.fn();
 const state = vi.fn();
 beforeEach(() => {
-	vi.stubGlobal('window', { requestAnimationFrame: vi.fn(() => 1) });
+	vi.stubGlobal(
+		'requestAnimationFrame',
+		vi.fn(() => 1)
+	);
 	vi.stubGlobal('cancelAnimationFrame', vi.fn());
 	vi.stubGlobal(
 		'AudioContext',

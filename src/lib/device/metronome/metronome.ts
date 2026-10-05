@@ -1,3 +1,4 @@
+import { SynthVoices } from '../../audio/voices';
 import { TempoTimer, type AudioTickState, type TempoState, type TickState } from '../../timer/tick';
 
 export interface MetronomeOption {
@@ -15,12 +16,26 @@ export type OnBarCallback = (state: MetronomeState) => unknown;
 
 class Metronome {
 	#timer: TempoTimer;
-	constructor(timer: TempoTimer) {
+	constructor(
+		timer: TempoTimer,
+		private ownsTimer = false
+	) {
 		this.#timer = timer;
-		this.#timer.onStart(() => {});
-		this.#timer.onStop(() => {});
+		this.#timer.onTempoChanged(this.#onTempo);
+		this.#removeStop = this.#timer.onStop(() => {
+			this.#voices.stop();
+			this.#onBeatCallbacks.forEach((callback) =>
+				callback({ tempo: this.#timer.tempoState, currentBeat: 0, currentBar: 0 })
+			);
+		});
 	}
 
+	#onTempo = () => {
+		if (this.#isScheduled) {
+			this.removeSchedule();
+			this.schedule();
+		}
+	};
 	get timer() {
 		return this.#timer;
 	}
@@ -45,6 +60,7 @@ class Metronome {
 	removeSchedule() {
 		if (this.#isScheduled) {
 			this.#isScheduled = false;
+			this.#voices.stop();
 			this.#timer.cancelSchedule(this.#scheduleId);
 		}
 	}
@@ -71,37 +87,25 @@ class Metronome {
 		}
 	}
 
-	#masterGain: GainNode | null = null;
+	#voices = new SynthVoices();
+	#removeStop: () => void;
 	get #notesPerBeat() {
 		return this.#timer.convert(1, 'beat', 'note');
 	}
 	get #ticksPerBeat() {
 		return this.#timer.convert(1, 'beat', 'tick');
 	}
-	#scheduleAudio({ audioCtx, time, tickPassed }: AudioTickState) {
-		if (!this.#masterGain) {
-			this.#masterGain = audioCtx.createGain();
-			this.#masterGain.connect(audioCtx.destination);
-		}
-		const beatPassed = tickPassed / this.#ticksPerBeat;
-		const currentBeat = (beatPassed % this.#timer.beatPerBar) + 1;
-
-		const osc = audioCtx.createOscillator();
-		const gain = audioCtx.createGain();
-		osc.connect(gain);
-		gain.connect(this.#masterGain);
-		if (currentBeat === 1) {
-			osc.frequency.value = 880;
-		} else {
-			osc.frequency.value = 440;
-		}
-		osc.start(time);
-		osc.stop(time + 0.1);
-		gain.gain.setValueAtTime(gain.gain.value, time + 0.01);
-		gain.gain.linearRampToValueAtTime(0.0001, time + 0.1);
-		osc.addEventListener('ended', () => {
-			gain.disconnect();
-		});
+	#scheduleAudio({ audioCtx, time, tickPassed, signal }: AudioTickState) {
+		const beat = tickPassed / this.#ticksPerBeat;
+		this.#voices.tone(
+			audioCtx,
+			beat % this.#timer.beatPerBar === 0 ? 880 : 440,
+			time,
+			0.07,
+			0.12,
+			'sine',
+			signal
+		);
 	}
 
 	#onBeatCallbacks = new Set<OnBeatCallback>();
@@ -127,6 +131,9 @@ class Metronome {
 
 	destroy() {
 		this.removeSchedule();
+		this.#removeStop();
+		this.#timer.removeTempoChanged(this.#onTempo);
+		if (this.ownsTimer) this.#timer.destroy();
 		this.clearDerivedSchedule();
 	}
 }

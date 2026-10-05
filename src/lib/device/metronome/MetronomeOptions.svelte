@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import PlusMinusBarButton from '#src/lib/ui/PlusMinusBarButton.svelte';
 	import { getMetronomeContext } from './context';
 
@@ -14,19 +15,22 @@
 		beatPerBar = metronome.timer.beatPerBar
 	}: MetronomeOptionsProps = $props();
 
-	metronome.timer.onTempoChanged((state) => {
+	const onTempo: Parameters<typeof metronome.timer.onTempoChanged>[0] = (state) => {
 		bpm = state.bpm;
 		beatPerBar = state.beatPerBar;
-	});
+	};
+	metronome.timer.onTempoChanged(onTempo);
+	onDestroy(() => metronome.timer.removeTempoChanged(onTempo));
 
 	let lastTapTimestamp = -1;
 	let tapIntervalStore: number[] = [];
 
 	$effect(() => {
-		metronome.timer.bpm = bpm;
+		if (Number.isFinite(bpm) && bpm >= 20 && bpm <= 500) metronome.timer.bpm = bpm;
 	});
 	$effect(() => {
-		metronome.timer.beatPerBar = beatPerBar;
+		if (Number.isInteger(beatPerBar) && beatPerBar >= 1 && beatPerBar <= 12)
+			metronome.timer.beatPerBar = beatPerBar;
 	});
 </script>
 

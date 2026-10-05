@@ -1,36 +1,33 @@
+import { SynthVoices } from '#lib/audio/voices.ts';
 import { TempoTimer } from '#lib/timer/tick.ts';
 
 /** Shares the application's audio-clock scheduler; sounds are reference tones. */
 export class LearningPlayer {
 	readonly timer = new TempoTimer();
 	private schedules: number[] = [];
-	private voices = new Set<OscillatorNode>();
+	private voices = new SynthVoices();
 	private generation = 0;
 	constructor(
 		private onNote: (index: number | null) => void,
 		private onState: (running: boolean, count: number | null) => void
 	) {
 		this.timer.timeSignature = { upper: 4, lower: 4 };
+		this.timer.onStop(() => {
+			this.voices.stop();
+			this.onNote(null);
+			this.onState(false, null);
+		});
 	}
-	private tone(midi: number, time: number, duration: number, volume = 0.1) {
-		const ctx = this.timer.audioCtx!;
-		const osc = ctx.createOscillator();
-		const gain = ctx.createGain();
-		osc.type = 'triangle';
-		osc.frequency.value = 440 * 2 ** ((midi - 69) / 12);
-		gain.gain.setValueAtTime(0, time);
-		gain.gain.linearRampToValueAtTime(volume, time + 0.01);
-		gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-		osc.connect(gain);
-		gain.connect(ctx.destination);
-		this.voices.add(osc);
-		osc.onended = () => {
-			this.voices.delete(osc);
-			osc.disconnect();
-			gain.disconnect();
-		};
-		osc.start(time);
-		osc.stop(time + duration + 0.01);
+	private tone(midi: number, time: number, duration: number, volume = 0.1, signal?: AbortSignal) {
+		this.voices.tone(
+			this.timer.audioCtx!,
+			440 * 2 ** ((midi - 69) / 12),
+			time,
+			duration,
+			volume,
+			'triangle',
+			signal
+		);
 	}
 	async play(notes: number[], bpm: number, loop: boolean, countIn: boolean, chord = false) {
 		this.stop();
@@ -44,7 +41,7 @@ export class LearningPlayer {
 				this.schedules.push(
 					this.timer.scheduleOnTempo({
 						time: { start: beat / 4 },
-						audio: ({ time }) => this.tone(beat === 0 ? 88 : 81, time, 0.07, 0.045),
+						audio: ({ time, signal }) => this.tone(beat === 0 ? 88 : 81, time, 0.07, 0.045, signal),
 						animation: () => {
 							this.onState(true, 4 - beat);
 						}
@@ -53,8 +50,14 @@ export class LearningPlayer {
 		const schedule = (index: number, start: number) => {
 			const event = {
 				time: { start: start / 4, interval: beats / 4 },
-				audio: ({ time }: { time: number }) =>
-					this.tone(notes[index], time, (60 / bpm) * (chord ? 2.8 : 0.75), chord ? 0.055 : 0.1),
+				audio: ({ time, signal }: { time: number; signal: AbortSignal }) =>
+					this.tone(
+						notes[index],
+						time,
+						(60 / bpm) * (chord ? 2.8 : 0.75),
+						chord ? 0.055 : 0.1,
+						signal
+					),
 				animation: () => {
 					this.onNote(index);
 					this.onState(true, null);
@@ -90,14 +93,7 @@ export class LearningPlayer {
 		this.timer.stop();
 		this.schedules.forEach((id) => this.timer.cancelSchedule(id));
 		this.schedules = [];
-		this.voices.forEach((voice) => {
-			try {
-				voice.stop();
-			} catch {
-				/* Already ended. */
-			}
-		});
-		this.voices.clear();
+		this.voices.stop();
 		this.onNote(null);
 		this.onState(false, null);
 	}

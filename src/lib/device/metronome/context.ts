@@ -5,7 +5,7 @@ import Metronome from './metronome';
 const CONTEXT_KEY = 'metronome';
 
 export const setMetronomeContext = (timer?: TempoTimer) => {
-	const context = setContext(CONTEXT_KEY, new Metronome(timer ?? new TempoTimer()));
+	const context = setContext(CONTEXT_KEY, new Metronome(timer ?? new TempoTimer(), !timer));
 	return context;
 };
 

@@ -121,6 +121,9 @@
 				count = remaining;
 			}
 		);
+		player.timer.onError(() => {
+			audioError = '소리를 재생하지 못했어요. 다시 재생해 주세요.';
+		});
 		try {
 			const record = parseRecord(localStorage.getItem(RECORD_KEY));
 			if (record) {

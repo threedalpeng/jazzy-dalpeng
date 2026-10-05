@@ -1,3 +1,4 @@
+import { onFrame } from '../../animation/frame';
 import { CanvasEventHandler, pointerEventTypes, type OnHitCallback } from './events';
 
 export type CanvasGetter = () => HTMLCanvasElement;
@@ -30,7 +31,8 @@ export class CanvasContext {
 	#running = false;
 	#setup = false;
 	#preventContextMenu = (ev: Event) => ev.preventDefault();
-	#frameId = 0;
+	#removeUpdate: (() => void) | undefined;
+	#removeDraw: (() => void) | undefined;
 	#eventHandler = new CanvasEventHandler();
 	constructor(
 		canvasGetter: CanvasGetter,
@@ -181,6 +183,7 @@ export class CanvasContext {
 	}
 
 	render = (t: number, cache?: { key: unknown }) => {
+		if (this.#orderObserver?.takeRecords().length) this.#invalidateOrder();
 		this.#frameTime = t;
 		this.#timePassed = this.#lastTime === null ? 0 : Math.max(0, t - this.#lastTime);
 		this.#lastTime = t;
@@ -261,18 +264,17 @@ export class CanvasContext {
 		if (this.#running) return;
 		this.setup();
 		this.#running = true;
-		const loop: FrameRequestCallback = (t) => {
-			if (!this.#running) return;
-			this.#eventHandler.poll();
-			this.render(t);
-			if (this.#running) this.#frameId = requestAnimationFrame(loop);
-		};
-		this.#frameId = requestAnimationFrame(loop);
+		this.#removeUpdate = onFrame(() => this.#eventHandler.poll());
+		this.#removeDraw = onFrame((time) => {
+			if (this.#running) this.render(time);
+		}, 'draw');
 	}
 
 	quit() {
 		this.#running = false;
-		cancelAnimationFrame(this.#frameId);
+		this.#removeUpdate?.();
+		this.#removeDraw?.();
+		this.#removeUpdate = this.#removeDraw = undefined;
 		if (this.#setup) {
 			const canvas = this.canvas;
 			canvas.removeEventListener('contextmenu', this.#preventContextMenu);
