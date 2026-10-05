@@ -11,6 +11,8 @@
 		sourceArea?: Partial<Rect>;
 		destArea?: Partial<Rect>;
 		debug?: boolean;
+		cached?: boolean;
+		cacheKey?: unknown;
 		children: Snippet;
 	}
 
@@ -20,6 +22,8 @@
 		sourceArea = { x: 0, y: 0 },
 		destArea = { x: 0, y: 0 },
 		debug = false,
+		cached = false,
+		cacheKey,
 		children
 	}: CropProps = $props();
 
@@ -27,20 +31,31 @@
 	const upperCanvasContext = getCanvasContext();
 
 	/* Inner Context */
+	let orderNode: HTMLSpanElement;
 	const offscreenCanvas = document.createElement('canvas');
 	setSubroutineCanvasContext(upperCanvasContext, () => offscreenCanvas, {
-		beforeRender: ({ canvas }) => {
-			canvas.dataset.logicalWidth = String(width);
-			canvas.dataset.logicalHeight = String(height);
-		},
-		afterRender: ({ canvas, hitContext2d, pixelScale }) => {
+		orderNode: () => orderNode,
+		dimensions: () => ({
+			width,
+			height,
+			scale:
+				upperCanvasContext.pixelScale *
+				Math.max(
+					(destArea.width ?? sourceArea.width ?? width) / (sourceArea.width ?? width),
+					(destArea.height ?? sourceArea.height ?? height) / (sourceArea.height ?? height)
+				)
+		}),
+		cache: () => (cached ? { key: cacheKey } : undefined),
+		afterRender: ({ canvas, hitContext2d }) => {
+			const scaleX = canvas.width / width;
+			const scaleY = canvas.height / height;
 			const hitCanvas = hitContext2d.canvas;
 			upperCanvasContext.context2d.drawImage(
 				canvas,
-				(sourceArea.x ?? 0) * pixelScale,
-				(sourceArea.y ?? 0) * pixelScale,
-				(sourceArea.width ?? width) * pixelScale,
-				(sourceArea.height ?? height) * pixelScale,
+				(sourceArea.x ?? 0) * scaleX,
+				(sourceArea.y ?? 0) * scaleY,
+				(sourceArea.width ?? width) * scaleX,
+				(sourceArea.height ?? height) * scaleY,
 				destArea.x ?? 0,
 				destArea.y ?? 0,
 				destArea.width ?? sourceArea.width ?? width,
@@ -50,18 +65,18 @@
 				hitCanvas,
 				sourceArea.x ?? 0,
 				sourceArea.y ?? 0,
-				sourceArea.width ?? hitCanvas.width,
-				sourceArea.height ?? hitCanvas.height,
+				sourceArea.width ?? width,
+				sourceArea.height ?? height,
 				destArea.x ?? 0,
 				destArea.y ?? 0,
-				destArea.width ?? sourceArea.width ?? hitCanvas.width,
-				destArea.height ?? sourceArea.height ?? hitCanvas.height
+				destArea.width ?? sourceArea.width ?? width,
+				destArea.height ?? sourceArea.height ?? height
 			);
 		}
 	});
 </script>
 
-{#if offscreenCanvas}
+<span hidden bind:this={orderNode}>
 	{@render children()}
 	{#if debug}
 		<Rectangle
@@ -75,4 +90,4 @@
 			active={false}
 		/>
 	{/if}
-{/if}
+</span>

@@ -75,9 +75,22 @@ The library is in `src/lib/canvas` and is shared by the fretboard and metronome.
 ```
 
 - Render callbacks are synchronous. `context.delta` is the frame interval in milliseconds
-  (zero for the first frame).
+  (zero for the first frame). `context.frameTime` is the shared RAF timestamp;
+  nested contexts receive the same timestamp.
+- Visible drawing, hit regions, and nested compositing share one painter order.
+  Built-in elements follow their Svelte DOM anchors, including conditional remounts
+  and keyed reordering. Changing `active` preserves the layer position. Noninteractive
+  visuals do not block an interactive region underneath.
 - `Crop` renders a child canvas and composites both its visible surface and hitmap.
-  Both surfaces follow dimension changes.
+  Both surfaces follow dimension changes; destination enlargement also increases
+  child backing resolution. Rounded backing pixels map to the complete logical area.
+- `Crop cached cacheKey={value}` reuses both surfaces until the key, dimensions,
+  pixel scale, or registrations change. Include every changing child value in the
+  key, or call its canvas context's `invalidate()`. Leave animated children uncached.
+  The fretboard caches its static strings, frets, and inlays; note and hover updates
+  continue rendering normally. DOM layer changes invalidate affected context trees.
+- `Clear` erases a rectangle, optionally including its hit regions. `Clip` remains
+  an alias for compatibility; it does not establish a Canvas 2D clipping path.
 - Shapes expose `active`, `onup`, `ondown`, `onover`, `onout`, `onmove`, `onclick`,
   and `oncancel`. `active` can change at runtime. Shapes are inactive by default;
   standalone `HitRegion` is active by default.
@@ -94,5 +107,13 @@ rendered CSS size and device pixel ratio, including cropped child surfaces. Hitm
 and pointer events retain logical coordinates; use `data-logical-width` and
 `data-logical-height` when inspecting canvas pixels or converting coordinates.
 
-Future extensions can add shared transforms/clipping,
-static layer caching, and redraw-on-change before adding more visual practice tools.
+Frame dimensions are sampled once and shared with all drawing callbacks. Manage
+logical dimensions through Canvas/Crop props or the context dimensions provider;
+provider-managed `context.width`/`height` writes throw instead of silently changing
+only backing pixels. Standalone contexts without a provider retain writable sizes.
+Custom `onCanvasRender(callback, () => orderNode)` hooks can supply a hidden DOM
+anchor for declaration order; hooks without an anchor retain registration order.
+
+The root RAF remains active for pointer queues, tweened hover effects, and animated
+beats. Full redraw-on-change and a general transform/clipping stack are future work;
+static caching is explicit rather than assuming arbitrary callbacks are pure.

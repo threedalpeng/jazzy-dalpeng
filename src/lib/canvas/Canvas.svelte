@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { HTMLCanvasAttributes } from 'svelte/elements';
 	import { setCanvasContext } from './core/hooks.svelte.ts';
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 
 	interface CanvasProps {
 		children: Snippet;
@@ -15,21 +15,28 @@
 	}: CanvasProps & HTMLCanvasAttributes = $props();
 
 	let canvas: HTMLCanvasElement;
-	setCanvasContext(
+	let layers: HTMLSpanElement;
+	const context = setCanvasContext(
 		() => canvas,
-		() => ({
-			width: Number(width),
-			height: Number(height),
-			scale: Math.max(
-				1,
-				(window.devicePixelRatio || 1) *
-					Math.max(
-						(canvas?.getBoundingClientRect().width || Number(width)) / Number(width),
-						(canvas?.getBoundingClientRect().height || Number(height)) / Number(height)
-					)
-			)
-		})
+		() => {
+			const logicalWidth = Number(width);
+			const logicalHeight = Number(height);
+			const bounds = canvas?.getBoundingClientRect();
+			return {
+				width: logicalWidth,
+				height: logicalHeight,
+				scale: Math.max(
+					1,
+					(window.devicePixelRatio || 1) *
+						Math.max(
+							(bounds?.width || logicalWidth) / logicalWidth,
+							(bounds?.height || logicalHeight) / logicalHeight
+						)
+				)
+			};
+		}
 	);
+	onMount(() => context.observeOrder(layers));
 </script>
 
 <canvas
@@ -42,7 +49,7 @@
 	data-logical-height={height}
 	style={`--canvas-width: ${width}px; --canvas-height: ${height}px; ${rest.style ?? ''}`}
 ></canvas>
-{@render children()}
+<span hidden bind:this={layers}>{@render children()}</span>
 
 <style>
 	:where(canvas) {

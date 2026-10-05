@@ -36,10 +36,14 @@ export const onCanvasSetup = (setupFn: CanvasRenderCallback) => {
 	});
 };
 
-export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
+export const onCanvasRender = (
+	renderFn: CanvasRenderCallback,
+	orderNode?: () => Node | undefined
+) => {
 	const canvasContext = getCanvasContext();
+	const order = canvasContext.reserveOrder();
 	onMount(() => {
-		canvasContext.onRender(renderFn);
+		canvasContext.onRender(renderFn, orderNode ?? order);
 	});
 
 	onDestroy(() => {
@@ -50,20 +54,29 @@ export const onCanvasRender = (renderFn: CanvasRenderCallback) => {
 export const onCanvasHit = (
 	active: boolean | (() => boolean),
 	hitboxRenderFn: OffscreenCanvasRenderCallback,
-	onHit: OnHitCallback
+	onHit: OnHitCallback,
+	orderNode?: () => Node | undefined
 ) => {
 	const canvasContext = getCanvasContext();
 	const nextHitCode = CanvasEventHandler.nextHitCode;
+	const order = canvasContext.reserveOrder();
+	const isActive = () => (typeof active === 'function' ? active() : active);
 	function render(ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D) {
+		if (!isActive()) return;
 		ctx.fillStyle = nextHitCode;
 		ctx.strokeStyle = nextHitCode;
 		hitboxRenderFn(ctx);
 	}
 
-	$effect(() => {
-		if (typeof active === 'function' ? active() : active) {
-			canvasContext.onHitboxRender(nextHitCode, render, onHit);
-		}
+	onMount(() => {
+		canvasContext.onHitboxRender(
+			nextHitCode,
+			render,
+			(ev) => {
+				if (isActive()) onHit(ev);
+			},
+			orderNode ?? order
+		);
 		return () => canvasContext.removeHitboxRender(nextHitCode);
 	});
 };

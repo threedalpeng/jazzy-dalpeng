@@ -8,4 +8,16 @@ import Line from './elements/Line.svelte';
 import Text from './elements/Text.svelte';
 import Rectangle from './elements/Rectangle.svelte';
 import HitRegion from './elements/HitRegion.svelte';
-export { Canvas, Circle, Clip, Crop, Ellipse, Line, Text, Rectangle, HitRegion, onCanvasRender };
+export {
+	Canvas,
+	Circle,
+	Clip,
+	Clip as Clear,
+	Crop,
+	Ellipse,
+	Line,
+	Text,
+	Rectangle,
+	HitRegion,
+	onCanvasRender
+};

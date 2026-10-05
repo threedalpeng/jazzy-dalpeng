@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Line } from '#lib/canvas/index.ts';
+	import { Crop, Line } from '#lib/canvas/index.ts';
 	import { getFingerBoardContext } from '../context';
 	import FingerBoardInlay from './FingerBoardInlay.svelte';
 
@@ -27,20 +27,27 @@
 	}
 </script>
 
-{#each fretLines.slice(1) as points (points)}
-	<Line {points} lineCap="round" lineWidth={FRET_WIDTH / 2} strokeStyle="#475569" />
-{/each}
-{#each stringLines as points (points)}
-	<Line {points} lineCap="round" lineWidth={STRING_WIDTH} strokeStyle="#64748b" />
-{/each}
-<Line
-	points={fretLines[0].map((line) => {
-		return { x: line.x - 2, y: line.y };
-	})}
-	lineCap="round"
-	lineWidth={FRET_WIDTH + 4}
-	strokeStyle="#555"
-/>
-{#if inlayVisible}
-	<FingerBoardInlay />
-{/if}
+<Crop
+	width={FRET_START * 2 + FRET_GAP * FRET_MAX}
+	height={STRING_START * 2 + STRING_GAP * 5}
+	cached
+	cacheKey={inlayVisible}
+>
+	{#each fretLines.slice(1) as points (points)}
+		<Line {points} lineCap="round" lineWidth={FRET_WIDTH / 2} strokeStyle="#475569" />
+	{/each}
+	{#each stringLines as points (points)}
+		<Line {points} lineCap="round" lineWidth={STRING_WIDTH} strokeStyle="#64748b" />
+	{/each}
+	<Line
+		points={fretLines[0].map((line) => {
+			return { x: line.x - 2, y: line.y };
+		})}
+		lineCap="round"
+		lineWidth={FRET_WIDTH + 4}
+		strokeStyle="#555"
+	/>
+	{#if inlayVisible}
+		<FingerBoardInlay />
+	{/if}
+</Crop>

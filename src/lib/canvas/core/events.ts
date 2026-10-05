@@ -45,6 +45,8 @@ export class CanvasEventHandler {
 	}
 	resize(width: number, height: number) {
 		if (!this.#canvas) return;
+		width = Math.max(1, Math.ceil(width));
+		height = Math.max(1, Math.ceil(height));
 		if (this.#canvas.width !== width) this.#canvas.width = width;
 		if (this.#canvas.height !== height) this.#canvas.height = height;
 		this.context2d.imageSmoothingEnabled = false;
@@ -197,17 +199,21 @@ export class CanvasEventHandler {
 	beforeRender() {
 		this.context2d.clearRect(0, 0, this.context2d.canvas.width, this.context2d.canvas.height);
 	}
-	render() {
-		for (const render of this.#hitRenderMap.values()) {
-			const ctx = this.context2d;
-			ctx.save();
-			try {
-				render(ctx);
-			} finally {
-				ctx.restore();
-			}
+	renderRegion(code: string) {
+		const render = this.#hitRenderMap.get(code);
+		if (!render) return;
+		const ctx = this.context2d;
+		ctx.save();
+		try {
+			render(ctx);
+		} finally {
+			ctx.restore();
 		}
 	}
+	render() {
+		for (const code of this.#hitRenderMap.keys()) this.renderRegion(code);
+	}
+
 	clear() {
 		for (const code of this.#hitRenderMap.keys()) this.#onHitMap.delete(code);
 		this.#hitRenderMap.clear();

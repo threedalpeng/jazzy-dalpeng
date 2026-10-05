@@ -31,6 +31,7 @@
 		onclick = () => {}
 	}: HitRegionProps = $props();
 
+	let orderNode: HTMLSpanElement;
 	onCanvasHit(
 		() => active,
 		(ctx) => render(ctx),
@@ -58,6 +59,9 @@
 					onclick(ev.detail);
 					break;
 			}
-		}
+		},
+		() => orderNode
 	);
 </script>
+
+<span hidden bind:this={orderNode}></span>

@@ -94,3 +94,13 @@ describe('canvas pointer input', () => {
 		expect(onHit).not.toHaveBeenCalled();
 	});
 });
+
+it('rounds fractional logical hit dimensions without reallocating each frame', () => {
+	handler.resize(100.2, 80.1);
+	const canvas = handler.context2d.canvas;
+	expect([canvas.width, canvas.height]).toEqual([101, 81]);
+	const setWidth = vi.fn();
+	Object.defineProperty(canvas, 'width', { get: () => 101, set: setWidth });
+	handler.resize(100.2, 80.1);
+	expect(setWidth).not.toHaveBeenCalled();
+});

@@ -8,15 +8,22 @@
 
 	const { x, y, width, height, removeHitRegion = false }: ClipProps = $props();
 
-	onCanvasRender(({ context2d: ctx }) => {
-		ctx.clearRect(x, y, width, height);
-	});
+	let orderNode: HTMLSpanElement;
+	onCanvasRender(
+		({ context2d: ctx }) => {
+			ctx.clearRect(x, y, width, height);
+		},
+		() => orderNode
+	);
 
 	onCanvasHit(
 		() => removeHitRegion,
 		(hitCtx) => {
 			hitCtx.clearRect(x, y, width, height);
 		},
-		() => {}
+		() => {},
+		() => orderNode
 	);
 </script>
+
+<span hidden bind:this={orderNode}></span>

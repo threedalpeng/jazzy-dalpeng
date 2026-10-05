@@ -32,11 +32,16 @@
 		ctx.stroke();
 	};
 
-	onCanvasRender(({ context2d: ctx }) => {
-		ctx.fillStyle = fillStyle;
-		ctx.strokeStyle = strokeStyle;
-		render(ctx);
-	});
+	let orderNode: HTMLSpanElement;
+	onCanvasRender(
+		({ context2d: ctx }) => {
+			ctx.fillStyle = fillStyle;
+			ctx.strokeStyle = strokeStyle;
+			render(ctx);
+		},
+		() => orderNode
+	);
 </script>
 
+<span hidden bind:this={orderNode}></span>
 <HitRegion {active} {render} {...rest}></HitRegion>
